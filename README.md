@@ -35,7 +35,7 @@ Aggregating results from MMLU, HumanEval, GSM8K, GPQA, and 10+ more benchmarks i
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Python 3.13+ (or 3.11+)
+- Python 3.13+
 - Node.js 18+
 - npm
 

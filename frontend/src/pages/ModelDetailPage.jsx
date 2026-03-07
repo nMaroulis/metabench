@@ -4,7 +4,7 @@ import { ArrowLeft, ExternalLink, DollarSign, Clock, Zap, Code, Shield, BookOpen
 import api from '../services/api';
 import ScoreBar from '../components/ScoreBar';
 import BenchmarkRadarChart from '../charts/RadarChart';
-import TrendChart from '../charts/TrendChart';
+import TechnicalDetails from '../components/TechnicalDetails';
 
 export default function ModelDetailPage() {
     const { modelName } = useParams();
@@ -212,6 +212,10 @@ export default function ModelDetailPage() {
                     </table>
                 </div>
             </div>
+
+            {/* Render the advanced technical details here at the very bottom */}
+            <TechnicalDetails model={model} />
+
         </div>
     );
 }
