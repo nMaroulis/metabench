@@ -1,0 +1,129 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-surface-50 text-gray-900 dark:bg-surface-900 dark:text-gray-100 font-sans antialiased;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-gray-300 dark:bg-gray-700 rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-400 dark:bg-gray-600;
+  }
+}
+
+@layer components {
+  .glass {
+    @apply bg-white/70 dark:bg-surface-800/70 backdrop-blur-xl border border-white/20 dark:border-white/10;
+  }
+
+  .glass-card {
+    @apply glass rounded-2xl shadow-lg shadow-black/5 dark:shadow-black/20 transition-all duration-300;
+  }
+
+  .glass-card:hover {
+    @apply shadow-xl shadow-brand-500/10 dark:shadow-brand-500/20 -translate-y-1;
+  }
+
+  .gradient-text {
+    @apply bg-gradient-to-r from-brand-500 via-accent-500 to-brand-600 bg-clip-text text-transparent;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl font-semibold text-sm
+           bg-gradient-to-r from-brand-500 to-brand-600 text-white
+           shadow-lg shadow-brand-500/25
+           hover:shadow-xl hover:shadow-brand-500/40 hover:from-brand-600 hover:to-brand-700
+           active:scale-[0.98] transition-all duration-200;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl font-semibold text-sm
+           bg-gray-100 dark:bg-surface-700 text-gray-700 dark:text-gray-200
+           border border-gray-200 dark:border-gray-600
+           hover:bg-gray-200 dark:hover:bg-surface-800
+           active:scale-[0.98] transition-all duration-200;
+  }
+
+  .score-badge {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-sm font-bold;
+  }
+
+  .score-high {
+    @apply bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400;
+  }
+
+  .score-mid {
+    @apply bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400;
+  }
+
+  .score-low {
+    @apply bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400;
+  }
+
+  .page-container {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8;
+  }
+
+  .section-title {
+    @apply text-3xl sm:text-4xl font-display font-bold tracking-tight;
+  }
+
+  .input-field {
+    @apply w-full px-4 py-2.5 rounded-xl bg-white dark:bg-surface-800
+           border border-gray-200 dark:border-gray-700
+           text-gray-900 dark:text-gray-100 placeholder-gray-400
+           focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500
+           transition-all duration-200;
+  }
+}
+
+/* Gradient background for hero sections */
+.hero-gradient {
+  background: linear-gradient(135deg,
+    rgba(99, 102, 241, 0.05) 0%,
+    rgba(217, 70, 239, 0.05) 50%,
+    rgba(99, 102, 241, 0.05) 100%
+  );
+}
+
+.dark .hero-gradient {
+  background: linear-gradient(135deg,
+    rgba(99, 102, 241, 0.1) 0%,
+    rgba(217, 70, 239, 0.08) 50%,
+    rgba(99, 102, 241, 0.1) 100%
+  );
+}
+
+/* Animated gradient border */
+.gradient-border {
+  position: relative;
+}
+
+.gradient-border::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, #6366f1, #d946ef, #6366f1);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+}
