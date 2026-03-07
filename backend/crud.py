@@ -1,13 +1,11 @@
 """CRUD operations for BenchIndex database."""
 
 from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import desc, func
-from typing import Optional
+from sqlalchemy import desc
 
 import models as db_models
 import schemas
 from normalization import (
-    normalize_score,
     compute_weighted_overall_score,
     DEFAULT_WEIGHTS,
 )
@@ -17,7 +15,7 @@ from normalization import (
 
 
 def get_models(
-    db: Session, skip: int = 0, limit: int = 100, provider: Optional[str] = None
+    db: Session, skip: int = 0, limit: int = 100, provider: str | None = None
 ):
     query = db.query(db_models.Model)
     if provider:
@@ -68,7 +66,7 @@ def get_benchmark_by_name(db: Session, name: str):
 # ---------- Scores ----------
 
 
-def get_scores_for_model(db: Session, model_name: str, language: Optional[str] = None):
+def get_scores_for_model(db: Session, model_name: str, language: str | None = None):
     model = get_model_by_name(db, model_name)
     if not model:
         return []
@@ -123,8 +121,8 @@ def compare_models(db: Session, model_names: list[str]):
 
 def get_leaderboard(
     db: Session,
-    task: Optional[str] = None,
-    language: Optional[str] = None,
+    task: str | None = None,
+    language: str | None = None,
     limit: int = 50,
 ):
     if task:
@@ -191,7 +189,7 @@ def create_community_submission(
     return db_sub
 
 
-def get_community_submissions(db: Session, status: Optional[str] = None):
+def get_community_submissions(db: Session, status: str | None = None):
     query = db.query(db_models.CommunitySubmission)
     if status:
         query = query.filter(db_models.CommunitySubmission.status == status)

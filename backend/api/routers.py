@@ -2,7 +2,6 @@
 
 import csv
 import io
-from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from sqlalchemy.orm import Session
@@ -21,7 +20,7 @@ router = APIRouter()
 def list_models(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=500),
-    provider: Optional[str] = None,
+    provider: str | None = None,
     db: Session = Depends(get_db),
 ):
     """List all models with metadata and overall scores."""
@@ -62,7 +61,7 @@ def get_model_detail(model_name: str, db: Session = Depends(get_db)):
 
 @router.get("/benchmarks", tags=["Benchmarks"])
 def list_benchmarks(
-    model: Optional[str] = None,
+    model: str | None = None,
     db: Session = Depends(get_db),
 ):
     """List all benchmarks, or get per-task scores for a specific model."""
@@ -102,8 +101,8 @@ def compare_models(
 
 @router.get("/leaderboard", tags=["Leaderboard"])
 def get_leaderboard(
-    task: Optional[str] = None,
-    language: Optional[str] = None,
+    task: str | None = None,
+    language: str | None = None,
     limit: int = Query(50, ge=1, le=200),
     db: Session = Depends(get_db),
 ):
@@ -162,7 +161,7 @@ def submit_community_score(
     tags=["Community"],
 )
 def list_community_submissions(
-    status: Optional[str] = None,
+    status: str | None = None,
     db: Session = Depends(get_db),
 ):
     """List community submissions, optionally filtered by status."""

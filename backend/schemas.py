@@ -1,5 +1,4 @@
 from pydantic import BaseModel, Field
-from typing import Optional
 from datetime import datetime
 
 
@@ -12,17 +11,17 @@ class ModelBase(BaseModel):
     architecture: str = ""
     license_type: str = ""
     release_date: str = ""
-    cost_per_1m_input_tokens: Optional[float] = None
-    cost_per_1m_output_tokens: Optional[float] = None
-    avg_latency_ms: Optional[float] = None
-    context_window: Optional[int] = None
+    cost_per_1m_input_tokens: float | None = None
+    cost_per_1m_output_tokens: float | None = None
+    avg_latency_ms: float | None = None
+    context_window: int | None = None
 
 
 class ModelOut(ModelBase):
     id: int
     overall_score: float = 0.0
     confidence: float = 0.0
-    technical_details: Optional[list] = None
+    technical_details: list | None = None
 
     class Config:
         from_attributes = True
@@ -92,12 +91,12 @@ class LeaderboardEntry(BaseModel):
     rank: int
     model: ModelOut
     score: float
-    benchmark_name: Optional[str] = None
+    benchmark_name: str | None = None
 
 
 class LeaderboardResponse(BaseModel):
-    task: Optional[str] = None
-    language: Optional[str] = None
+    task: str | None = None
+    language: str | None = None
     entries: list[LeaderboardEntry]
 
 
@@ -110,13 +109,13 @@ class CommunitySubmissionCreate(BaseModel):
     submitter: str = "anonymous"
     evidence_url: str = ""
     notes: str = ""
-    evaluation_data: Optional[dict] = None
+    evaluation_data: dict | None = None
 
 
 class CommunitySubmissionOut(CommunitySubmissionCreate):
     id: int
     status: str = "pending"
-    submitted_at: Optional[datetime] = None
+    submitted_at: datetime | None = None
 
     class Config:
         from_attributes = True

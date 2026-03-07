@@ -7,7 +7,6 @@ Categories: Math, Coding, Reasoning, Data Analysis, Language, Instruction Follow
 import csv
 import io
 import httpx
-from typing import Optional
 
 
 LIVEBENCH_CSV_URLS = [

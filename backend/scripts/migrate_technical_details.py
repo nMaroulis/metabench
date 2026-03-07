@@ -1,8 +1,5 @@
-import os
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
 from models import Model
-from database import DATABASE_URL, engine, SessionLocal
+from database import SessionLocal
 
 
 def get_technical_details(

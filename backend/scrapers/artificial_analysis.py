@@ -6,7 +6,6 @@ Requires ARTIFICIAL_ANALYSIS_API_KEY in .env
 
 import os
 import httpx
-from typing import Optional
 from dotenv import load_dotenv
 
 load_dotenv()

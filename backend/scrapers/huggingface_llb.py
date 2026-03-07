@@ -5,7 +5,6 @@ Benchmarks: IFEval, BBH, MATH-Hard, GPQA, MUSR, MMLU-Pro
 """
 
 import httpx
-from typing import Optional
 
 
 HF_CONTENTS_API = "https://huggingface.co/api/datasets/open-llm-leaderboard/contents"

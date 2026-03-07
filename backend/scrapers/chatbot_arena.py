@@ -6,8 +6,6 @@ Source: https://huggingface.co/spaces/lmarena-ai/chatbot-arena-leaderboard
 import csv
 import io
 import httpx
-from typing import Optional
-
 
 HF_SPACE_API = "https://huggingface.co/api/spaces/lmarena-ai/arena-leaderboard"
 HF_CSV_BASE = "https://huggingface.co/spaces/lmarena-ai/arena-leaderboard/resolve/main"
@@ -52,7 +50,7 @@ ARENA_NAME_MAP = {
 }
 
 
-def get_latest_csv_filename() -> Optional[str]:
+def get_latest_csv_filename() -> str | None:
     """Find the latest leaderboard_table CSV from HuggingFace Space siblings."""
     try:
         response = httpx.get(HF_SPACE_API, timeout=15, follow_redirects=True)

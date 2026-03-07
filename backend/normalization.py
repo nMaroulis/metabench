@@ -5,7 +5,6 @@ weighted Overall Intelligence Scores with confidence intervals.
 """
 
 import math
-from typing import Optional
 
 
 def normalize_score(
@@ -20,7 +19,7 @@ def normalize_score(
 
 def compute_weighted_overall_score(
     scores: list[dict],
-    weights: Optional[dict[str, float]] = None,
+    weights: dict[str, float] | None = None,
 ) -> tuple[float, float]:
     """
     Compute weighted overall score and confidence from a list of benchmark scores.

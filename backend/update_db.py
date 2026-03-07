@@ -4,7 +4,6 @@ Runs all scrapers to fetch the latest model pricing and scores,
 then updates the SQLite database.
 """
 
-from sqlalchemy.orm import Session
 from database import SessionLocal
 from models import Model, Benchmark, BenchmarkScore
 from normalization import (

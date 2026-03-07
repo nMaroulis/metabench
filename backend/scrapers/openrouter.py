@@ -4,7 +4,6 @@ API: GET https://openrouter.ai/api/v1/models (no auth required)
 """
 
 import httpx
-from typing import Optional
 
 
 OPENROUTER_API_URL = "https://openrouter.ai/api/v1/models"
@@ -91,7 +90,7 @@ def fetch_openrouter_models() -> list[dict]:
             cost_output = None
 
         context_length = model.get("context_length")
-        arch = model.get("architecture", {})
+        arch = model.get("architecture", {})  # noqa: F841
 
         results.append(
             {
