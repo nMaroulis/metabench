@@ -9,10 +9,8 @@ import httpx
 from typing import Optional
 
 
-HF_SPACE_API = "https://huggingface.co/api/spaces/lmarena-ai/chatbot-arena-leaderboard"
-HF_CSV_BASE = (
-    "https://huggingface.co/spaces/lmarena-ai/chatbot-arena-leaderboard/resolve/main"
-)
+HF_SPACE_API = "https://huggingface.co/api/spaces/lmarena-ai/arena-leaderboard"
+HF_CSV_BASE = "https://huggingface.co/spaces/lmarena-ai/arena-leaderboard/resolve/main"
 
 # Map Arena model keys to our canonical names
 ARENA_NAME_MAP = {
@@ -57,7 +55,7 @@ ARENA_NAME_MAP = {
 def get_latest_csv_filename() -> Optional[str]:
     """Find the latest leaderboard_table CSV from HuggingFace Space siblings."""
     try:
-        response = httpx.get(HF_SPACE_API, timeout=15)
+        response = httpx.get(HF_SPACE_API, timeout=15, follow_redirects=True)
         response.raise_for_status()
         data = response.json()
     except Exception as e:
@@ -87,7 +85,7 @@ def fetch_arena_elo_ratings() -> dict[str, float]:
     print(f"[ChatbotArena] Fetching {filename}")
 
     try:
-        response = httpx.get(url, timeout=30)
+        response = httpx.get(url, timeout=30, follow_redirects=True)
         response.raise_for_status()
     except Exception as e:
         print(f"[ChatbotArena] Error fetching CSV: {e}")

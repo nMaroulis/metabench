@@ -4,10 +4,13 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.triggers.cron import CronTrigger
 
 from database import engine, SessionLocal, Base
 from api.routers import router
 from seed_data import seed_database
+from update_db import update_database
 
 
 @asynccontextmanager
@@ -19,7 +22,19 @@ async def lifespan(app: FastAPI):
         seed_database(db)
     finally:
         db.close()
+
+    # Scheduling the background updates
+    scheduler = BackgroundScheduler()
+    # Run twice a day (e.g. at 00:00 and 12:00)
+    scheduler.add_job(update_database, trigger=CronTrigger(hour="0,12", minute=0))
+    scheduler.start()
+
+    print("--- Background Scheduler Started ---")
+
     yield
+
+    # Shutdown scheduler when app exits
+    scheduler.shutdown()
 
 
 app = FastAPI(

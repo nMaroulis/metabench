@@ -11,6 +11,7 @@ class Model(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, unique=True, index=True, nullable=False)
     provider = Column(String, nullable=False)
+    open_router_id = Column(String, default="")
     description = Column(Text, default="")
     parameters = Column(String, default="")  # e.g., "70B", "8x7B"
     architecture = Column(String, default="")
