@@ -23,6 +23,7 @@ class Model(Base):
     context_window = Column(Integer, nullable=True)
     overall_score = Column(Float, default=0.0)
     confidence = Column(Float, default=0.0)
+    technical_details = Column(JSON, nullable=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     scores = relationship(

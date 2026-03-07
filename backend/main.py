@@ -9,7 +9,7 @@ from apscheduler.triggers.cron import CronTrigger
 
 from database import engine, SessionLocal, Base
 from api.routers import router
-from seed_data import seed_database
+from scripts.seed_data import seed_database
 from update_db import update_database
 
 

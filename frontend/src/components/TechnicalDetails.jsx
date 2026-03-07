@@ -16,12 +16,11 @@ import {
     Maximize,
     Code
 } from 'lucide-react';
-import { getTechnicalDetails } from '../utils/technicalDetails';
 
 export default function TechnicalDetails({ model }) {
-    if (!model) return null;
+    if (!model || !model.technical_details) return null;
 
-    const sections = getTechnicalDetails(model);
+    const sections = model.technical_details;
 
     // Map section titles to lucide-react icons for a stylish presentation
     const getSectionIcon = (title) => {

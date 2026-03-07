@@ -22,6 +22,7 @@ class ModelOut(ModelBase):
     id: int
     overall_score: float = 0.0
     confidence: float = 0.0
+    technical_details: Optional[list] = None
 
     class Config:
         from_attributes = True

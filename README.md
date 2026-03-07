@@ -105,7 +105,7 @@ benchindex/
 │   ├── schemas.py           # Pydantic request/response schemas
 │   ├── normalization.py     # Score normalization + weighted scoring
 │   ├── crud.py              # Database operations
-│   ├── seed_data.py         # Sample data (15 LLMs, 12 benchmarks)
+│   ├── scripts/seed_data.py # Sample data (15 LLMs, 12 benchmarks)
 │   ├── api/routers.py       # All API route handlers
 │   ├── scrapers/            # Future benchmark scrapers
 │   └── tests/               # Unit tests

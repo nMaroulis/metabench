@@ -52,6 +52,7 @@ def get_model_detail(model_name: str, db: Session = Depends(get_db)):
         "context_window": model.context_window,
         "overall_score": model.overall_score,
         "confidence": model.confidence,
+        "technical_details": model.technical_details,
         "scores": scores,
     }
 
