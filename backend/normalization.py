@@ -58,7 +58,7 @@ def compute_weighted_overall_score(
 
     # Confidence: based on coverage (number of benchmarks) and consistency (low variance)
     n = len(score_values)
-    coverage_factor = min(n / 8.0, 1.0)  # Full confidence at 8+ benchmarks
+    coverage_factor = min(n / 10.0, 1.0)  # Full confidence at 10+ benchmarks
 
     if n > 1:
         mean = sum(score_values) / n
@@ -77,17 +77,15 @@ def compute_weighted_overall_score(
 DEFAULT_WEIGHTS = {
     "MMLU": 1.2,
     "MMLU-Pro": 1.3,
+    "GPQA Diamond": 1.3,
     "GSM8K": 1.0,
-    "MATH": 1.1,
+    "MATH-500": 1.2,
     "HumanEval": 1.2,
+    "LiveCodeBench": 1.1,
     "BigBench-Hard": 1.1,
     "ARC-Challenge": 0.9,
-    "HellaSwag": 0.8,
-    "TruthfulQA": 1.0,
-    "Winogrande": 0.7,
-    "DROP": 0.9,
-    "GPQA": 1.3,
     "IFEval": 1.0,
-    "MBPP": 1.0,
-    "TypeThink": 1.1,
+    "Arena Elo": 1.5,
+    "LiveBench": 1.2,
+    "EQBench": 0.8,
 }

@@ -4,7 +4,7 @@
 
 **The definitive aggregator of LLM benchmark scores**
 
-Aggregating results from MMLU, HumanEval, GSM8K, GPQA, and 9+ more benchmarks into a single **Overall Intelligence Score** per model.
+Aggregating results from MMLU, HumanEval, GSM8K, GPQA, and 10+ more benchmarks into a single **Overall Intelligence Score** per model.
 
 [View Leaderboard](#features) · [Compare Models](#features) · [API Docs](http://localhost:8000/docs)
 

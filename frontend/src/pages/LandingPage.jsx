@@ -48,7 +48,7 @@ export default function LandingPage() {
                     </h1>
 
                     <p className="text-lg sm:text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto mb-10 animate-slide-up leading-relaxed">
-                        Aggregating benchmark results from MMLU, HumanEval, GSM8K, and 9+ more sources into one
+                        Aggregating benchmark results from MMLU, HumanEval, GSM8K, and 10+ more sources into one
                         <strong className="text-gray-900 dark:text-gray-200"> Overall Intelligence Score</strong> per model.
                     </p>
 
