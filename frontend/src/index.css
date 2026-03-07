@@ -45,19 +45,11 @@
   }
 
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl font-semibold text-sm
-           bg-gradient-to-r from-brand-500 to-brand-600 text-white
-           shadow-lg shadow-brand-500/25
-           hover:shadow-xl hover:shadow-brand-500/40 hover:from-brand-600 hover:to-brand-700
-           active:scale-[0.98] transition-all duration-200;
+    @apply inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl font-semibold text-sm bg-gradient-to-r from-brand-500 to-brand-600 text-white shadow-lg shadow-brand-500/25 hover:shadow-xl hover:shadow-brand-500/40 hover:from-brand-600 hover:to-brand-700 active:scale-[0.98] transition-all duration-200;
   }
 
   .btn-secondary {
-    @apply inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl font-semibold text-sm
-           bg-gray-100 dark:bg-surface-700 text-gray-700 dark:text-gray-200
-           border border-gray-200 dark:border-gray-600
-           hover:bg-gray-200 dark:hover:bg-surface-800
-           active:scale-[0.98] transition-all duration-200;
+    @apply inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl font-semibold text-sm bg-gray-100 dark:bg-surface-700 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-surface-800 active:scale-[0.98] transition-all duration-200;
   }
 
   .score-badge {
@@ -85,29 +77,23 @@
   }
 
   .input-field {
-    @apply w-full px-4 py-2.5 rounded-xl bg-white dark:bg-surface-800
-           border border-gray-200 dark:border-gray-700
-           text-gray-900 dark:text-gray-100 placeholder-gray-400
-           focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500
-           transition-all duration-200;
+    @apply w-full px-4 py-2.5 rounded-xl bg-white dark:bg-surface-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 transition-all duration-200;
   }
 }
 
 /* Gradient background for hero sections */
 .hero-gradient {
   background: linear-gradient(135deg,
-    rgba(99, 102, 241, 0.05) 0%,
-    rgba(217, 70, 239, 0.05) 50%,
-    rgba(99, 102, 241, 0.05) 100%
-  );
+      rgba(99, 102, 241, 0.05) 0%,
+      rgba(217, 70, 239, 0.05) 50%,
+      rgba(99, 102, 241, 0.05) 100%);
 }
 
 .dark .hero-gradient {
   background: linear-gradient(135deg,
-    rgba(99, 102, 241, 0.1) 0%,
-    rgba(217, 70, 239, 0.08) 50%,
-    rgba(99, 102, 241, 0.1) 100%
-  );
+      rgba(99, 102, 241, 0.1) 0%,
+      rgba(217, 70, 239, 0.08) 50%,
+      rgba(99, 102, 241, 0.1) 100%);
 }
 
 /* Animated gradient border */
@@ -126,4 +112,19 @@
   mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
+}
+
+@keyframes slide-infinite {
+  0% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-slide-infinite {
+  animation: slide-infinite 25s linear infinite;
+  will-change: transform;
 }

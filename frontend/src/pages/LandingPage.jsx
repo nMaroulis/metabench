@@ -5,6 +5,15 @@ import api from '../services/api';
 import ModelCard from '../components/ModelCard';
 import ScoreBar from '../components/ScoreBar';
 
+const dataSources = [
+    { name: 'HuggingFace', logo: '/logos/huggingface.svg', type: 'image' },
+    { name: 'OpenRouter', logo: '/logos/openrouter.png', type: 'image', rounded: true },
+    { name: 'Chatbot Arena', logo: '/logos/lmsys.png', type: 'image' },
+    { name: 'LiveBench', logo: 'LB', type: 'text', color: 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600' },
+    { name: 'ArtificialAnalysis', logo: '/logos/artificialanalysis.svg', type: 'image' },
+    { name: 'EQBench', logo: 'EQ', type: 'text', color: 'bg-amber-100 dark:bg-amber-500/20 text-amber-600' },
+];
+
 export default function LandingPage() {
     const [models, setModels] = useState([]);
     const [stats, setStats] = useState(null);
@@ -131,13 +140,49 @@ export default function LandingPage() {
             {/* Benchmarks Overview */}
             <section className="page-container">
                 <div className="glass-card p-8">
-                    <h2 className="section-title mb-6">Benchmark Sources</h2>
+                    <h2 className="section-title mb-6">Benchmarks</h2>
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
                         {['MMLU', 'MMLU-Pro', 'HumanEval', 'GSM8K', 'MATH', 'GPQA', 'BigBench-Hard', 'ARC-Challenge', 'HellaSwag', 'TruthfulQA', 'IFEval', 'MBPP'].map(name => (
                             <div key={name} className="px-4 py-3 rounded-xl bg-gray-50 dark:bg-surface-700/50 text-center text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-brand-50 dark:hover:bg-brand-900/20 hover:text-brand-600 dark:hover:text-brand-400 transition-colors cursor-default">
                                 {name}
                             </div>
                         ))}
+                    </div>
+                </div>
+            </section>
+
+            {/* Live Data Sources */}
+            <section className="page-container">
+                <div className="glass-card p-8">
+                    <h2 className="section-title mb-6">Live Data Sources</h2>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 mb-8">
+                        BenchIndex continuously aggregates real-time data from the community's most trusted platforms
+                    </p>
+
+                    {/* CSS-based infinite scroll carousel */}
+                    <div className="relative w-full overflow-hidden h-20 flex items-center bg-gray-50/50 dark:bg-surface-800/30 rounded-2xl border border-gray-100 dark:border-surface-700">
+                        {/* Left/Right fading edges */}
+                        <div className="absolute left-0 top-0 bottom-0 w-24 bg-gradient-to-r from-white dark:from-surface-800 to-transparent z-10" />
+                        <div className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-white dark:from-surface-800 to-transparent z-10" />
+
+                        <div className="flex w-max animate-slide-infinite items-center">
+                            {[...dataSources, ...dataSources].map((source, idx) => (
+                                <div key={idx} className="flex items-center gap-4 w-72 justify-center opacity-80 backdrop-blur-md pointer-events-none">
+                                    {source.type === 'image' ? (
+                                        <img
+                                            src={source.logo}
+                                            alt={source.name}
+                                            className={`w-14 h-14 object-contain ${source.rounded ? 'rounded-2xl' : ''} ${source.invertDark ? 'brightness-0 dark:brightness-200' : ''} drop-shadow-sm`}
+                                        />
+                                    ) : (
+                                        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center font-black text-2xl shadow-sm ${source.color}`}>
+                                            {source.logo}
+                                        </div>
+                                    )}
+                                    <span className="font-display font-bold text-2xl text-gray-800 dark:text-gray-200 whitespace-nowrap drop-shadow-sm">{source.name}</span>
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 </div>
             </section>
