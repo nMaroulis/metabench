@@ -230,14 +230,30 @@ def get_all_data_for_export(db: Session):
             "parameters": model.parameters,
             "overall_score": model.overall_score,
             "confidence": model.confidence,
-            "cost_per_1m_input_tokens": model.cost_per_1m_input_tokens,
-            "cost_per_1m_output_tokens": model.cost_per_1m_output_tokens,
-            "cost_per_1m_blended": model.cost_per_1m_blended,
-            "median_output_tokens_per_second": model.median_output_tokens_per_second,
-            "median_ttft_seconds": model.median_ttft_seconds,
-            "median_ttfa_seconds": model.median_ttfa_seconds,
-            "avg_latency_ms": model.avg_latency_ms,
-            "context_window": model.context_window,
+            "cost_per_1m_input_tokens": model.pricing.cost_per_1m_input_tokens
+            if model.pricing
+            else None,
+            "cost_per_1m_output_tokens": model.pricing.cost_per_1m_output_tokens
+            if model.pricing
+            else None,
+            "cost_per_1m_blended": model.pricing.cost_per_1m_blended
+            if model.pricing
+            else None,
+            "median_output_tokens_per_second": model.performance.median_output_tokens_per_second
+            if model.performance
+            else None,
+            "median_ttft_seconds": model.performance.median_ttft_seconds
+            if model.performance
+            else None,
+            "median_ttfa_seconds": model.performance.median_ttfa_seconds
+            if model.performance
+            else None,
+            "avg_latency_ms": model.performance.avg_latency_ms
+            if model.performance
+            else None,
+            "context_window": model.performance.context_window
+            if model.performance
+            else None,
         }
         for s in scores:
             model_data[f"{s['benchmark_name']}_raw"] = s["raw_score"]

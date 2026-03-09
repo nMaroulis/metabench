@@ -121,10 +121,10 @@ export default function ModelDetailPage() {
                 {/* Quick metrics */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-8">
                     {[
-                        { icon: DollarSign, label: 'Input Cost', value: model.cost_per_1m_input_tokens != null ? `$${model.cost_per_1m_input_tokens}/1M` : 'N/A' },
-                        { icon: DollarSign, label: 'Output Cost', value: model.cost_per_1m_output_tokens != null ? `$${model.cost_per_1m_output_tokens}/1M` : 'N/A' },
-                        { icon: Clock, label: 'Avg Latency', value: model.avg_latency_ms != null ? (model.avg_latency_ms < 1000 ? `${model.avg_latency_ms}ms` : `${(model.avg_latency_ms / 1000).toFixed(1)}s`) : 'N/A' },
-                        { icon: Zap, label: 'Context Window', value: model.context_window != null ? (model.context_window >= 1000000 ? `${(model.context_window / 1000000).toFixed(0)}M tokens` : `${(model.context_window / 1000).toFixed(0)}K tokens`) : 'N/A' },
+                        { icon: DollarSign, label: 'Input Cost', value: model.pricing?.cost_per_1m_input_tokens != null ? `$${model.pricing.cost_per_1m_input_tokens}/1M` : 'N/A' },
+                        { icon: DollarSign, label: 'Output Cost', value: model.pricing?.cost_per_1m_output_tokens != null ? `$${model.pricing.cost_per_1m_output_tokens}/1M` : 'N/A' },
+                        { icon: Clock, label: 'Avg Latency', value: model.performance?.avg_latency_ms != null ? (model.performance.avg_latency_ms < 1000 ? `${model.performance.avg_latency_ms}ms` : `${(model.performance.avg_latency_ms / 1000).toFixed(1)}s`) : 'N/A' },
+                        { icon: Zap, label: 'Context Window', value: model.performance?.context_window != null ? (model.performance.context_window >= 1000000 ? `${(model.performance.context_window / 1000000).toFixed(0)}M tokens` : `${(model.performance.context_window / 1000).toFixed(0)}K tokens`) : 'N/A' },
                     ].map(({ icon: Icon, label, value }) => (
                         <div key={label} className="p-4 rounded-xl bg-gray-50 dark:bg-surface-700/50">
                             <div className="flex items-center gap-2 text-gray-400 mb-1">

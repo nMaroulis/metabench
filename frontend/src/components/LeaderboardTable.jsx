@@ -28,8 +28,8 @@ export default function LeaderboardTable({ entries, showBenchmark = false }) {
                 case 'score': valA = a.score; valB = b.score; break;
                 case 'name': valA = a.model.name.toLowerCase(); valB = b.model.name.toLowerCase(); break;
                 case 'provider': valA = a.model.provider.toLowerCase(); valB = b.model.provider.toLowerCase(); break;
-                case 'cost': valA = a.model.cost_per_1m_input_tokens || 999; valB = b.model.cost_per_1m_input_tokens || 999; break;
-                case 'latency': valA = a.model.avg_latency_ms || 99999; valB = b.model.avg_latency_ms || 99999; break;
+                case 'cost': valA = a.model.pricing?.cost_per_1m_input_tokens || 999; valB = b.model.pricing?.cost_per_1m_input_tokens || 999; break;
+                case 'latency': valA = a.model.performance?.avg_latency_ms || 99999; valB = b.model.performance?.avg_latency_ms || 99999; break;
                 default: valA = a.score; valB = b.score;
             }
             if (typeof valA === 'string') {
@@ -116,8 +116,8 @@ export default function LeaderboardTable({ entries, showBenchmark = false }) {
                                     </span>
                                 </td>
                                 <td className="px-6 py-4 hidden md:table-cell text-sm text-gray-500 dark:text-gray-400">
-                                    {entry.model.cost_per_1m_input_tokens != null
-                                        ? `$${entry.model.cost_per_1m_input_tokens}`
+                                    {entry.model.pricing?.cost_per_1m_input_tokens != null
+                                        ? `$${entry.model.pricing.cost_per_1m_input_tokens}`
                                         : '—'}
                                 </td>
                                 <td className="px-6 py-4 hidden lg:table-cell text-sm text-gray-500 dark:text-gray-400">

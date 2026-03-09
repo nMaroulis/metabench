@@ -259,7 +259,9 @@ def migrate_db():
                 model_parameters=model.parameters,
                 model_architecture=model.architecture,
                 model_license_type=model.license_type,
-                model_context_window=model.context_window,
+                model_context_window=model.performance.context_window
+                if model.performance
+                else 0,
             )
 
             # Update

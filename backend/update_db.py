@@ -5,7 +5,7 @@ then updates the SQLite database.
 """
 
 from database import SessionLocal
-from models import Model, Benchmark, BenchmarkScore
+from models import Model, Benchmark, BenchmarkScore, ModelPricing, ModelPerformance
 from normalization import (
     normalize_score,
     compute_weighted_overall_score,
@@ -37,14 +37,37 @@ def update_database():
             # --- Update Pricing ---
             if canonical_name in pricing_data:
                 pricing = pricing_data[canonical_name]
+
+                # Make sure the relationship exists
+                if not model.pricing:
+                    model.pricing = ModelPricing(model_id=model.id)
+                    db.add(model.pricing)
+
                 if pricing["cost_per_1m_input_tokens"] is not None:
-                    model.cost_per_1m_input_tokens = pricing["cost_per_1m_input_tokens"]
+                    model.pricing.cost_per_1m_input_tokens = pricing[
+                        "cost_per_1m_input_tokens"
+                    ]
                 if pricing["cost_per_1m_output_tokens"] is not None:
-                    model.cost_per_1m_output_tokens = pricing[
+                    model.pricing.cost_per_1m_output_tokens = pricing[
                         "cost_per_1m_output_tokens"
                     ]
+
+                # Update blended cost
+                price_in = model.pricing.cost_per_1m_input_tokens
+                price_out = model.pricing.cost_per_1m_output_tokens
+                if price_in is not None and price_out is not None:
+                    model.pricing.cost_per_1m_blended = round(
+                        (price_in * 0.5 + price_out * 0.5), 4
+                    )
+                elif price_in is not None or price_out is not None:
+                    model.pricing.cost_per_1m_blended = price_in or price_out or 0
+
                 if pricing["context_window"] is not None:
-                    model.context_window = pricing["context_window"]
+                    # Context window goes on performance in our new schema
+                    if not model.performance:
+                        model.performance = ModelPerformance(model_id=model.id)
+                        db.add(model.performance)
+                    model.performance.context_window = pricing["context_window"]
 
                 # Link OpenRouter ID if empty
                 if not model.open_router_id:

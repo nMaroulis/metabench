@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ArrowRight, Zap, DollarSign, Clock } from 'lucide-react';
+import { ArrowRight, Zap, DollarSign, Clock, Activity, Cpu } from 'lucide-react';
 import ScoreBar from './ScoreBar';
 
 export default function ModelCard({ model, rank }) {
@@ -30,8 +30,8 @@ export default function ModelCard({ model, rank }) {
                 <div className="flex items-center gap-3">
                     {rank && (
                         <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold ${rank <= 3
-                                ? `bg-gradient-to-br ${rank === 1 ? 'from-yellow-400 to-amber-500' : rank === 2 ? 'from-gray-300 to-gray-400' : 'from-amber-600 to-orange-700'} text-white shadow-lg`
-                                : 'bg-gray-100 dark:bg-surface-700 text-gray-600 dark:text-gray-400'
+                            ? `bg-gradient-to-br ${rank === 1 ? 'from-yellow-400 to-amber-500' : rank === 2 ? 'from-gray-300 to-gray-400' : 'from-amber-600 to-orange-700'} text-white shadow-lg`
+                            : 'bg-gray-100 dark:bg-surface-700 text-gray-600 dark:text-gray-400'
                             }`}>
                             {rank}
                         </div>
@@ -69,22 +69,22 @@ export default function ModelCard({ model, rank }) {
 
             {/* Quick stats */}
             <div className="flex items-center gap-4 mt-4 text-xs text-gray-500 dark:text-gray-400">
-                {model.cost_per_1m_input_tokens != null && (
-                    <span className="flex items-center gap-1">
-                        <DollarSign className="w-3 h-3" />
-                        ${model.cost_per_1m_input_tokens}/1M in
+                {model.pricing?.cost_per_1m_input_tokens != null && (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-green-50 text-green-700 dark:bg-green-500/10 dark:text-green-400 border border-green-200 dark:border-green-500/20">
+                        <DollarSign className="w-3.5 h-3.5" />
+                        ${model.pricing.cost_per_1m_input_tokens}/1M in
                     </span>
                 )}
-                {model.avg_latency_ms != null && (
+                {model.performance?.avg_latency_ms != null && (
                     <span className="flex items-center gap-1">
                         <Clock className="w-3 h-3" />
-                        {model.avg_latency_ms < 1000 ? `${model.avg_latency_ms}ms` : `${(model.avg_latency_ms / 1000).toFixed(1)}s`}
+                        {model.performance.avg_latency_ms < 1000 ? `${model.performance.avg_latency_ms}ms` : `${(model.performance.avg_latency_ms / 1000).toFixed(1)}s`}
                     </span>
                 )}
-                {model.context_window != null && (
-                    <span className="flex items-center gap-1">
-                        <Zap className="w-3 h-3" />
-                        {model.context_window >= 1000000 ? `${(model.context_window / 1000000).toFixed(0)}M ctx` : `${(model.context_window / 1000).toFixed(0)}K ctx`}
+                {model.performance?.context_window != null && (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-brand-50 text-brand-700 dark:bg-brand-500/10 dark:text-brand-400 border border-brand-200 dark:border-brand-500/20">
+                        <Activity className="w-3 h-3" />
+                        {model.performance.context_window >= 1000000 ? `${(model.performance.context_window / 1000000).toFixed(0)}M ctx` : `${(model.performance.context_window / 1000).toFixed(0)}K ctx`}
                     </span>
                 )}
             </div>

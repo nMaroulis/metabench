@@ -43,13 +43,11 @@ def get_model_detail(model_name: str, db: Session = Depends(get_db)):
         "architecture": model.architecture,
         "license_type": model.license_type,
         "release_date": model.release_date,
-        "cost_per_1m_input_tokens": model.cost_per_1m_input_tokens,
-        "cost_per_1m_output_tokens": model.cost_per_1m_output_tokens,
-        "avg_latency_ms": model.avg_latency_ms,
-        "context_window": model.context_window,
+        "pricing": model.pricing,
+        "performance": model.performance,
         "overall_score": model.overall_score,
         "confidence": model.confidence,
-        "technical_details": model.technical_details,
+        "technical_details": schemas.ModelOut.model_validate(model).technical_details,
         "scores": scores,
     }
 

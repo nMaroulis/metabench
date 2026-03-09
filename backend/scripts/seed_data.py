@@ -5,7 +5,14 @@ Scores are real values gathered from public benchmarks as of early 2025.
 """
 
 from sqlalchemy.orm import Session
-from models import Model, Benchmark, BenchmarkScore
+from models import (
+    Model,
+    Benchmark,
+    BenchmarkScore,
+    ModelPricing,
+    ModelPerformance,
+    TechnicalSpec,
+)
 from normalization import (
     normalize_score,
     compute_weighted_overall_score,
@@ -498,17 +505,21 @@ def populate_missing_scores(mapped_scores: dict) -> dict:
 
 def seed_database(db: Session):
     """Seed the database with benchmarks and top LLM models from Artificial Analysis."""
-    existing = db.query(Model).first()
-    if existing:
-        return
 
     # Create benchmarks
     benchmark_objs = {}
     for b_data in BENCHMARKS:
-        benchmark = Benchmark(**b_data)
-        db.add(benchmark)
-        db.flush()
+        benchmark = db.query(Benchmark).filter(Benchmark.name == b_data["name"]).first()
+        if not benchmark:
+            benchmark = Benchmark(**b_data)
+            db.add(benchmark)
+            db.flush()
         benchmark_objs[b_data["name"]] = benchmark
+
+    # If models already exist, we're done (seed only runs once for models)
+    existing_model = db.query(Model).first()
+    if existing_model:
+        return
 
     # Fetch models from Artificial Analysis
     from services.fetch_models import get_models
@@ -554,18 +565,38 @@ def seed_database(db: Session):
             architecture="Unknown",
             license_type="Unknown",
             release_date=m.get("release_date"),
-            cost_per_1m_input_tokens=price_in,
-            cost_per_1m_output_tokens=price_out,
-            cost_per_1m_blended=blended,
-            avg_latency_ms=speed * 1000 if speed else 0,
-            context_window=0,
-            median_output_tokens_per_second=median_otps,
-            median_ttft_seconds=median_ttft,
-            median_ttfa_seconds=median_ttfa,
-            technical_details=tech_details,
         )
         db.add(model)
         db.flush()
+
+        pricing = ModelPricing(
+            model_id=model.id,
+            cost_per_1m_input_tokens=price_in,
+            cost_per_1m_output_tokens=price_out,
+            cost_per_1m_blended=blended,
+        )
+        db.add(pricing)
+
+        performance = ModelPerformance(
+            model_id=model.id,
+            median_output_tokens_per_second=median_otps,
+            median_ttft_seconds=median_ttft,
+            median_ttfa_seconds=median_ttfa,
+            avg_latency_ms=speed * 1000 if speed else 0,
+            context_window=0,
+        )
+        db.add(performance)
+
+        for sec in tech_details:
+            section_title = sec["title"]
+            for fact in sec["facts"]:
+                spec = TechnicalSpec(
+                    model_id=model.id,
+                    section=section_title,
+                    label=fact["label"],
+                    value=fact["value"],
+                )
+                db.add(spec)
 
         # Map scores and populate missing fields dummy values
         scores_data = populate_missing_scores(map_aa_scores(evals))

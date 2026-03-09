@@ -209,10 +209,10 @@ export default function ComparePage() {
                                     <div key={m.model.name}>
                                         <div className="flex justify-between text-sm mb-1">
                                             <span className="font-medium">{m.model.name}</span>
-                                            <span className="text-gray-500">${m.model.cost_per_1m_input_tokens}/1M input</span>
+                                            <span className="text-gray-500">${m.model.pricing?.cost_per_1m_input_tokens}/1M input</span>
                                         </div>
                                         <ScoreBar
-                                            score={Math.max(0, 100 - (m.model.cost_per_1m_input_tokens || 0) * 5)}
+                                            score={Math.max(0, 100 - (m.model.pricing?.cost_per_1m_input_tokens || 0) * 5)}
                                             showLabel={false}
                                             height="h-2"
                                         />
@@ -228,11 +228,15 @@ export default function ComparePage() {
                                         <div className="flex justify-between text-sm mb-1">
                                             <span className="font-medium">{m.model.name}</span>
                                             <span className="text-gray-500">
-                                                {m.model.avg_latency_ms < 1000 ? `${m.model.avg_latency_ms}ms` : `${(m.model.avg_latency_ms / 1000).toFixed(1)}s`}
+                                                {m.model.performance?.avg_latency_ms != null
+                                                    ? (m.model.performance.avg_latency_ms < 1000
+                                                        ? `${m.model.performance.avg_latency_ms}ms`
+                                                        : `${(m.model.performance.avg_latency_ms / 1000).toFixed(1)}s`)
+                                                    : 'N/A'}
                                             </span>
                                         </div>
                                         <ScoreBar
-                                            score={Math.max(0, 100 - (m.model.avg_latency_ms || 0) / 100)}
+                                            score={Math.max(0, 100 - (m.model.performance?.avg_latency_ms || 0) / 100)}
                                             showLabel={false}
                                             height="h-2"
                                         />

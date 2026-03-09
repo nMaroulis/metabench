@@ -1,5 +1,34 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, computed_field
 from datetime import datetime
+
+
+class ModelPricingOut(BaseModel):
+    cost_per_1m_input_tokens: float | None = None
+    cost_per_1m_output_tokens: float | None = None
+    cost_per_1m_blended: float | None = None
+
+    class Config:
+        from_attributes = True
+
+
+class ModelPerformanceOut(BaseModel):
+    median_output_tokens_per_second: float | None = None
+    median_ttft_seconds: float | None = None
+    median_ttfa_seconds: float | None = None
+    avg_latency_ms: float | None = None
+    context_window: int | None = None
+
+    class Config:
+        from_attributes = True
+
+
+class TechnicalSpecOut(BaseModel):
+    section: str
+    label: str
+    value: str
+
+    class Config:
+        from_attributes = True
 
 
 # ---------- Model schemas ----------
@@ -13,21 +42,36 @@ class ModelBase(BaseModel):
     architecture: str = ""
     license_type: str = ""
     release_date: str = ""
-    cost_per_1m_input_tokens: float | None = None
-    cost_per_1m_output_tokens: float | None = None
-    cost_per_1m_blended: float | None = None
-    avg_latency_ms: float | None = None
-    context_window: int | None = None
-    median_output_tokens_per_second: float | None = None
-    median_ttft_seconds: float | None = None
-    median_ttfa_seconds: float | None = None
 
 
 class ModelOut(ModelBase):
     id: int
     overall_score: float = 0.0
     confidence: float = 0.0
-    technical_details: list | None = None
+
+    pricing: ModelPricingOut | None = None
+    performance: ModelPerformanceOut | None = None
+    technical_specs: list[TechnicalSpecOut] = Field(default_factory=list, exclude=True)
+
+    @computed_field
+    def technical_details(self) -> list[dict] | None:
+        """Reconstruct the JSON format expected by the frontend TechnicalDetails.jsx"""
+        if not self.technical_specs:
+            return None
+
+        # Group by section
+        grouped = {}
+        for spec in self.technical_specs:
+            if spec.section not in grouped:
+                grouped[spec.section] = []
+            grouped[spec.section].append({"label": spec.label, "value": spec.value})
+
+        # Format as requested array of {title, facts}
+        output = []
+        for section, facts in grouped.items():
+            output.append({"title": section, "facts": facts})
+
+        return output
 
     class Config:
         from_attributes = True

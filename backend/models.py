@@ -19,23 +19,76 @@ class Model(Base):
     architecture = Column(String, default="")
     license_type = Column(String, default="")
     release_date = Column(String, default="")
-    cost_per_1m_input_tokens = Column(Float, nullable=True)
-    cost_per_1m_output_tokens = Column(Float, nullable=True)
-    cost_per_1m_blended = Column(Float, nullable=True)
-    avg_latency_ms = Column(Float, nullable=True)
-    context_window = Column(Integer, nullable=True)
-    # Performance metrics
-    median_output_tokens_per_second = Column(Float, nullable=True)
-    median_ttft_seconds = Column(Float, nullable=True)
-    median_ttfa_seconds = Column(Float, nullable=True)
     overall_score = Column(Float, default=0.0)
     confidence = Column(Float, default=0.0)
-    technical_details = Column(JSON, nullable=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     scores = relationship(
         "BenchmarkScore", back_populates="model", cascade="all, delete-orphan"
     )
+    pricing = relationship(
+        "ModelPricing",
+        back_populates="model",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )
+    performance = relationship(
+        "ModelPerformance",
+        back_populates="model",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )
+    technical_specs = relationship(
+        "TechnicalSpec", back_populates="model", cascade="all, delete-orphan"
+    )
+
+
+class ModelPricing(Base):
+    __tablename__ = "model_pricing"
+
+    id = Column(Integer, primary_key=True, index=True)
+    model_id = Column(Integer, ForeignKey("models.id"), nullable=False, unique=True)
+    cost_per_1m_input_tokens = Column(Float, nullable=True)
+    cost_per_1m_output_tokens = Column(Float, nullable=True)
+    cost_per_1m_blended = Column(Float, nullable=True)
+    updated_at = Column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
+
+    model = relationship("Model", back_populates="pricing")
+
+
+class ModelPerformance(Base):
+    __tablename__ = "model_performance"
+
+    id = Column(Integer, primary_key=True, index=True)
+    model_id = Column(Integer, ForeignKey("models.id"), nullable=False, unique=True)
+    median_output_tokens_per_second = Column(Float, nullable=True)
+    median_ttft_seconds = Column(Float, nullable=True)
+    median_ttfa_seconds = Column(Float, nullable=True)
+    avg_latency_ms = Column(Float, nullable=True)
+    context_window = Column(Integer, nullable=True)
+    updated_at = Column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
+
+    model = relationship("Model", back_populates="performance")
+
+
+class TechnicalSpec(Base):
+    __tablename__ = "technical_specs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    model_id = Column(Integer, ForeignKey("models.id"), nullable=False)
+    section = Column(String, nullable=False)  # e.g., "Model Size"
+    label = Column(String, nullable=False)  # e.g., "Total Parameters"
+    value = Column(String, nullable=False)  # e.g., "70B"
+
+    model = relationship("Model", back_populates="technical_specs")
 
 
 class Benchmark(Base):
