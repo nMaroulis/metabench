@@ -8,7 +8,7 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=sqlite:///./benchindex.db
+      - DATABASE_URL=sqlite:///./metabench.db
     volumes:
       - ./backend:/app
       - backend-data:/app/data
@@ -25,19 +25,17 @@ services:
       - ./frontend/src:/app/src
     depends_on:
       - backend
-
   # Optional: PostgreSQL for production
   # postgres:
   #   image: postgres:16-alpine
   #   environment:
-  #     POSTGRES_DB: benchindex
-  #     POSTGRES_USER: benchindex
-  #     POSTGRES_PASSWORD: benchindex_secret
+  #     POSTGRES_DB: metabench
+  #     POSTGRES_USER: metabench
+  #     POSTGRES_PASSWORD: metabench_secret
   #   ports:
   #     - "5432:5432"
   #   volumes:
   #     - pgdata:/var/lib/postgresql/data
 
 volumes:
-  backend-data:
-  # pgdata:
+  backend-data: # pgdata:

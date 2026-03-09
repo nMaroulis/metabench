@@ -12,7 +12,7 @@ export default function Footer() {
                             <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-brand-500 to-accent-500 flex items-center justify-center">
                                 <Brain className="w-4 h-4 text-white" />
                             </div>
-                            <span className="text-lg font-display font-bold">BenchIndex</span>
+                            <span className="text-lg font-display font-bold">MetaBench</span>
                         </Link>
                         <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
                             The definitive aggregator of LLM benchmark scores. Compare models, explore leaderboards, and make informed decisions.
@@ -71,7 +71,7 @@ export default function Footer() {
 
                 <div className="mt-10 pt-6 border-t border-gray-200/50 dark:border-gray-700/50 flex flex-col sm:flex-row justify-between items-center gap-4">
                     <p className="text-xs text-gray-400 dark:text-gray-500">
-                        © 2025 BenchIndex. Metacritic for LLMs. All benchmark data sourced from publicly available evaluations.
+                        © 2026 MetaBench. Metacritic for LLMs. All benchmark data sourced from publicly available evaluations.
                     </p>
                     <div className="flex gap-4">
                         <span className="text-xs text-gray-400 dark:text-gray-500">Built with FastAPI + React</span>

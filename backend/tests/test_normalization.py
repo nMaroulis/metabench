@@ -1,5 +1,3 @@
-"""Unit tests for BenchIndex normalization and scoring logic."""
-
 import sys
 import os
 

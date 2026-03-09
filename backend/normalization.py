@@ -1,5 +1,5 @@
 """
-Score normalization utilities for BenchIndex.
+Score normalization utilities for MetaBench.
 Normalizes raw benchmark scores to a 0-100 scale and computes
 weighted Overall Intelligence Scores with confidence intervals.
 """

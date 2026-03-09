@@ -1,5 +1,3 @@
-"""CRUD operations for BenchIndex database."""
-
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import desc
 

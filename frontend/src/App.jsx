@@ -12,13 +12,13 @@ export const ThemeContext = createContext();
 
 function App() {
   const [darkMode, setDarkMode] = useState(() => {
-    const saved = localStorage.getItem('benchindex-dark-mode');
+    const saved = localStorage.getItem('metabench-dark-mode');
     if (saved !== null) return JSON.parse(saved);
     return window.matchMedia('(prefers-color-scheme: dark)').matches;
   });
 
   useEffect(() => {
-    localStorage.setItem('benchindex-dark-mode', JSON.stringify(darkMode));
+    localStorage.setItem('metabench-dark-mode', JSON.stringify(darkMode));
     if (darkMode) {
       document.documentElement.classList.add('dark');
     } else {

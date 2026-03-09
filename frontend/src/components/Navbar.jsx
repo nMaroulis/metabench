@@ -27,7 +27,7 @@ export default function Navbar() {
                             <Brain className="w-5 h-5 text-white" />
                         </div>
                         <span className="text-xl font-display font-bold tracking-tight">
-                            Bench<span className="gradient-text">Index</span>
+                            Meta<span className="gradient-text">Bench</span>
                         </span>
                     </Link>
 
@@ -38,8 +38,8 @@ export default function Navbar() {
                                 key={to}
                                 to={to}
                                 className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${isActive(to)
-                                        ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400'
-                                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-surface-800'
+                                    ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400'
+                                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-surface-800'
                                     }`}
                             >
                                 {label}
@@ -78,8 +78,8 @@ export default function Navbar() {
                                 to={to}
                                 onClick={() => setMobileOpen(false)}
                                 className={`block px-4 py-2 rounded-xl text-sm font-medium transition-colors ${isActive(to)
-                                        ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400'
-                                        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-surface-800'
+                                    ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400'
+                                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-surface-800'
                                     }`}
                             >
                                 {label}

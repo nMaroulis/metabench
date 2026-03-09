@@ -1,5 +1,5 @@
 """
-Update Script for BenchIndex Database
+Update Script for MetaBench Database
 Runs all scrapers to fetch the latest model pricing and scores,
 then updates the SQLite database.
 """

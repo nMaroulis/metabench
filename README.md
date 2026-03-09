@@ -1,4 +1,4 @@
-# BenchIndex – Metacritic for LLMs
+# MetaBench – Metacritic for LLMs
 
 <div align="center">
 
@@ -43,7 +43,7 @@ Aggregating results from MMLU, HumanEval, GSM8K, GPQA, and 10+ more benchmarks i
 
 ```bash
 git clone <repository-url>
-cd benchindex
+cd metabench
 
 # Create virtual environment
 python3.13 -m venv venv
@@ -97,14 +97,14 @@ docker-compose up --build
 ## 📁 Project Structure
 
 ```
-benchindex/
+metabench/
 ├── backend/
 │   ├── main.py              # FastAPI entry point
 │   ├── database.py          # SQLAlchemy engine + session
 │   ├── models.py            # DB models (Model, Benchmark, Score)
 │   ├── schemas.py           # Pydantic request/response schemas
 │   ├── normalization.py     # Score normalization + weighted scoring
-│   ├── crud.py              # Database operations
+│   ├── crud/                # Database operations
 │   ├── scripts/seed_data.py # Sample data (15 LLMs, 12 benchmarks)
 │   ├── api/routers.py       # All API route handlers
 │   ├── scrapers/            # Future benchmark scrapers

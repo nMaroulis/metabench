@@ -1,5 +1,3 @@
-"""BenchIndex API routers."""
-
 import csv
 import io
 
@@ -7,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from sqlalchemy.orm import Session
 
 from database import get_db
-import crud
+from crud import crud
 import schemas
 
 router = APIRouter()
@@ -132,7 +130,7 @@ def export_data(
             content=output.getvalue(),
             media_type="text/csv",
             headers={
-                "Content-Disposition": "attachment; filename=benchindex_export.csv"
+                "Content-Disposition": "attachment; filename=metabench_export.csv"
             },
         )
 

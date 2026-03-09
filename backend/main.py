@@ -1,4 +1,4 @@
-"""BenchIndex – FastAPI backend entry point."""
+"""MetaBench – FastAPI backend entry point."""
 
 from contextlib import asynccontextmanager
 
@@ -38,7 +38,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="BenchIndex API",
+    title="MetaBench API",
     description="Metacritic for LLMs – Aggregated benchmark scores, leaderboards, and model comparison",
     version="1.0.0",
     lifespan=lifespan,
@@ -58,7 +58,7 @@ app.include_router(router, prefix="/api")
 @app.get("/")
 def root():
     return {
-        "name": "BenchIndex API",
+        "name": "MetaBench API",
         "version": "1.0.0",
         "docs": "/docs",
         "description": "Metacritic for LLMs",

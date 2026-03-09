@@ -31,7 +31,7 @@ export default function LeaderboardPage() {
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = 'benchindex_export.csv';
+                a.download = 'metabench_export.csv';
                 a.click();
                 URL.revokeObjectURL(url);
             } else {
@@ -40,7 +40,7 @@ export default function LeaderboardPage() {
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = 'benchindex_export.json';
+                a.download = 'metabench_export.json';
                 a.click();
                 URL.revokeObjectURL(url);
             }

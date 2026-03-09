@@ -11,7 +11,7 @@ const dataSources = [
     { name: 'Chatbot Arena', logo: '/logos/lmsys.png', type: 'image' },
     { name: 'LiveBench', logo: 'LB', type: 'text', color: 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600' },
     { name: 'ArtificialAnalysis', logo: '/logos/artificialanalysis.svg', type: 'image' },
-    { name: 'EQBench', logo: 'EQ', type: 'text', color: 'bg-amber-100 dark:bg-amber-500/20 text-amber-600' },
+    { name: 'EQBench', logo: '/logos/eqbench.png', type: 'image', rounded: true },
 ];
 
 export default function LandingPage() {
@@ -156,7 +156,7 @@ export default function LandingPage() {
                 <div className="glass-card p-8">
                     <h2 className="section-title mb-6">Live Data Sources</h2>
                     <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 mb-8">
-                        BenchIndex continuously aggregates real-time data from the community's most trusted platforms
+                        MetaBench continuously aggregates real-time data from the community's most trusted platforms
                     </p>
 
                     {/* CSS-based infinite scroll carousel */}
