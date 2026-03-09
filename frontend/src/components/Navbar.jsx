@@ -1,7 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useContext, useState } from 'react';
 import { ThemeContext } from '../App';
-import { Sun, Moon, Menu, X, Brain, Search } from 'lucide-react';
+import { Sun, Moon, Menu, X, Search } from 'lucide-react';
 
 export default function Navbar() {
     const { darkMode, setDarkMode } = useContext(ThemeContext);
@@ -23,9 +23,7 @@ export default function Navbar() {
                 <div className="flex items-center justify-between h-16">
                     {/* Logo */}
                     <Link to="/" className="flex items-center gap-2 group">
-                        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-brand-500 to-accent-500 flex items-center justify-center shadow-lg shadow-brand-500/25 group-hover:shadow-brand-500/40 transition-shadow">
-                            <Brain className="w-5 h-5 text-white" />
-                        </div>
+                        <img src="/logos/logo.png" alt="MetaBench Logo" className="w-9 h-9 object-contain" />
                         <span className="text-xl font-display font-bold tracking-tight">
                             Meta<span className="gradient-text">Bench</span>
                         </span>
