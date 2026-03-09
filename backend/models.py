@@ -10,7 +10,9 @@ class Model(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, unique=True, index=True, nullable=False)
+    slug = Column(String, default="", index=True)
     provider = Column(String, nullable=False)
+    model_creator_slug = Column(String, default="")
     open_router_id = Column(String, default="")
     description = Column(Text, default="")
     parameters = Column(String, default="")  # e.g., "70B", "8x7B"
@@ -19,8 +21,13 @@ class Model(Base):
     release_date = Column(String, default="")
     cost_per_1m_input_tokens = Column(Float, nullable=True)
     cost_per_1m_output_tokens = Column(Float, nullable=True)
+    cost_per_1m_blended = Column(Float, nullable=True)
     avg_latency_ms = Column(Float, nullable=True)
     context_window = Column(Integer, nullable=True)
+    # Performance metrics
+    median_output_tokens_per_second = Column(Float, nullable=True)
+    median_ttft_seconds = Column(Float, nullable=True)
+    median_ttfa_seconds = Column(Float, nullable=True)
     overall_score = Column(Float, default=0.0)
     confidence = Column(Float, default=0.0)
     technical_details = Column(JSON, nullable=True)
@@ -39,6 +46,9 @@ class Benchmark(Base):
     category = Column(
         String, nullable=False
     )  # e.g., "reasoning", "coding", "math", "knowledge"
+    type = Column(
+        String, default="benchmark"
+    )  # "benchmark" = actual test, "index" = composite score from a website
     description = Column(Text, default="")
     max_score = Column(Float, default=100.0)
     weight = Column(Float, default=1.0)  # Weight for overall score computation

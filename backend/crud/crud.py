@@ -224,12 +224,18 @@ def get_all_data_for_export(db: Session):
         scores = get_scores_for_model(db, model.name)
         model_data = {
             "name": model.name,
+            "slug": model.slug,
             "provider": model.provider,
+            "model_creator_slug": model.model_creator_slug,
             "parameters": model.parameters,
             "overall_score": model.overall_score,
             "confidence": model.confidence,
             "cost_per_1m_input_tokens": model.cost_per_1m_input_tokens,
             "cost_per_1m_output_tokens": model.cost_per_1m_output_tokens,
+            "cost_per_1m_blended": model.cost_per_1m_blended,
+            "median_output_tokens_per_second": model.median_output_tokens_per_second,
+            "median_ttft_seconds": model.median_ttft_seconds,
+            "median_ttfa_seconds": model.median_ttfa_seconds,
             "avg_latency_ms": model.avg_latency_ms,
             "context_window": model.context_window,
         }

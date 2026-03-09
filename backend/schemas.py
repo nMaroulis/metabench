@@ -5,7 +5,9 @@ from datetime import datetime
 # ---------- Model schemas ----------
 class ModelBase(BaseModel):
     name: str
+    slug: str = ""
     provider: str
+    model_creator_slug: str = ""
     description: str = ""
     parameters: str = ""
     architecture: str = ""
@@ -13,8 +15,12 @@ class ModelBase(BaseModel):
     release_date: str = ""
     cost_per_1m_input_tokens: float | None = None
     cost_per_1m_output_tokens: float | None = None
+    cost_per_1m_blended: float | None = None
     avg_latency_ms: float | None = None
     context_window: int | None = None
+    median_output_tokens_per_second: float | None = None
+    median_ttft_seconds: float | None = None
+    median_ttfa_seconds: float | None = None
 
 
 class ModelOut(ModelBase):
@@ -38,6 +44,7 @@ class ModelDetail(ModelOut):
 class BenchmarkBase(BaseModel):
     name: str
     category: str
+    type: str = "benchmark"  # "benchmark" or "index"
     description: str = ""
     max_score: float = 100.0
     weight: float = 1.0

@@ -1,7 +1,6 @@
 """
 Score normalization utilities for MetaBench.
-Normalizes raw benchmark scores to a 0-100 scale and computes
-weighted Overall Intelligence Scores with confidence intervals.
+Normalizes raw benchmark scores to a 0-100 scale and computes weighted Overall Intelligence Scores with confidence intervals.
 """
 
 import math
@@ -77,14 +76,24 @@ DEFAULT_WEIGHTS = {
     "MMLU": 1.2,
     "MMLU-Pro": 1.3,
     "GPQA Diamond": 1.3,
+    "HLE": 1.4,
     "GSM8K": 1.0,
     "MATH-500": 1.2,
+    "AIME": 1.2,
+    "AIME 2025": 1.2,
     "HumanEval": 1.2,
     "LiveCodeBench": 1.1,
+    "SciCode": 1.0,
+    "TerminalBench Hard": 1.1,
     "BigBench-Hard": 1.1,
     "ARC-Challenge": 0.9,
+    "LCR": 1.0,
     "IFEval": 1.0,
+    "TAU2": 1.1,
     "Arena Elo": 1.5,
     "LiveBench": 1.2,
     "EQBench": 0.8,
+    "AA Intelligence Index": 1.5,
+    "AA Coding Index": 1.3,
+    "AA Math Index": 1.3,
 }

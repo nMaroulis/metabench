@@ -1,10 +1,20 @@
 # MetaBench – Metacritic for LLMs
 
+[![Python Version](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+[![ty](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ty/main/assets/badge/v0.json)](https://github.com/astral-sh/ty)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/nmaroulis/protolink)
+
+<div align="center">
+  <img src="https://raw.githubusercontent.com/nMaroulis/metabench/main/frontend/public/logos/logo.png" alt="MetaBench Logo" width="20%">
+</div>
 <div align="center">
 
-**The definitive aggregator of LLM benchmark scores**
+**Metacritic for LLMs**
 
-Aggregating results from MMLU, HumanEval, GSM8K, GPQA, and 10+ more benchmarks into a single **Overall Intelligence Score** per model.
+MetaBench aggregates composite indexes from well-known evaluation sites (e.g. Artificial Analysis, Chatbot Arena) alongside raw benchmark scores (MMLU-Pro, GPQA, LiveCodeBench, AIME, and 15+ more) to compute a single **Overall Intelligence Score** for every model — enabling fair, cross-source ranking on one unified leaderboard.
+
+*Scoring methodology whitepaper — TBA.*
 
 [View Leaderboard](#features) · [Compare Models](#features) · [API Docs](http://localhost:8000/docs)
 

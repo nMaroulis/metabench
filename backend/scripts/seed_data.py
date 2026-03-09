@@ -277,6 +277,14 @@ BENCHMARKS = [
         "source": "NYU",
     },
     {
+        "name": "HLE",
+        "category": "reasoning",
+        "description": "Humanity's Last Exam – extremely difficult reasoning benchmark",
+        "max_score": 100.0,
+        "weight": 1.4,
+        "source": "HLE",
+    },
+    {
         "name": "GSM8K",
         "category": "math",
         "description": "Grade School Math – multi-step math problems",
@@ -291,6 +299,22 @@ BENCHMARKS = [
         "max_score": 100.0,
         "weight": 1.2,
         "source": "Hendrycks et al.",
+    },
+    {
+        "name": "AIME",
+        "category": "math",
+        "description": "American Invitational Mathematics Examination problems",
+        "max_score": 100.0,
+        "weight": 1.2,
+        "source": "AMC/AIME",
+    },
+    {
+        "name": "AIME 2025",
+        "category": "math",
+        "description": "AIME 2025 benchmark variant",
+        "max_score": 100.0,
+        "weight": 1.2,
+        "source": "AMC/AIME 2025",
     },
     {
         "name": "HumanEval",
@@ -309,6 +333,22 @@ BENCHMARKS = [
         "source": "LiveCodeBench",
     },
     {
+        "name": "SciCode",
+        "category": "coding",
+        "description": "Scientific programming tasks benchmark",
+        "max_score": 100.0,
+        "weight": 1.0,
+        "source": "SciCode",
+    },
+    {
+        "name": "TerminalBench Hard",
+        "category": "coding",
+        "description": "Autonomous coding/terminal tasks benchmark",
+        "max_score": 100.0,
+        "weight": 1.1,
+        "source": "TerminalBench",
+    },
+    {
         "name": "BigBench-Hard",
         "category": "reasoning",
         "description": "23 challenging BIG-Bench reasoning tasks",
@@ -325,12 +365,28 @@ BENCHMARKS = [
         "source": "AI2",
     },
     {
+        "name": "LCR",
+        "category": "reasoning",
+        "description": "Long Context Reasoning – reasoning with large context windows",
+        "max_score": 100.0,
+        "weight": 1.0,
+        "source": "LCR",
+    },
+    {
         "name": "IFEval",
         "category": "instruction",
         "description": "Instruction Following Evaluation",
         "max_score": 100.0,
         "weight": 1.0,
         "source": "Google",
+    },
+    {
+        "name": "TAU2",
+        "category": "agentic",
+        "description": "TAU-Bench v2 – agentic tool-use tasks",
+        "max_score": 100.0,
+        "weight": 1.1,
+        "source": "TAU-Bench",
     },
     {
         "name": "Arena Elo",
@@ -351,10 +407,38 @@ BENCHMARKS = [
     {
         "name": "EQBench",
         "category": "emotional_intelligence",
+        "type": "benchmark",
         "description": "Emotional intelligence and nuance understanding",
         "max_score": 100.0,
         "weight": 0.8,
         "source": "EQ-Bench",
+    },
+    {
+        "name": "AA Intelligence Index",
+        "category": "composite",
+        "type": "index",
+        "description": "Artificial Analysis composite score for overall model intelligence",
+        "max_score": 100.0,
+        "weight": 1.5,
+        "source": "Artificial Analysis",
+    },
+    {
+        "name": "AA Coding Index",
+        "category": "composite",
+        "type": "index",
+        "description": "Artificial Analysis composite score for coding ability",
+        "max_score": 100.0,
+        "weight": 1.3,
+        "source": "Artificial Analysis",
+    },
+    {
+        "name": "AA Math Index",
+        "category": "composite",
+        "type": "index",
+        "description": "Artificial Analysis composite score for math reasoning",
+        "max_score": 100.0,
+        "weight": 1.3,
+        "source": "Artificial Analysis",
     },
 ]
 
@@ -364,23 +448,39 @@ def map_aa_scores(evals: dict) -> dict:
     if not evals:
         return {}
 
-    mapping = {
+    # Regular benchmarks (0-1 scale, will be multiplied by 100)
+    benchmark_mapping = {
         "mmlu_pro": "MMLU-Pro",
         "gpqa": "GPQA Diamond",
+        "hle": "HLE",
         "livecodebench": "LiveCodeBench",
         "scicode": "SciCode",
         "math_500": "MATH-500",
         "aime": "AIME",
         "aime_25": "AIME 2025",
         "ifbench": "IFEval",
+        "lcr": "LCR",
         "terminalbench_hard": "TerminalBench Hard",
+        "tau2": "TAU2",
+    }
+
+    # Composite indexes (already 0-100+ scale, NOT multiplied by 100)
+    index_mapping = {
+        "artificial_analysis_intelligence_index": "AA Intelligence Index",
+        "artificial_analysis_coding_index": "AA Coding Index",
+        "artificial_analysis_math_index": "AA Math Index",
     }
 
     mapped_scores = {}
-    for aa_key, bench_name in mapping.items():
+    for aa_key, bench_name in benchmark_mapping.items():
         if aa_key in evals and evals[aa_key] is not None:
             # Multiply raw decimal stats to fit our local out of 100 system.
             mapped_scores[bench_name] = evals[aa_key] * 100
+
+    for aa_key, bench_name in index_mapping.items():
+        if aa_key in evals and evals[aa_key] is not None:
+            # Already on 0-100+ scale, store as-is
+            mapped_scores[bench_name] = evals[aa_key]
 
     return mapped_scores
 
@@ -433,9 +533,22 @@ def seed_database(db: Session):
             model_context_window=0,
         )
 
+        # Extract evaluations (including composite indexes)
+        evals = m.get("evaluations", {})
+
+        # Performance metrics
+        median_otps = m.get("median_output_tokens_per_second")
+        median_ttft = m.get("median_time_to_first_token_seconds")
+        median_ttfa = m.get("median_time_to_first_answer_token")
+
+        # Blended pricing
+        blended = m.get("pricing", {}).get("price_1m_blended_3_to_1")
+
         model = Model(
             name=m.get("name", "Unknown"),
+            slug=m.get("slug", ""),
             provider=m.get("model_creator", {}).get("name", "Unknown"),
+            model_creator_slug=m.get("model_creator", {}).get("slug", ""),
             description=m.get("slug", ""),
             parameters="Unknown",
             architecture="Unknown",
@@ -443,15 +556,18 @@ def seed_database(db: Session):
             release_date=m.get("release_date"),
             cost_per_1m_input_tokens=price_in,
             cost_per_1m_output_tokens=price_out,
+            cost_per_1m_blended=blended,
             avg_latency_ms=speed * 1000 if speed else 0,
             context_window=0,
+            median_output_tokens_per_second=median_otps,
+            median_ttft_seconds=median_ttft,
+            median_ttfa_seconds=median_ttfa,
             technical_details=tech_details,
         )
         db.add(model)
         db.flush()
 
         # Map scores and populate missing fields dummy values
-        evals = m.get("evaluations", {})
         scores_data = populate_missing_scores(map_aa_scores(evals))
 
         score_list = []
