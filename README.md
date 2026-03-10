@@ -6,7 +6,7 @@
 [![ty](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ty/main/assets/badge/v0.json)](https://github.com/astral-sh/ty)
 
 <div align="center">
-  <img src="https://raw.githubusercontent.com/nMaroulis/metabench/main/frontend/public/logos/logo.png" alt="MetaBench Logo" width="20%">
+  <img src="https://raw.githubusercontent.com/nMaroulis/metabench/main/frontend/public/logos/logo_bg.png" alt="MetaBench Logo" width="20%">
 </div>
 <div align="center">
 
@@ -56,9 +56,9 @@ git clone <repository-url>
 cd metabench
 
 # Create virtual environment
-python3.13 -m venv venv
-source venv/bin/activate  # macOS/Linux
-# venv\Scripts\activate   # Windows
+python3.13 -m venv .venv
+source .venv/bin/activate  # macOS/Linux
+# .venv\Scripts\activate   # Windows
 
 # Install dependencies
 pip install -r requirements.txt
@@ -117,7 +117,7 @@ metabench/
 │   ├── crud/                # Database operations
 │   ├── scripts/seed_data.py # Sample data (15 LLMs, 12 benchmarks)
 │   ├── api/routers.py       # All API route handlers
-│   ├── scrapers/            # Future benchmark scrapers
+│   ├── clients/             # Benchmark clients
 │   └── tests/               # Unit tests
 ├── frontend/
 │   ├── src/
