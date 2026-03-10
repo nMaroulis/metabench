@@ -93,6 +93,29 @@ export default function ModelDetailPage() {
     }];
     const indexNames = indexScores.map(s => s.benchmark_name);
 
+    // Capability Profile: Average score per category
+    const capabilityCategories = [
+        'knowledge', 'math', 'coding', 'reasoning',
+        'instruction', 'agentic', 'human_preference', 'emotional_intelligence'
+    ];
+
+    const capabilityScores = capabilityCategories.map(cat => {
+        const scores = scoresByCategory[cat] || [];
+        const avg = scores.length > 0
+            ? scores.reduce((sum, s) => sum + s.normalized_score, 0) / scores.length
+            : 0;
+        return {
+            benchmark_name: cat.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
+            normalized_score: avg
+        };
+    });
+
+    const capabilityRadarData = [{
+        name: model.name,
+        scores: capabilityScores,
+    }];
+    const capabilityNames = capabilityScores.map(s => s.benchmark_name);
+
     return (
         <div className="page-container">
             {/* Back link */}
@@ -177,6 +200,17 @@ export default function ModelDetailPage() {
                         ) : (
                             <div className="h-[400px] flex items-center justify-center text-gray-400 italic">
                                 No index data available
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="pt-8 border-t border-gray-100 dark:border-gray-800">
+                        <h3 className="text-lg font-display font-bold mb-4 text-brand-500">Capability Profile</h3>
+                        {capabilityNames.length > 0 ? (
+                            <BenchmarkRadarChart modelsData={capabilityRadarData} benchmarks={capabilityNames} colorOffset={2} />
+                        ) : (
+                            <div className="h-[400px] flex items-center justify-center text-gray-400 italic">
+                                General capability data unavailable
                             </div>
                         )}
                     </div>
