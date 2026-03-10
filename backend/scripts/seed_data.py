@@ -235,7 +235,7 @@ BENCHMARKS = [
         "description": "MMLU Professional - harder, more discriminative version",
         "max_score": 100.0,
         "weight": 1.3,
-        "source": "TIGER-Lab",
+        "source": "Artificial Analysis",
     },
     {
         "name": "GPQA Diamond",
@@ -243,7 +243,7 @@ BENCHMARKS = [
         "description": "Graduate-level science QA - PhD-level Q&A",
         "max_score": 100.0,
         "weight": 1.3,
-        "source": "NYU",
+        "source": "Artificial Analysis",
     },
     {
         "name": "HLE",
@@ -251,7 +251,7 @@ BENCHMARKS = [
         "description": "Humanity's Last Exam - extremely difficult reasoning benchmark",
         "max_score": 100.0,
         "weight": 1.4,
-        "source": "HLE",
+        "source": "Artificial Analysis",
     },
     {
         "name": "GSM8K",
@@ -267,7 +267,7 @@ BENCHMARKS = [
         "description": "Competition-level math - 500 problems",
         "max_score": 100.0,
         "weight": 1.2,
-        "source": "Hendrycks et al.",
+        "source": "Artificial Analysis",
     },
     {
         "name": "AIME",
@@ -275,7 +275,7 @@ BENCHMARKS = [
         "description": "American Invitational Mathematics Examination problems",
         "max_score": 100.0,
         "weight": 1.2,
-        "source": "AMC/AIME",
+        "source": "Artificial Analysis",
     },
     {
         "name": "AIME 2025",
@@ -283,7 +283,7 @@ BENCHMARKS = [
         "description": "AIME 2025 benchmark variant",
         "max_score": 100.0,
         "weight": 1.2,
-        "source": "AMC/AIME 2025",
+        "source": "Artificial Analysis",
     },
     {
         "name": "HumanEval",
@@ -299,7 +299,7 @@ BENCHMARKS = [
         "description": "Live competitive programming benchmark",
         "max_score": 100.0,
         "weight": 1.1,
-        "source": "LiveCodeBench",
+        "source": "Artificial Analysis",
     },
     {
         "name": "SciCode",
@@ -307,7 +307,7 @@ BENCHMARKS = [
         "description": "Scientific programming tasks benchmark",
         "max_score": 100.0,
         "weight": 1.0,
-        "source": "SciCode",
+        "source": "Artificial Analysis",
     },
     {
         "name": "TerminalBench Hard",
@@ -315,7 +315,7 @@ BENCHMARKS = [
         "description": "Autonomous coding/terminal tasks benchmark",
         "max_score": 100.0,
         "weight": 1.1,
-        "source": "TerminalBench",
+        "source": "Artificial Analysis",
     },
     {
         "name": "BigBench-Hard",
@@ -339,7 +339,7 @@ BENCHMARKS = [
         "description": "Long Context Reasoning - reasoning with large context windows",
         "max_score": 100.0,
         "weight": 1.0,
-        "source": "LCR",
+        "source": "Artificial Analysis",
     },
     {
         "name": "IFEval",
@@ -347,7 +347,7 @@ BENCHMARKS = [
         "description": "Instruction Following Evaluation",
         "max_score": 100.0,
         "weight": 1.0,
-        "source": "Google",
+        "source": "Artificial Analysis",
     },
     {
         "name": "TAU2",
@@ -355,7 +355,7 @@ BENCHMARKS = [
         "description": "TAU-Bench v2 - agentic tool-use tasks",
         "max_score": 100.0,
         "weight": 1.1,
-        "source": "TAU-Bench",
+        "source": "Artificial Analysis",
     },
     {
         "name": "Arena Elo",

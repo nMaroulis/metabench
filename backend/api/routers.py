@@ -106,7 +106,7 @@ def get_leaderboard(
 
 @router.get("/export", tags=["Export"])
 def export_data(
-    file_format: str = Query("json", regex="^(json|csv)$"),
+    file_format: str = Query("json", pattern="^(json|csv)$"),
     db: Session = Depends(get_db),
 ):
     """Export all benchmark data as JSON or CSV."""

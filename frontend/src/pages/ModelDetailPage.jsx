@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, ExternalLink, DollarSign, Clock, Zap, Code, Shield, BookOpen, Brain } from 'lucide-react';
+import {
+    ArrowLeft, DollarSign, Clock, Zap, Code, Shield,
+    BookOpen, Brain, GraduationCap, MessageSquare, Cpu, Users, Heart
+} from 'lucide-react';
 import api from '../services/api';
 import ScoreBar from '../components/ScoreBar';
 import BenchmarkRadarChart from '../charts/RadarChart';
@@ -51,10 +54,16 @@ export default function ModelDetailPage() {
     };
 
     const getCategoryIcon = (category) => {
-        switch (category) {
+        const cat = category?.toLowerCase();
+        switch (cat) {
             case 'coding': return Code;
             case 'math': return Brain;
             case 'reasoning': return BookOpen;
+            case 'knowledge': return GraduationCap;
+            case 'instruction': return MessageSquare;
+            case 'agentic': return Cpu;
+            case 'human_preference': return Users;
+            case 'emotional_intelligence': return Heart;
             case 'safety': return Shield;
             default: return Zap;
         }

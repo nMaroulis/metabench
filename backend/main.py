@@ -7,7 +7,7 @@ from database import Base, SessionLocal, engine
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from scripts.seed_data import seed_database
-from update_db import update_database
+from scripts.update_db import update_database
 
 
 @asynccontextmanager
