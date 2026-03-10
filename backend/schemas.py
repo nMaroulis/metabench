@@ -1,5 +1,6 @@
-from pydantic import BaseModel, Field, computed_field
 from datetime import datetime
+
+from pydantic import BaseModel, Field, computed_field
 
 
 class ModelPricingOut(BaseModel):

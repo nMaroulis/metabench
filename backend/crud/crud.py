@@ -1,29 +1,20 @@
-from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import desc
-
 import models as db_models
 import schemas
 from normalization import (
-    compute_weighted_overall_score,
     DEFAULT_WEIGHTS,
+    compute_weighted_overall_score,
 )
-
+from sqlalchemy import desc
+from sqlalchemy.orm import Session, joinedload
 
 # ---------- Models ----------
 
 
-def get_models(
-    db: Session, skip: int = 0, limit: int = 100, provider: str | None = None
-):
+def get_models(db: Session, skip: int = 0, limit: int = 100, provider: str | None = None):
     query = db.query(db_models.Model)
     if provider:
         query = query.filter(db_models.Model.provider == provider)
-    return (
-        query.order_by(desc(db_models.Model.overall_score))
-        .offset(skip)
-        .limit(limit)
-        .all()
-    )
+    return query.order_by(desc(db_models.Model.overall_score)).offset(skip).limit(limit).all()
 
 
 def get_model_by_name(db: Session, name: str):
@@ -37,11 +28,7 @@ def get_model_by_id(db: Session, model_id: int):
 def get_model_detail(db: Session, name: str):
     model = (
         db.query(db_models.Model)
-        .options(
-            joinedload(db_models.Model.scores).joinedload(
-                db_models.BenchmarkScore.benchmark
-            )
-        )
+        .options(joinedload(db_models.Model.scores).joinedload(db_models.BenchmarkScore.benchmark))
         .filter(db_models.Model.name == name)
         .first()
     )
@@ -56,9 +43,7 @@ def get_benchmarks(db: Session):
 
 
 def get_benchmark_by_name(db: Session, name: str):
-    return (
-        db.query(db_models.Benchmark).filter(db_models.Benchmark.name == name).first()
-    )
+    return db.query(db_models.Benchmark).filter(db_models.Benchmark.name == name).first()
 
 
 # ---------- Scores ----------
@@ -68,9 +53,7 @@ def get_scores_for_model(db: Session, model_name: str, language: str | None = No
     model = get_model_by_name(db, model_name)
     if not model:
         return []
-    query = db.query(db_models.BenchmarkScore).filter(
-        db_models.BenchmarkScore.model_id == model.id
-    )
+    query = db.query(db_models.BenchmarkScore).filter(db_models.BenchmarkScore.model_id == model.id)
     if language:
         query = query.filter(db_models.BenchmarkScore.language == language)
     scores = query.all()
@@ -130,17 +113,11 @@ def get_leaderboard(
         if not benchmark:
             return {"task": task, "language": language, "entries": []}
 
-        query = db.query(db_models.BenchmarkScore).filter(
-            db_models.BenchmarkScore.benchmark_id == benchmark.id
-        )
+        query = db.query(db_models.BenchmarkScore).filter(db_models.BenchmarkScore.benchmark_id == benchmark.id)
         if language:
             query = query.filter(db_models.BenchmarkScore.language == language)
 
-        scores = (
-            query.order_by(desc(db_models.BenchmarkScore.normalized_score))
-            .limit(limit)
-            .all()
-        )
+        scores = query.order_by(desc(db_models.BenchmarkScore.normalized_score)).limit(limit).all()
         entries = []
         for rank, s in enumerate(scores, 1):
             model = db.query(db_models.Model).get(s.model_id)
@@ -156,12 +133,7 @@ def get_leaderboard(
         return {"task": task, "language": language, "entries": entries}
     else:
         # Overall leaderboard
-        models = (
-            db.query(db_models.Model)
-            .order_by(desc(db_models.Model.overall_score))
-            .limit(limit)
-            .all()
-        )
+        models = db.query(db_models.Model).order_by(desc(db_models.Model.overall_score)).limit(limit).all()
         entries = []
         for rank, m in enumerate(models, 1):
             entries.append(
@@ -178,9 +150,7 @@ def get_leaderboard(
 # ---------- Community Submissions ----------
 
 
-def create_community_submission(
-    db: Session, submission: schemas.CommunitySubmissionCreate
-):
+def create_community_submission(db: Session, submission: schemas.CommunitySubmissionCreate):
     db_sub = db_models.CommunitySubmission(**submission.model_dump())
     db.add(db_sub)
     db.commit()
@@ -204,9 +174,7 @@ def recompute_overall_scores(db: Session):
     for model in models:
         scores = get_scores_for_model(db, model.name)
         if scores:
-            overall, confidence = compute_weighted_overall_score(
-                scores, DEFAULT_WEIGHTS
-            )
+            overall, confidence = compute_weighted_overall_score(scores, DEFAULT_WEIGHTS)
             model.overall_score = overall
             model.confidence = confidence
     db.commit()
@@ -217,9 +185,7 @@ def recompute_overall_scores(db: Session):
 
 def get_all_data_for_export(db: Session):
     """Get all models with their scores for CSV/JSON export."""
-    models = (
-        db.query(db_models.Model).order_by(desc(db_models.Model.overall_score)).all()
-    )
+    models = db.query(db_models.Model).order_by(desc(db_models.Model.overall_score)).all()
     export_data = []
     for model in models:
         scores = get_scores_for_model(db, model.name)
@@ -231,30 +197,16 @@ def get_all_data_for_export(db: Session):
             "parameters": model.parameters,
             "overall_score": model.overall_score,
             "confidence": model.confidence,
-            "cost_per_1m_input_tokens": model.pricing.cost_per_1m_input_tokens
-            if model.pricing
-            else None,
-            "cost_per_1m_output_tokens": model.pricing.cost_per_1m_output_tokens
-            if model.pricing
-            else None,
-            "cost_per_1m_blended": model.pricing.cost_per_1m_blended
-            if model.pricing
-            else None,
+            "cost_per_1m_input_tokens": model.pricing.cost_per_1m_input_tokens if model.pricing else None,
+            "cost_per_1m_output_tokens": model.pricing.cost_per_1m_output_tokens if model.pricing else None,
+            "cost_per_1m_blended": model.pricing.cost_per_1m_blended if model.pricing else None,
             "median_output_tokens_per_second": model.performance.median_output_tokens_per_second
             if model.performance
             else None,
-            "median_ttft_seconds": model.performance.median_ttft_seconds
-            if model.performance
-            else None,
-            "median_ttfa_seconds": model.performance.median_ttfa_seconds
-            if model.performance
-            else None,
-            "avg_latency_ms": model.performance.avg_latency_ms
-            if model.performance
-            else None,
-            "context_window": model.performance.context_window
-            if model.performance
-            else None,
+            "median_ttft_seconds": model.performance.median_ttft_seconds if model.performance else None,
+            "median_ttfa_seconds": model.performance.median_ttfa_seconds if model.performance else None,
+            "avg_latency_ms": model.performance.avg_latency_ms if model.performance else None,
+            "context_window": model.performance.context_window if model.performance else None,
         }
         for s in scores:
             model_data[f"{s['benchmark_name']}_raw"] = s["raw_score"]

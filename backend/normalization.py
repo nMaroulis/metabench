@@ -1,14 +1,13 @@
 """
 Score normalization utilities for MetaBench.
-Normalizes raw benchmark scores to a 0-100 scale and computes weighted Overall Intelligence Scores with confidence intervals.
+Normalizes raw benchmark scores to a 0-100 scale and computes weighted Overall Intelligence Scores with
+confidence intervals.
 """
 
 import math
 
 
-def normalize_score(
-    raw_score: float, max_score: float, min_score: float = 0.0
-) -> float:
+def normalize_score(raw_score: float, max_score: float, min_score: float = 0.0) -> float:
     """Normalize a raw score to 0-100 scale using min-max normalization."""
     if max_score == min_score:
         return 0.0

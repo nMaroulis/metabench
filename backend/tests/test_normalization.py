@@ -1,13 +1,13 @@
-import sys
 import os
+import sys
 
 # Add parent dir to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from normalization import (
-    normalize_score,
-    compute_weighted_overall_score,
     DEFAULT_WEIGHTS,
+    compute_weighted_overall_score,
+    normalize_score,
 )
 
 
@@ -73,10 +73,7 @@ class TestComputeWeightedOverallScore:
         assert abs(overall - 66.67) < 0.01
 
     def test_high_confidence_many_consistent_scores(self):
-        scores = [
-            {"benchmark_name": f"bench_{i}", "normalized_score": 80.0}
-            for i in range(10)
-        ]
+        scores = [{"benchmark_name": f"bench_{i}", "normalized_score": 80.0} for i in range(10)]
         _, confidence = compute_weighted_overall_score(scores)
         assert confidence >= 90.0
 
@@ -127,8 +124,6 @@ class TestIntegration:
             ns = normalize_score(raw, max_s)
             normalized.append({"benchmark_name": name, "normalized_score": ns})
 
-        overall, confidence = compute_weighted_overall_score(
-            normalized, DEFAULT_WEIGHTS
-        )
+        overall, confidence = compute_weighted_overall_score(normalized, DEFAULT_WEIGHTS)
         assert 80.0 < overall < 95.0
         assert confidence > 20.0

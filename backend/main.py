@@ -1,14 +1,11 @@
-"""MetaBench – FastAPI backend entry point."""
-
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+from api.routers import router
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
-
-from database import engine, SessionLocal, Base
-from api.routers import router
+from database import Base, SessionLocal, engine
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from scripts.seed_data import seed_database
 from update_db import update_database
 
@@ -39,7 +36,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="MetaBench API",
-    description="Metacritic for LLMs – Aggregated benchmark scores, leaderboards, and model comparison",
+    description="Metacritic for LLMs - Aggregated benchmark scores, leaderboards, and model comparison",
     version="1.0.0",
     lifespan=lifespan,
 )

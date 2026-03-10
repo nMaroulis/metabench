@@ -1,12 +1,11 @@
 import csv
 import io
 
+import schemas
+from crud import crud
+from database import get_db
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from sqlalchemy.orm import Session
-
-from database import get_db
-from crud import crud
-import schemas
 
 router = APIRouter()
 
@@ -64,9 +63,7 @@ def list_benchmarks(
     if model:
         scores = crud.get_scores_for_model(db, model)
         if not scores:
-            raise HTTPException(
-                status_code=404, detail=f"No scores found for model '{model}'"
-            )
+            raise HTTPException(status_code=404, detail=f"No scores found for model '{model}'")
         return scores
     return crud.get_benchmarks(db)
 
@@ -82,9 +79,7 @@ def compare_models(
     """Compare 2-5 models side by side."""
     model_names = [m.strip() for m in models.split(",")]
     if len(model_names) < 2 or len(model_names) > 5:
-        raise HTTPException(
-            status_code=400, detail="Must compare between 2 and 5 models"
-        )
+        raise HTTPException(status_code=400, detail="Must compare between 2 and 5 models")
 
     result = crud.compare_models(db, model_names)
     if not result["models"]:
@@ -111,13 +106,13 @@ def get_leaderboard(
 
 @router.get("/export", tags=["Export"])
 def export_data(
-    format: str = Query("json", regex="^(json|csv)$"),
+    file_format: str = Query("json", regex="^(json|csv)$"),
     db: Session = Depends(get_db),
 ):
     """Export all benchmark data as JSON or CSV."""
     data = crud.get_all_data_for_export(db)
 
-    if format == "csv":
+    if file_format == "csv":
         if not data:
             return Response(content="", media_type="text/csv")
         output = io.StringIO()
@@ -127,9 +122,7 @@ def export_data(
         return Response(
             content=output.getvalue(),
             media_type="text/csv",
-            headers={
-                "Content-Disposition": "attachment; filename=metabench_export.csv"
-            },
+            headers={"Content-Disposition": "attachment; filename=metabench_export.csv"},
         )
 
     return data
@@ -170,7 +163,7 @@ def list_community_submissions(
 @router.get("/stats", tags=["Stats"])
 def get_stats(db: Session = Depends(get_db)):
     """Get platform statistics."""
-    from models import Model, Benchmark, BenchmarkScore, CommunitySubmission
+    from models import Benchmark, BenchmarkScore, CommunitySubmission, Model
 
     return {
         "total_models": db.query(Model).count(),

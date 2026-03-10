@@ -5,15 +5,14 @@ then updates the SQLite database.
 """
 
 from database import SessionLocal
-from models import Model, Benchmark, BenchmarkScore, ModelPricing, ModelPerformance
+from models import Benchmark, BenchmarkScore, Model, ModelPerformance, ModelPricing
 from normalization import (
-    normalize_score,
-    compute_weighted_overall_score,
     DEFAULT_WEIGHTS,
+    compute_weighted_overall_score,
+    normalize_score,
 )
-
-from scrapers.openrouter import get_pricing_map
 from scrapers.chatbot_arena import fetch_arena_elo_ratings
+from scrapers.openrouter import get_pricing_map
 
 
 def update_database():
@@ -44,21 +43,15 @@ def update_database():
                     db.add(model.pricing)
 
                 if pricing["cost_per_1m_input_tokens"] is not None:
-                    model.pricing.cost_per_1m_input_tokens = pricing[
-                        "cost_per_1m_input_tokens"
-                    ]
+                    model.pricing.cost_per_1m_input_tokens = pricing["cost_per_1m_input_tokens"]
                 if pricing["cost_per_1m_output_tokens"] is not None:
-                    model.pricing.cost_per_1m_output_tokens = pricing[
-                        "cost_per_1m_output_tokens"
-                    ]
+                    model.pricing.cost_per_1m_output_tokens = pricing["cost_per_1m_output_tokens"]
 
                 # Update blended cost
                 price_in = model.pricing.cost_per_1m_input_tokens
                 price_out = model.pricing.cost_per_1m_output_tokens
                 if price_in is not None and price_out is not None:
-                    model.pricing.cost_per_1m_blended = round(
-                        (price_in * 0.5 + price_out * 0.5), 4
-                    )
+                    model.pricing.cost_per_1m_blended = round((price_in * 0.5 + price_out * 0.5), 4)
                 elif price_in is not None or price_out is not None:
                     model.pricing.cost_per_1m_blended = price_in or price_out or 0
 
@@ -77,9 +70,7 @@ def update_database():
             if canonical_name in elo_data:
                 new_elo = elo_data[canonical_name]
                 # Find Arena Elo benchmark
-                arena_bench = (
-                    db.query(Benchmark).filter(Benchmark.name == "Arena Elo").first()
-                )
+                arena_bench = db.query(Benchmark).filter(Benchmark.name == "Arena Elo").first()
                 if arena_bench:
                     # Look up existing score or create new one
                     score_entry = (
@@ -109,11 +100,7 @@ def update_database():
             db.flush()
 
             # --- Recalculate Overall Score ---
-            all_scores = (
-                db.query(BenchmarkScore)
-                .filter(BenchmarkScore.model_id == model.id)
-                .all()
-            )
+            all_scores = db.query(BenchmarkScore).filter(BenchmarkScore.model_id == model.id).all()
             score_list = [
                 {
                     "benchmark_name": score.benchmark.name,
@@ -121,9 +108,7 @@ def update_database():
                 }
                 for score in all_scores
             ]
-            overall, confidence = compute_weighted_overall_score(
-                score_list, DEFAULT_WEIGHTS
-            )
+            overall, confidence = compute_weighted_overall_score(score_list, DEFAULT_WEIGHTS)
             model.overall_score = overall
             model.confidence = confidence
 

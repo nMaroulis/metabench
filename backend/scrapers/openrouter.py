@@ -1,10 +1,9 @@
 """
-OpenRouter scraper – fetches live pricing and model metadata.
+OpenRouter scraper - fetches live pricing and model metadata.
 API: GET https://openrouter.ai/api/v1/models (no auth required)
 """
 
 import httpx
-
 
 OPENROUTER_API_URL = "https://openrouter.ai/api/v1/models"
 
@@ -96,12 +95,8 @@ def fetch_openrouter_models() -> list[dict]:
             {
                 "canonical_name": canonical_name,
                 "openrouter_id": model_id,
-                "cost_per_1m_input_tokens": round(cost_input, 4)
-                if cost_input
-                else None,
-                "cost_per_1m_output_tokens": round(cost_output, 4)
-                if cost_output
-                else None,
+                "cost_per_1m_input_tokens": round(cost_input, 4) if cost_input else None,
+                "cost_per_1m_output_tokens": round(cost_output, 4) if cost_output else None,
                 "context_window": context_length,
                 "description": model.get("description", "")[:300],
             }

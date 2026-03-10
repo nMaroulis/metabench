@@ -1,8 +1,8 @@
-from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Text, JSON
-from sqlalchemy.orm import relationship
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from database import Base
+from sqlalchemy import JSON, Column, DateTime, Float, ForeignKey, Integer, String, Text
+from sqlalchemy.orm import relationship
 
 
 class Model(Base):
@@ -21,11 +21,9 @@ class Model(Base):
     release_date = Column(String, default="")
     overall_score = Column(Float, default=0.0)
     confidence = Column(Float, default=0.0)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
-    scores = relationship(
-        "BenchmarkScore", back_populates="model", cascade="all, delete-orphan"
-    )
+    scores = relationship("BenchmarkScore", back_populates="model", cascade="all, delete-orphan")
     pricing = relationship(
         "ModelPricing",
         back_populates="model",
@@ -38,9 +36,7 @@ class Model(Base):
         uselist=False,
         cascade="all, delete-orphan",
     )
-    technical_specs = relationship(
-        "TechnicalSpec", back_populates="model", cascade="all, delete-orphan"
-    )
+    technical_specs = relationship("TechnicalSpec", back_populates="model", cascade="all, delete-orphan")
 
 
 class ModelPricing(Base):
@@ -53,8 +49,8 @@ class ModelPricing(Base):
     cost_per_1m_blended = Column(Float, nullable=True)
     updated_at = Column(
         DateTime,
-        default=lambda: datetime.now(timezone.utc),
-        onupdate=lambda: datetime.now(timezone.utc),
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
     )
 
     model = relationship("Model", back_populates="pricing")
@@ -72,8 +68,8 @@ class ModelPerformance(Base):
     context_window = Column(Integer, nullable=True)
     updated_at = Column(
         DateTime,
-        default=lambda: datetime.now(timezone.utc),
-        onupdate=lambda: datetime.now(timezone.utc),
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
     )
 
     model = relationship("Model", back_populates="performance")
@@ -96,20 +92,14 @@ class Benchmark(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, unique=True, index=True, nullable=False)
-    category = Column(
-        String, nullable=False
-    )  # e.g., "reasoning", "coding", "math", "knowledge"
-    type = Column(
-        String, default="benchmark"
-    )  # "benchmark" = actual test, "index" = composite score from a website
+    category = Column(String, nullable=False)  # e.g., "reasoning", "coding", "math", "knowledge"
+    type = Column(String, default="benchmark")  # "benchmark" = actual test, "index" = composite score from a website
     description = Column(Text, default="")
     max_score = Column(Float, default=100.0)
     weight = Column(Float, default=1.0)  # Weight for overall score computation
     source = Column(String, default="")
 
-    scores = relationship(
-        "BenchmarkScore", back_populates="benchmark", cascade="all, delete-orphan"
-    )
+    scores = relationship("BenchmarkScore", back_populates="benchmark", cascade="all, delete-orphan")
 
 
 class BenchmarkScore(Base):
@@ -140,5 +130,5 @@ class CommunitySubmission(Base):
     evidence_url = Column(String, default="")
     notes = Column(Text, default="")
     status = Column(String, default="pending")  # pending, approved, rejected
-    submitted_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    submitted_at = Column(DateTime, default=lambda: datetime.now(UTC))
     evaluation_data = Column(JSON, nullable=True)

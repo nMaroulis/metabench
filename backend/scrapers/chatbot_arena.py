@@ -1,10 +1,11 @@
 """
-Chatbot Arena scraper – fetches Elo ratings from LMSYS leaderboard CSVs on HuggingFace.
+Chatbot Arena scraper - fetches Elo ratings from LMSYS leaderboard CSVs on HuggingFace.
 Source: https://huggingface.co/spaces/lmarena-ai/chatbot-arena-leaderboard
 """
 
 import csv
 import io
+
 import httpx
 
 HF_SPACE_API = "https://huggingface.co/api/spaces/lmarena-ai/arena-leaderboard"
@@ -63,8 +64,7 @@ def get_latest_csv_filename() -> str | None:
     csv_files = [
         s["rfilename"]
         for s in data.get("siblings", [])
-        if s["rfilename"].startswith("leaderboard_table_")
-        and s["rfilename"].endswith(".csv")
+        if s["rfilename"].startswith("leaderboard_table_") and s["rfilename"].endswith(".csv")
     ]
     if not csv_files:
         return None
@@ -128,12 +128,9 @@ def normalize_elo_to_100(elo_scores: dict[str, float]) -> dict[str, float]:
     max_elo = max(values)
 
     if max_elo == min_elo:
-        return {k: 50.0 for k in elo_scores}
+        return dict.fromkeys(elo_scores, 50.0)
 
-    return {
-        name: round(((elo - min_elo) / (max_elo - min_elo)) * 100.0, 2)
-        for name, elo in elo_scores.items()
-    }
+    return {name: round(((elo - min_elo) / (max_elo - min_elo)) * 100.0, 2) for name, elo in elo_scores.items()}
 
 
 if __name__ == "__main__":

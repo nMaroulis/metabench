@@ -6,11 +6,8 @@ Benchmarks: IFEval, BBH, MATH-Hard, GPQA, MUSR, MMLU-Pro
 
 import httpx
 
-
 HF_CONTENTS_API = "https://huggingface.co/api/datasets/open-llm-leaderboard/contents"
-HF_PARQUET_URL = (
-    "https://huggingface.co/datasets/open-llm-leaderboard/contents/resolve/main"
-)
+HF_PARQUET_URL = "https://huggingface.co/datasets/open-llm-leaderboard/contents/resolve/main"
 
 # Map HuggingFace model names to our canonical names
 HF_NAME_MAP = {

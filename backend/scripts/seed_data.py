@@ -1,17 +1,17 @@
-from sqlalchemy.orm import Session
 from models import (
-    Model,
     Benchmark,
     BenchmarkScore,
-    ModelPricing,
+    Model,
     ModelPerformance,
+    ModelPricing,
     TechnicalSpec,
 )
 from normalization import (
-    normalize_score,
-    compute_weighted_overall_score,
     DEFAULT_WEIGHTS,
+    compute_weighted_overall_score,
+    normalize_score,
 )
+from sqlalchemy.orm import Session
 
 
 def get_technical_details(
@@ -123,15 +123,11 @@ def get_technical_details(
     # Override based on model family
     if "gpt-4" in name:
         details["Core Model Identity"]["Model Type"] = "Mixture-of-Experts (MoE)"
-        details["Core Model Identity"]["Multimodal Support"] = (
-            "Yes (Native Vision/Audio)"
-        )
+        details["Core Model Identity"]["Multimodal Support"] = "Yes (Native Vision/Audio)"
         details["Model Size"]["Active Parameters per Token"] = "~200B"
         details["Model Size"]["Number of Experts"] = "16 (Estimated)"
         details["Model Size"]["Parameter Density"] = "Sparse MoE"
-        details["Attention Architecture"]["Attention Type"] = (
-            "Grouped Query Attention (GQA)"
-        )
+        details["Attention Architecture"]["Attention Type"] = "Grouped Query Attention (GQA)"
         details["Tokenization"]["Tokenizer Type"] = "tiktoken (o200k_base)"
         details["Tokenization"]["Vocabulary Size"] = "200,000"
         details["Training Dataset"]["Total Training Tokens"] = "~15T+ tokens"
@@ -145,9 +141,7 @@ def get_technical_details(
         details["Model Size"]["Parameter Density"] = "Highly Sparse MoE"
         details["Transformer Architecture"]["Layers"] = "61"
         details["Transformer Architecture"]["Hidden Size (d_model)"] = "7168"
-        details["Attention Architecture"]["Attention Type"] = (
-            "Multi-head Latent Attention (MLA)"
-        )
+        details["Attention Architecture"]["Attention Type"] = "Multi-head Latent Attention (MLA)"
         details["Attention Architecture"]["Number of Attention Heads"] = "128"
         details["Positional Encoding"]["Type"] = "YaRN RoPE"
         details["Tokenization"]["Tokenizer Type"] = "Byte-level BPE"
@@ -155,12 +149,8 @@ def get_technical_details(
         details["Training Dataset"]["Total Training Tokens"] = "14.8T tokens"
         details["Training Process"]["Optimizer"] = "AdamW"
         details["Training Process"]["Mixed Precision Type"] = "FP8 Mixed Precision"
-        details["Post-Training"]["Fine-Tuning"] = (
-            "Pure RL (GRPO)" if "r1" in name else "SFT + DPO"
-        )
-        details["System / Infrastructure"]["Optimizations"] = (
-            "FlashAttention-3, MLA, FP8 native"
-        )
+        details["Post-Training"]["Fine-Tuning"] = "Pure RL (GRPO)" if "r1" in name else "SFT + DPO"
+        details["System / Infrastructure"]["Optimizations"] = "FlashAttention-3, MLA, FP8 native"
         details["Quantization Support"]["Supported Formats"] = "AWQ, GGUF, EXL2, FP8"
     elif "llama 3" in name or "llama-3" in name or "llama 4" in name:
         is405b = "405b" in name
@@ -190,63 +180,41 @@ def get_technical_details(
         details["Transformer Architecture"]["Hidden Size (d_model)"] = (
             "16384" if (is405b or is400b) else "8192" if (is70b or is109b) else "4096"
         )
-        details["Attention Architecture"]["Attention Type"] = (
-            "Grouped Query Attention (GQA)"
-        )
+        details["Attention Architecture"]["Attention Type"] = "Grouped Query Attention (GQA)"
         details["Positional Encoding"]["Type"] = "RoPE (Theta: 500k)"
         details["Tokenization"]["Tokenizer Type"] = "tiktoken (Llama)"
         details["Tokenization"]["Vocabulary Size"] = "128,256"
         details["Training Dataset"]["Total Training Tokens"] = "15T+ tokens"
         details["Quantization Support"]["Supported Formats"] = "GGUF, AWQ, GPTQ, EXL2"
         details["Inference Characteristics"]["Memory Footprint"] = (
-            "~800GB (FP16)"
-            if is400b or is405b
-            else "~140GB (FP16)"
-            if is70b or is109b
-            else "~16GB (FP16)"
+            "~800GB (FP16)" if is400b or is405b else "~140GB (FP16)" if is70b or is109b else "~16GB (FP16)"
         )
         details["Post-Training"]["Fine-Tuning"] = "SFT, Rejection Sampling, PPO/DPO"
     elif "claude 3" in name:
         details["Core Model Identity"]["Multimodal Support"] = "Yes (Vision)"
-        details["Training Dataset"]["Total Training Tokens"] = (
-            "Proprietary High-Quality Mix"
-        )
+        details["Training Dataset"]["Total Training Tokens"] = "Proprietary High-Quality Mix"
         details["Quantization Support"]["Supported Formats"] = "Proprietary (API only)"
         details["Post-Training"]["Fine-Tuning"] = "Constitutional AI, SFT, RLHF"
-        details["Attention Architecture"]["Attention Type"] = (
-            "Grouped Query Attention (GQA) / MQA"
-        )
+        details["Attention Architecture"]["Attention Type"] = "Grouped Query Attention (GQA) / MQA"
     elif "gemini" in name:
         details["Core Model Identity"]["Model Type"] = "Mixture-of-Experts (MoE)"
-        details["Core Model Identity"]["Multimodal Support"] = (
-            "Yes (Interleaved Text, Vision, Audio)"
-        )
+        details["Core Model Identity"]["Multimodal Support"] = "Yes (Interleaved Text, Vision, Audio)"
         details["Attention Architecture"]["Attention Type"] = "Multimodal Block GQA"
         details["Tokenization"]["Tokenizer Type"] = "SentencePiece (Multimodal)"
-        details["Training Dataset"]["Total Training Tokens"] = (
-            "Google Proprietary Multimodal Data"
-        )
+        details["Training Dataset"]["Total Training Tokens"] = "Google Proprietary Multimodal Data"
         details["Hardware Requirements"]["Minimum VRAM"] = "TPU v5p / TPU v5e Native"
-        details["System / Infrastructure"]["Optimizations"] = (
-            "Ring Attention, Blockwise Compute Context"
-        )
+        details["System / Infrastructure"]["Optimizations"] = "Ring Attention, Blockwise Compute Context"
     elif "o1" in name or "o3" in name:
         details["Core Model Identity"]["Model Type"] = "RL Reasoning Model (MoE)"
-        details["Core Model Identity"]["Reasoning Variant"] = (
-            "Yes (Chain-of-Thought / RL Search)"
-        )
-        details["Training Process"]["Pretraining Objective"] = (
-            "RL Search, Next token prediction"
-        )
+        details["Core Model Identity"]["Reasoning Variant"] = "Yes (Chain-of-Thought / RL Search)"
+        details["Training Process"]["Pretraining Objective"] = "RL Search, Next token prediction"
         details["Post-Training"]["Fine-Tuning"] = "Massive RL, Value Networks"
         details["Quantization Support"]["Supported Formats"] = "Proprietary (API only)"
 
     # Format as array of categories strictly matching frontend
     output = []
     for title, facts in details.items():
-        fact_list = [
-            {"label": label, "value": str(value)} for label, value in facts.items()
-        ]
+        fact_list = [{"label": label, "value": str(value)} for label, value in facts.items()]
         output.append({"title": title, "facts": fact_list})
 
     return output
@@ -256,7 +224,7 @@ BENCHMARKS = [
     {
         "name": "MMLU",
         "category": "knowledge",
-        "description": "Massive Multitask Language Understanding – 57 subjects",
+        "description": "Massive Multitask Language Understanding - 57 subjects",
         "max_score": 100.0,
         "weight": 1.2,
         "source": "Hendrycks et al.",
@@ -264,7 +232,7 @@ BENCHMARKS = [
     {
         "name": "MMLU-Pro",
         "category": "knowledge",
-        "description": "MMLU Professional – harder, more discriminative version",
+        "description": "MMLU Professional - harder, more discriminative version",
         "max_score": 100.0,
         "weight": 1.3,
         "source": "TIGER-Lab",
@@ -272,7 +240,7 @@ BENCHMARKS = [
     {
         "name": "GPQA Diamond",
         "category": "knowledge",
-        "description": "Graduate-level science QA – PhD-level Q&A",
+        "description": "Graduate-level science QA - PhD-level Q&A",
         "max_score": 100.0,
         "weight": 1.3,
         "source": "NYU",
@@ -280,7 +248,7 @@ BENCHMARKS = [
     {
         "name": "HLE",
         "category": "reasoning",
-        "description": "Humanity's Last Exam – extremely difficult reasoning benchmark",
+        "description": "Humanity's Last Exam - extremely difficult reasoning benchmark",
         "max_score": 100.0,
         "weight": 1.4,
         "source": "HLE",
@@ -288,7 +256,7 @@ BENCHMARKS = [
     {
         "name": "GSM8K",
         "category": "math",
-        "description": "Grade School Math – multi-step math problems",
+        "description": "Grade School Math - multi-step math problems",
         "max_score": 100.0,
         "weight": 1.0,
         "source": "OpenAI",
@@ -296,7 +264,7 @@ BENCHMARKS = [
     {
         "name": "MATH-500",
         "category": "math",
-        "description": "Competition-level math – 500 problems",
+        "description": "Competition-level math - 500 problems",
         "max_score": 100.0,
         "weight": 1.2,
         "source": "Hendrycks et al.",
@@ -320,7 +288,7 @@ BENCHMARKS = [
     {
         "name": "HumanEval",
         "category": "coding",
-        "description": "Python coding – functional correctness",
+        "description": "Python coding - functional correctness",
         "max_score": 100.0,
         "weight": 1.2,
         "source": "OpenAI",
@@ -360,7 +328,7 @@ BENCHMARKS = [
     {
         "name": "ARC-Challenge",
         "category": "reasoning",
-        "description": "AI2 Reasoning Challenge – science questions",
+        "description": "AI2 Reasoning Challenge - science questions",
         "max_score": 100.0,
         "weight": 0.9,
         "source": "AI2",
@@ -368,7 +336,7 @@ BENCHMARKS = [
     {
         "name": "LCR",
         "category": "reasoning",
-        "description": "Long Context Reasoning – reasoning with large context windows",
+        "description": "Long Context Reasoning - reasoning with large context windows",
         "max_score": 100.0,
         "weight": 1.0,
         "source": "LCR",
@@ -384,7 +352,7 @@ BENCHMARKS = [
     {
         "name": "TAU2",
         "category": "agentic",
-        "description": "TAU-Bench v2 – agentic tool-use tasks",
+        "description": "TAU-Bench v2 - agentic tool-use tasks",
         "max_score": 100.0,
         "weight": 1.1,
         "source": "TAU-Bench",
@@ -392,7 +360,7 @@ BENCHMARKS = [
     {
         "name": "Arena Elo",
         "category": "human_preference",
-        "description": "Chatbot Arena Elo – human preference votes",
+        "description": "Chatbot Arena Elo - human preference votes",
         "max_score": 1400.0,
         "weight": 1.5,
         "source": "LMSYS / Chatbot Arena",
@@ -618,9 +586,7 @@ def seed_database(db: Session):
                 }
             )
 
-        overall, confidence = compute_weighted_overall_score(
-            score_list, DEFAULT_WEIGHTS
-        )
+        overall, confidence = compute_weighted_overall_score(score_list, DEFAULT_WEIGHTS)
         model.overall_score = overall
         model.confidence = confidence
 

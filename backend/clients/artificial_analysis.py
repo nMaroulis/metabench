@@ -5,9 +5,10 @@ Requires ARTIFICIAL_ANALYSIS_API_KEY in .env
 """
 
 import os
-from dotenv import load_dotenv
-import requests
 from typing import Any
+
+import requests
+from dotenv import load_dotenv
 
 load_dotenv()
 
@@ -19,9 +20,7 @@ class ArtificialAnalysisAPIClient:
         self.api_key = os.getenv("ARTIFICIAL_ANALYSIS_API_KEY")
         self.timeout = timeout
         self.session = requests.Session()
-        self.session.headers.update(
-            {"x-api-key": self.api_key, "Content-Type": "application/json"}
-        )
+        self.session.headers.update({"x-api-key": self.api_key, "Content-Type": "application/json"})
 
     def _get(self, endpoint: str) -> dict[str, Any]:
         url = f"{self.BASE_URL}{endpoint}"

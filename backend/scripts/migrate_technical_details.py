@@ -1,5 +1,5 @@
-from models import Model
 from database import SessionLocal
+from models import Model
 
 
 def get_technical_details(
@@ -111,15 +111,11 @@ def get_technical_details(
     # Override based on model family
     if "gpt-4" in name:
         details["Core Model Identity"]["Model Type"] = "Mixture-of-Experts (MoE)"
-        details["Core Model Identity"]["Multimodal Support"] = (
-            "Yes (Native Vision/Audio)"
-        )
+        details["Core Model Identity"]["Multimodal Support"] = "Yes (Native Vision/Audio)"
         details["Model Size"]["Active Parameters per Token"] = "~200B"
         details["Model Size"]["Number of Experts"] = "16 (Estimated)"
         details["Model Size"]["Parameter Density"] = "Sparse MoE"
-        details["Attention Architecture"]["Attention Type"] = (
-            "Grouped Query Attention (GQA)"
-        )
+        details["Attention Architecture"]["Attention Type"] = "Grouped Query Attention (GQA)"
         details["Tokenization"]["Tokenizer Type"] = "tiktoken (o200k_base)"
         details["Tokenization"]["Vocabulary Size"] = "200,000"
         details["Training Dataset"]["Total Training Tokens"] = "~15T+ tokens"
@@ -133,9 +129,7 @@ def get_technical_details(
         details["Model Size"]["Parameter Density"] = "Highly Sparse MoE"
         details["Transformer Architecture"]["Layers"] = "61"
         details["Transformer Architecture"]["Hidden Size (d_model)"] = "7168"
-        details["Attention Architecture"]["Attention Type"] = (
-            "Multi-head Latent Attention (MLA)"
-        )
+        details["Attention Architecture"]["Attention Type"] = "Multi-head Latent Attention (MLA)"
         details["Attention Architecture"]["Number of Attention Heads"] = "128"
         details["Positional Encoding"]["Type"] = "YaRN RoPE"
         details["Tokenization"]["Tokenizer Type"] = "Byte-level BPE"
@@ -143,12 +137,8 @@ def get_technical_details(
         details["Training Dataset"]["Total Training Tokens"] = "14.8T tokens"
         details["Training Process"]["Optimizer"] = "AdamW"
         details["Training Process"]["Mixed Precision Type"] = "FP8 Mixed Precision"
-        details["Post-Training"]["Fine-Tuning"] = (
-            "Pure RL (GRPO)" if "r1" in name else "SFT + DPO"
-        )
-        details["System / Infrastructure"]["Optimizations"] = (
-            "FlashAttention-3, MLA, FP8 native"
-        )
+        details["Post-Training"]["Fine-Tuning"] = "Pure RL (GRPO)" if "r1" in name else "SFT + DPO"
+        details["System / Infrastructure"]["Optimizations"] = "FlashAttention-3, MLA, FP8 native"
         details["Quantization Support"]["Supported Formats"] = "AWQ, GGUF, EXL2, FP8"
     elif "llama 3" in name or "llama-3" in name or "llama 4" in name:
         is405b = "405b" in name
@@ -178,63 +168,41 @@ def get_technical_details(
         details["Transformer Architecture"]["Hidden Size (d_model)"] = (
             "16384" if (is405b or is400b) else "8192" if (is70b or is109b) else "4096"
         )
-        details["Attention Architecture"]["Attention Type"] = (
-            "Grouped Query Attention (GQA)"
-        )
+        details["Attention Architecture"]["Attention Type"] = "Grouped Query Attention (GQA)"
         details["Positional Encoding"]["Type"] = "RoPE (Theta: 500k)"
         details["Tokenization"]["Tokenizer Type"] = "tiktoken (Llama)"
         details["Tokenization"]["Vocabulary Size"] = "128,256"
         details["Training Dataset"]["Total Training Tokens"] = "15T+ tokens"
         details["Quantization Support"]["Supported Formats"] = "GGUF, AWQ, GPTQ, EXL2"
         details["Inference Characteristics"]["Memory Footprint"] = (
-            "~800GB (FP16)"
-            if is400b or is405b
-            else "~140GB (FP16)"
-            if is70b or is109b
-            else "~16GB (FP16)"
+            "~800GB (FP16)" if is400b or is405b else "~140GB (FP16)" if is70b or is109b else "~16GB (FP16)"
         )
         details["Post-Training"]["Fine-Tuning"] = "SFT, Rejection Sampling, PPO/DPO"
     elif "claude 3" in name:
         details["Core Model Identity"]["Multimodal Support"] = "Yes (Vision)"
-        details["Training Dataset"]["Total Training Tokens"] = (
-            "Proprietary High-Quality Mix"
-        )
+        details["Training Dataset"]["Total Training Tokens"] = "Proprietary High-Quality Mix"
         details["Quantization Support"]["Supported Formats"] = "Proprietary (API only)"
         details["Post-Training"]["Fine-Tuning"] = "Constitutional AI, SFT, RLHF"
-        details["Attention Architecture"]["Attention Type"] = (
-            "Grouped Query Attention (GQA) / MQA"
-        )
+        details["Attention Architecture"]["Attention Type"] = "Grouped Query Attention (GQA) / MQA"
     elif "gemini" in name:
         details["Core Model Identity"]["Model Type"] = "Mixture-of-Experts (MoE)"
-        details["Core Model Identity"]["Multimodal Support"] = (
-            "Yes (Interleaved Text, Vision, Audio)"
-        )
+        details["Core Model Identity"]["Multimodal Support"] = "Yes (Interleaved Text, Vision, Audio)"
         details["Attention Architecture"]["Attention Type"] = "Multimodal Block GQA"
         details["Tokenization"]["Tokenizer Type"] = "SentencePiece (Multimodal)"
-        details["Training Dataset"]["Total Training Tokens"] = (
-            "Google Proprietary Multimodal Data"
-        )
+        details["Training Dataset"]["Total Training Tokens"] = "Google Proprietary Multimodal Data"
         details["Hardware Requirements"]["Minimum VRAM"] = "TPU v5p / TPU v5e Native"
-        details["System / Infrastructure"]["Optimizations"] = (
-            "Ring Attention, Blockwise Compute Context"
-        )
+        details["System / Infrastructure"]["Optimizations"] = "Ring Attention, Blockwise Compute Context"
     elif "o1" in name or "o3" in name:
         details["Core Model Identity"]["Model Type"] = "RL Reasoning Model (MoE)"
-        details["Core Model Identity"]["Reasoning Variant"] = (
-            "Yes (Chain-of-Thought / RL Search)"
-        )
-        details["Training Process"]["Pretraining Objective"] = (
-            "RL Search, Next token prediction"
-        )
+        details["Core Model Identity"]["Reasoning Variant"] = "Yes (Chain-of-Thought / RL Search)"
+        details["Training Process"]["Pretraining Objective"] = "RL Search, Next token prediction"
         details["Post-Training"]["Fine-Tuning"] = "Massive RL, Value Networks"
         details["Quantization Support"]["Supported Formats"] = "Proprietary (API only)"
 
     # Format as array of categories strictly matching frontend
     output = []
     for title, facts in details.items():
-        fact_list = [
-            {"label": label, "value": str(value)} for label, value in facts.items()
-        ]
+        fact_list = [{"label": label, "value": str(value)} for label, value in facts.items()]
         output.append({"title": title, "facts": fact_list})
 
     return output
@@ -259,9 +227,7 @@ def migrate_db():
                 model_parameters=model.parameters,
                 model_architecture=model.architecture,
                 model_license_type=model.license_type,
-                model_context_window=model.performance.context_window
-                if model.performance
-                else 0,
+                model_context_window=model.performance.context_window if model.performance else 0,
             )
 
             # Update
@@ -269,9 +235,7 @@ def migrate_db():
             migrated_count += 1
 
         db.commit()
-        print(
-            f"Successfully migrated {migrated_count} models with technical_details JSON."
-        )
+        print(f"Successfully migrated {migrated_count} models with technical_details JSON.")
     except Exception as e:
         db.rollback()
         print(f"Migration failed: {e}")

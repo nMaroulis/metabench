@@ -1,13 +1,13 @@
 """
-LiveBench scraper – fetches benchmark scores from LiveBench GitHub CSV data.
+LiveBench scraper - fetches benchmark scores from LiveBench GitHub CSV data.
 Source: https://github.com/LiveBench/LiveBench
 Categories: Math, Coding, Reasoning, Data Analysis, Language, Instruction Following
 """
 
 import csv
 import io
-import httpx
 
+import httpx
 
 LIVEBENCH_CSV_URLS = [
     "https://raw.githubusercontent.com/LiveBench/LiveBench/refs/heads/main/docs/all_groups.csv",
