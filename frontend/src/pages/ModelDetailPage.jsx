@@ -68,11 +68,21 @@ export default function ModelDetailPage() {
         return acc;
     }, {});
 
-    const radarData = [{
+    // Separate scores for radar charts
+    const benchmarkScores = (model.scores || []).filter(s => s.benchmark_type === 'benchmark');
+    const indexScores = (model.scores || []).filter(s => s.benchmark_type === 'index');
+
+    const benchmarkRadarData = [{
         name: model.name,
-        scores: model.scores || [],
+        scores: benchmarkScores,
     }];
-    const benchmarkNames = (model.scores || []).map(s => s.benchmark_name);
+    const benchmarkNames = benchmarkScores.map(s => s.benchmark_name);
+
+    const indexRadarData = [{
+        name: model.name,
+        scores: indexScores,
+    }];
+    const indexNames = indexScores.map(s => s.benchmark_name);
 
     return (
         <div className="page-container">
@@ -138,10 +148,29 @@ export default function ModelDetailPage() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-                {/* Radar chart */}
+                {/* Radar charts */}
                 <div className="glass-card p-6">
-                    <h3 className="text-lg font-display font-bold mb-4">Capability Profile</h3>
-                    <BenchmarkRadarChart modelsData={radarData} benchmarks={benchmarkNames} />
+                    <div className="mb-8">
+                        <h3 className="text-lg font-display font-bold mb-4">Benchmark Capability</h3>
+                        {benchmarkNames.length > 0 ? (
+                            <BenchmarkRadarChart modelsData={benchmarkRadarData} benchmarks={benchmarkNames} />
+                        ) : (
+                            <div className="h-[400px] flex items-center justify-center text-gray-400 italic">
+                                No benchmark data available
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="pt-8 border-t border-gray-100 dark:border-gray-800">
+                        <h3 className="text-lg font-display font-bold mb-4">Index Performance</h3>
+                        {indexNames.length > 0 ? (
+                            <BenchmarkRadarChart modelsData={indexRadarData} benchmarks={indexNames} colorOffset={1} />
+                        ) : (
+                            <div className="h-[400px] flex items-center justify-center text-gray-400 italic">
+                                No index data available
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 {/* Score breakdown by category */}

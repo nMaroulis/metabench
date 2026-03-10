@@ -87,6 +87,7 @@ def get_scores_for_model(db: Session, model_name: str, language: str | None = No
                 "benchmark_category": benchmark.category if benchmark else "",
                 "raw_score": s.raw_score,
                 "normalized_score": s.normalized_score,
+                "benchmark_type": benchmark.type if benchmark else "benchmark",
                 "language": s.language,
                 "evaluation_date": s.evaluation_date,
                 "notes": s.notes,

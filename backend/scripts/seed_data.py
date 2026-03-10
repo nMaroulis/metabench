@@ -1,9 +1,3 @@
-"""
-Seed data for MetaBench - 50 top LLMs with real benchmark scores.
-Sources: Chatbot Arena, ArtificialAnalysis, HuggingFace LLB v2, LiveBench, EQBench, OpenRouter.
-Scores are real values gathered from public benchmarks as of early 2025.
-"""
-
 from sqlalchemy.orm import Session
 from models import (
     Model,
@@ -406,7 +400,8 @@ BENCHMARKS = [
     {
         "name": "LiveBench",
         "category": "reasoning",
-        "description": "Live benchmark – contamination-free reasoning",
+        "type": "index",
+        "description": "Live benchmark - contamination-free reasoning",
         "max_score": 100.0,
         "weight": 1.2,
         "source": "LiveBench.ai",

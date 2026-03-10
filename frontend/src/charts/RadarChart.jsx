@@ -6,7 +6,7 @@ import {
 
 const COLORS = ['#6366f1', '#d946ef', '#06b6d4', '#f59e0b', '#10b981'];
 
-export default function BenchmarkRadarChart({ modelsData, benchmarks }) {
+export default function BenchmarkRadarChart({ modelsData, benchmarks, colorOffset = 0 }) {
     if (!modelsData || modelsData.length === 0) return null;
 
     // Build data: each benchmark is a data point
@@ -37,8 +37,8 @@ export default function BenchmarkRadarChart({ modelsData, benchmarks }) {
                         key={name}
                         name={name}
                         dataKey={name}
-                        stroke={COLORS[idx % COLORS.length]}
-                        fill={COLORS[idx % COLORS.length]}
+                        stroke={COLORS[(idx + colorOffset) % COLORS.length]}
+                        fill={COLORS[(idx + colorOffset) % COLORS.length]}
                         fillOpacity={0.15}
                         strokeWidth={2}
                     />

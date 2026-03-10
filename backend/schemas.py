@@ -117,6 +117,7 @@ class BenchmarkScoreOut(BenchmarkScoreBase):
     benchmark_id: int
     benchmark_name: str = ""
     benchmark_category: str = ""
+    benchmark_type: str = "benchmark"
 
     class Config:
         from_attributes = True
