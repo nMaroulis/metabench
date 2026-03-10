@@ -14,6 +14,8 @@ const dataSources = [
     { name: 'EQBench', logo: '/logos/eqbench.png', type: 'image', rounded: true },
 ];
 
+import SEO from '../components/SEO';
+
 export default function LandingPage() {
     const [models, setModels] = useState([]);
     const [stats, setStats] = useState(null);
@@ -38,6 +40,10 @@ export default function LandingPage() {
 
     return (
         <div>
+            <SEO
+                title="The Intelligence Leaderboard"
+                description="Aggregating benchmark results from MMLU, HumanEval, GSM8K, and 10+ more sources into one Overall Intelligence Score per model."
+            />
             {/* Hero Section */}
             <section className="hero-gradient relative overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-b from-brand-500/5 to-transparent" />

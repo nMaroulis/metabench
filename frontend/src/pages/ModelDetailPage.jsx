@@ -8,6 +8,7 @@ import api from '../services/api';
 import ScoreBar from '../components/ScoreBar';
 import BenchmarkRadarChart from '../charts/RadarChart';
 import TechnicalDetails from '../components/TechnicalDetails';
+import SEO from '../components/SEO';
 
 export default function ModelDetailPage() {
     const { modelName } = useParams();
@@ -118,6 +119,11 @@ export default function ModelDetailPage() {
 
     return (
         <div className="page-container">
+            <SEO
+                title={`${model.name} - Performance & Benchmarks`}
+                description={`Detailed performance metrics, benchmark scores, and technical specifications for ${model.name} by ${model.provider}.`}
+                keywords={`${model.name}, ${model.provider}, benchmarks, ${model.architecture || ''}, LLM`}
+            />
             {/* Back link */}
             <Link to="/leaderboard" className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-brand-500 transition-colors mb-6">
                 <ArrowLeft className="w-4 h-4" /> Back to Leaderboard

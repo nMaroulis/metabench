@@ -4,6 +4,7 @@ import api from '../services/api';
 import BenchmarkRadarChart from '../charts/RadarChart';
 import BenchmarkBarChart from '../charts/BarChart';
 import ScoreBar from '../components/ScoreBar';
+import SEO from '../components/SEO';
 
 export default function ComparePage() {
     const [allModels, setAllModels] = useState([]);
@@ -55,6 +56,10 @@ export default function ComparePage() {
 
     return (
         <div className="page-container">
+            <SEO
+                title="Compare LLMs"
+                description="Side-by-side comparison of Large Language Models. Compare benchmarks, cost, and performance of GPT-4, Claude, Gemini, and more."
+            />
             {/* Header */}
             <div className="mb-8">
                 <h1 className="section-title flex items-center gap-3">

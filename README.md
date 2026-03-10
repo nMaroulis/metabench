@@ -12,7 +12,7 @@
 
 ### The Metacritic for LLMs
 
-MetaBench aggregates **composite indexes** from well-known evaluation sites (e.g. Artificial Analysis, Chatbot Arena) alongside **raw benchmark scores** (MMLU-Pro, GPQA, LiveCodeBench, AIME, and 15+ more) to compute a single **Overall Intelligence Score** for every model — enabling fair, cross-source ranking on one unified leaderboard.
+MetaBench aggregates **composite indexes** from well-known evaluation sites (e.g. Artificial Analysis, Chatbot Arena) alongside **raw benchmark scores** (MMLU-Pro, GPQA, LiveCodeBench, AIME, and 15+ more) to compute a single **Overall Intelligence Score** for every model, enabling fair, cross-source ranking on one unified leaderboard.
 
 *Scoring methodology whitepaper — TBA.*
 

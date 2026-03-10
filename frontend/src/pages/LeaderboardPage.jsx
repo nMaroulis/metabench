@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Trophy, Filter, Download } from 'lucide-react';
 import api from '../services/api';
 import LeaderboardTable from '../components/LeaderboardTable';
+import SEO from '../components/SEO';
 
 export default function LeaderboardPage() {
     const [entries, setEntries] = useState([]);
@@ -51,6 +52,10 @@ export default function LeaderboardPage() {
 
     return (
         <div className="page-container">
+            <SEO
+                title="LLM Intelligence Leaderboard"
+                description="The ultimate leaderboard for Large Language Models. Compare GPT-4, Claude, Gemini and more based on aggregated benchmark scores."
+            />
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
                 <div>

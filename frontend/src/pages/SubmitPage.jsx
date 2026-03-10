@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Send, CheckCircle, AlertCircle } from 'lucide-react';
 import api from '../services/api';
+import SEO from '../components/SEO';
 
 export default function SubmitPage() {
     const [form, setForm] = useState({
@@ -57,6 +58,10 @@ export default function SubmitPage() {
 
     return (
         <div className="page-container max-w-2xl">
+            <SEO
+                title="Submit Evaluation"
+                description="Contribute your own LLM benchmark results to MetaBench. Help build the most comprehensive intelligence index for AI models."
+            />
             <div className="mb-8">
                 <h1 className="section-title flex items-center gap-3">
                     <Send className="w-8 h-8 text-brand-500" />

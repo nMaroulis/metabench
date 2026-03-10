@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://metabench.com/sitemap.xml
