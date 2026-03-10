@@ -21,6 +21,7 @@ class Model(Base):
     release_date = Column(String, default="")
     overall_score = Column(Float, default=0.0)
     confidence = Column(Float, default=0.0)
+    technical_details = Column(JSON, nullable=True)
     created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
     scores = relationship("BenchmarkScore", back_populates="model", cascade="all, delete-orphan")

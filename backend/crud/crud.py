@@ -172,7 +172,7 @@ def recompute_overall_scores(db: Session):
     """Recomputer overall scores for all models."""
     models = db.query(db_models.Model).all()
     for model in models:
-        scores = get_scores_for_model(db, model.name)
+        scores = get_scores_for_model(db, str(model.name))
         if scores:
             overall, confidence = compute_weighted_overall_score(scores, DEFAULT_WEIGHTS)
             model.overall_score = overall
@@ -188,7 +188,7 @@ def get_all_data_for_export(db: Session):
     models = db.query(db_models.Model).order_by(desc(db_models.Model.overall_score)).all()
     export_data = []
     for model in models:
-        scores = get_scores_for_model(db, model.name)
+        scores = get_scores_for_model(db, str(model.name))
         model_data = {
             "name": model.name,
             "slug": model.slug,

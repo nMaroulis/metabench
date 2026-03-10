@@ -34,8 +34,8 @@ def update_database():
             canonical_name = model.name
 
             # --- Update Pricing ---
-            if canonical_name in pricing_data:
-                pricing = pricing_data[canonical_name]
+            if str(canonical_name) in pricing_data:
+                pricing = pricing_data[str(canonical_name)]
 
                 # Make sure the relationship exists
                 if not model.pricing:
@@ -67,8 +67,8 @@ def update_database():
                     model.open_router_id = pricing["openrouter_id"]
 
             # --- Update Arena Elo Score ---
-            if canonical_name in elo_data:
-                new_elo = elo_data[canonical_name]
+            if str(canonical_name) in elo_data:
+                new_elo = elo_data[str(canonical_name)]
                 # Find Arena Elo benchmark
                 arena_bench = db.query(Benchmark).filter(Benchmark.name == "Arena Elo").first()
                 if arena_bench:
@@ -82,7 +82,7 @@ def update_database():
                         .first()
                     )
 
-                    normalized_elo = normalize_score(new_elo, arena_bench.max_score)
+                    normalized_elo = normalize_score(float(new_elo), float(arena_bench.max_score))  # type: ignore
 
                     if score_entry:
                         score_entry.raw_score = new_elo

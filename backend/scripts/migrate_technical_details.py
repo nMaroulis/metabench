@@ -221,13 +221,13 @@ def migrate_db():
         for model in models:
             # Generate the technical details
             new_details = get_technical_details(
-                model_name=model.name,
-                model_provider=model.provider,
-                model_release_date=model.release_date,
-                model_parameters=model.parameters,
-                model_architecture=model.architecture,
-                model_license_type=model.license_type,
-                model_context_window=model.performance.context_window if model.performance else 0,
+                model_name=str(model.name),
+                model_provider=str(model.provider),
+                model_release_date=str(model.release_date),
+                model_parameters=str(model.parameters),
+                model_architecture=str(model.architecture),
+                model_license_type=str(model.license_type),
+                model_context_window=int(model.performance.context_window) if model.performance else 0,
             )
 
             # Update

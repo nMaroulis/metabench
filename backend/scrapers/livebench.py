@@ -59,9 +59,10 @@ def fetch_livebench_scores() -> dict[str, dict]:
                 canonical = LIVEBENCH_NAME_MAP.get(model_name, model_name)
 
                 scores = {}
-                for field in reader.fieldnames:
-                    if field == "model":
-                        continue
+                if reader.fieldnames:
+                    for field in reader.fieldnames:
+                        if field == "model":
+                            continue
                     val = row.get(field, "").strip()
                     if val and val != "-":
                         try:
