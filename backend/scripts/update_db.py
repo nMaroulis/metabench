@@ -1,7 +1,6 @@
 """
 Update Script for MetaBench Database
-Runs all scrapers to fetch the latest model pricing and scores,
-then updates the SQLite database.
+Runs all scrapers to fetch the latest model pricing and scores, then updates the SQLite database.
 """
 
 from database import SessionLocal

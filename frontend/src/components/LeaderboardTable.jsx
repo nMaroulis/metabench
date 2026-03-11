@@ -99,15 +99,31 @@ export default function LeaderboardTable({ entries, showBenchmark = false }) {
                                     </span>
                                 </td>
                                 <td className="px-6 py-4">
-                                    <Link
-                                        to={`/model/${encodeURIComponent(entry.model.name)}`}
-                                        className="text-sm font-semibold hover:text-brand-500 transition-colors"
-                                    >
-                                        {entry.model.name}
-                                    </Link>
-                                    {entry.model.parameters && (
-                                        <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{entry.model.parameters}</p>
-                                    )}
+                                    <div className="flex flex-col">
+                                        <Link
+                                            to={`/model/${encodeURIComponent(entry.model.name)}`}
+                                            className="text-sm font-semibold hover:text-brand-500 transition-colors"
+                                        >
+                                            {entry.model.name}
+                                        </Link>
+                                        <div className="flex items-center gap-1.5 text-[9px] sm:text-[11px] font-medium text-gray-400 dark:text-gray-500 mt-0.5">
+                                            <span className={
+                                                entry.model.license_type === 'Open Source' 
+                                                    ? 'text-emerald-500/70' 
+                                                    : entry.model.license_type === 'Proprietary'
+                                                    ? 'text-blue-500/60 dark:text-blue-400/60'
+                                                    : 'text-gray-400/50'
+                                            }>
+                                                {(entry.model.license_type || 'unknown').toLowerCase()}
+                                            </span>
+                                            {entry.model.parameters && entry.model.parameters !== 'Unknown' && (
+                                                <>
+                                                    <span className="text-gray-300 dark:text-gray-700 font-bold">·</span>
+                                                    <span>{entry.model.parameters.toLowerCase()}</span>
+                                                </>
+                                            )}
+                                        </div>
+                                    </div>
                                 </td>
                                 <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">{entry.model.provider}</td>
                                 <td className="px-6 py-4">

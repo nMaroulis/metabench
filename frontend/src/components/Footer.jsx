@@ -60,7 +60,7 @@ export default function Footer() {
                                 </a>
                             </li>
                             <li>
-                                <a href="https://github.com" target="_blank" rel="noopener noreferrer"
+                                <a href="https://github.com/nMaroulis/metabench" target="_blank" rel="noopener noreferrer"
                                     className="text-sm text-gray-600 dark:text-gray-400 hover:text-brand-500 transition-colors inline-flex items-center gap-1">
                                     GitHub <Github className="w-3 h-3" />
                                 </a>

@@ -13,6 +13,32 @@ from normalization import (
 )
 from sqlalchemy.orm import Session
 
+OPEN_SOURCE_PROVIDERS = {
+    "Meta",
+    "Mistral AI",
+    "Alibaba",
+    "DeepSeek",
+    "ByteDance Seed",
+}
+
+CLOSED_SOURCE_PROVIDERS = {
+    "OpenAI",
+    "Anthropic",
+    "Google",
+}
+
+
+def get_license_type(model_data: dict) -> str:
+    """Classify model as Proprietary or Open Source based on provider."""
+    provider = model_data.get("model_creator", {}).get("name")
+
+    if provider in OPEN_SOURCE_PROVIDERS:
+        return "Open Source"
+    if provider in CLOSED_SOURCE_PROVIDERS:
+        return "Proprietary"
+
+    return "Unknown"
+
 
 def get_technical_details(
     model_name: str,
@@ -479,9 +505,11 @@ def seed_database(db: Session):
             db.flush()
         benchmark_objs[b_data["name"]] = benchmark
 
-    # If models already exist, we're done (seed only runs once for models)
+    # If models already exist, we'll skip creating them but for this update
+    # we might want to ensure license_type is populated for existing ones if needed.
+    # However, the user asked to update seed_data.py logic for new seeds.
     existing_model = db.query(Model).first()
-    if existing_model:
+    if existing_model and not any(m.license_type == "Unknown" or not m.license_type for m in db.query(Model).all()):
         return
 
     # Fetch models from Artificial Analysis
@@ -497,13 +525,16 @@ def seed_database(db: Session):
         price_out = m.get("pricing", {}).get("price_1m_output_tokens", 0)
         speed = m.get("median_time_to_first_answer_token", 0)
 
+        # Determine license type
+        license_type = get_license_type(m)
+
         tech_details = get_technical_details(
             model_name=m.get("name", ""),
             model_provider=m.get("model_creator", {}).get("name", "Unknown"),
             model_release_date=m.get("release_date", "Unknown"),
             model_parameters="Unknown",
             model_architecture="Unknown",
-            model_license_type="Unknown",
+            model_license_type=license_type,
             model_context_window=0,
         )
 
@@ -518,38 +549,66 @@ def seed_database(db: Session):
         # Blended pricing
         blended = m.get("pricing", {}).get("price_1m_blended_3_to_1")
 
-        model = Model(
-            name=m.get("name", "Unknown"),
-            slug=m.get("slug", ""),
-            provider=m.get("model_creator", {}).get("name", "Unknown"),
-            model_creator_slug=m.get("model_creator", {}).get("slug", ""),
-            description=m.get("slug", ""),
-            parameters="Unknown",
-            architecture="Unknown",
-            license_type="Unknown",
-            release_date=m.get("release_date"),
-        )
-        db.add(model)
+        # Try to find existing model by name
+        model = db.query(Model).filter(Model.name == m.get("name")).first()
+
+        if model:
+            # Update existing model
+            model.slug = m.get("slug", "")
+            model.provider = m.get("model_creator", {}).get("name", "Unknown")
+            model.model_creator_slug = m.get("model_creator", {}).get("slug", "")
+            model.license_type = license_type
+            model.release_date = m.get("release_date")
+        else:
+            # Create new model
+            model = Model(
+                name=m.get("name", "Unknown"),
+                slug=m.get("slug", ""),
+                provider=m.get("model_creator", {}).get("name", "Unknown"),
+                model_creator_slug=m.get("model_creator", {}).get("slug", ""),
+                description=m.get("slug", ""),
+                parameters="Unknown",
+                architecture="Unknown",
+                license_type=license_type,
+                release_date=m.get("release_date"),
+            )
+            db.add(model)
+
         db.flush()
 
-        pricing = ModelPricing(
-            model_id=model.id,
-            cost_per_1m_input_tokens=price_in,
-            cost_per_1m_output_tokens=price_out,
-            cost_per_1m_blended=blended,
-        )
-        db.add(pricing)
+        # Update or create pricing
+        if not model.pricing:
+            pricing = ModelPricing(
+                model_id=model.id,
+                cost_per_1m_input_tokens=price_in,
+                cost_per_1m_output_tokens=price_out,
+                cost_per_1m_blended=blended,
+            )
+            db.add(pricing)
+        else:
+            model.pricing.cost_per_1m_input_tokens = price_in
+            model.pricing.cost_per_1m_output_tokens = price_out
+            model.pricing.cost_per_1m_blended = blended
 
-        performance = ModelPerformance(
-            model_id=model.id,
-            median_output_tokens_per_second=median_otps,
-            median_ttft_seconds=median_ttft,
-            median_ttfa_seconds=median_ttfa,
-            avg_latency_ms=speed * 1000 if speed else 0,
-            context_window=0,
-        )
-        db.add(performance)
+        # Update or create performance
+        if not model.performance:
+            performance = ModelPerformance(
+                model_id=model.id,
+                median_output_tokens_per_second=median_otps,
+                median_ttft_seconds=median_ttft,
+                median_ttfa_seconds=median_ttfa,
+                avg_latency_ms=speed * 1000 if speed else 0,
+                context_window=0,
+            )
+            db.add(performance)
+        else:
+            model.performance.median_output_tokens_per_second = median_otps
+            model.performance.median_ttft_seconds = median_ttft
+            model.performance.median_ttfa_seconds = median_ttfa
+            model.performance.avg_latency_ms = speed * 1000 if speed else 0
 
+        # Update technical specs (delete and recreate for simplicity)
+        db.query(TechnicalSpec).filter(TechnicalSpec.model_id == model.id).delete()
         for sec in tech_details:
             section_title = sec["title"]
             for fact in sec["facts"]:
@@ -562,23 +621,41 @@ def seed_database(db: Session):
                 db.add(spec)
 
         # Map scores and populate missing fields dummy values
-        scores_data = populate_missing_scores(map_aa_scores(evals))
+        # scores_data = populate_missing_scores(map_aa_scores(evals))
 
+        # Map Scores
+        scores_data = map_aa_scores(evals)
         score_list = []
         for bench_name, raw_score in scores_data.items():
             benchmark = benchmark_objs.get(bench_name)
             if not benchmark:
                 continue
             normalized = normalize_score(raw_score, benchmark.max_score)
-            score = BenchmarkScore(
-                model_id=model.id,
-                benchmark_id=benchmark.id,
-                raw_score=raw_score,
-                normalized_score=normalized,
-                language="en",
-                evaluation_date=model.release_date,
+
+            # Check for existing score
+            existing_score = (
+                db.query(BenchmarkScore)
+                .filter(BenchmarkScore.model_id == model.id, BenchmarkScore.benchmark_id == benchmark.id)
+                .first()
             )
-            db.add(score)
+
+            if existing_score:
+                # Update existing score
+                existing_score.raw_score = raw_score
+                existing_score.normalized_score = normalized
+                existing_score.evaluation_date = model.release_date
+            else:
+                # Create new score
+                score = BenchmarkScore(
+                    model_id=model.id,
+                    benchmark_id=benchmark.id,
+                    raw_score=raw_score,
+                    normalized_score=normalized,
+                    language="en",
+                    evaluation_date=model.release_date,
+                )
+                db.add(score)
+
             score_list.append(
                 {
                     "benchmark_name": bench_name,
