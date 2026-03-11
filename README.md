@@ -113,11 +113,16 @@ metabench/
 │   ├── db/database.py       # SQLAlchemy engine + session
 │   ├── models.py            # DB models (Model, Benchmark, Score)
 │   ├── schemas.py           # Pydantic request/response schemas
-│   ├── normalization.py     # Score normalization + weighted scoring
 │   ├── crud/                # Database operations
-│   ├── scripts/seed_data.py # Sample data (15 LLMs, 12 benchmarks)
+│   ├── services/            # Business logic
+│   │   ├── scoring.py       # Score normalization + weighted scoring
+│   │   ├── enrichment.py    # LLM-based model metadata research
+│   │   └── fetch_models.py  # Model data acquisition
+│   ├── scripts/             # Maintenance & seeding
+│   │   ├── seed_data.py     # Database seeding (LLMs + Benchmarks)
+│   │   └── update_db.py     # Background update logic
 │   ├── api/routers.py       # All API route handlers
-│   ├── clients/             # Benchmark clients
+│   ├── clients/             # External benchmark scrapers
 │   └── tests/               # Unit tests
 ├── frontend/
 │   ├── src/

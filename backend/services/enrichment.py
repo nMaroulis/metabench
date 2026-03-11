@@ -64,12 +64,22 @@ def enrich_model_metadata(model_name: str, provider: str) -> ModelMetadataEnrich
             content = response.choices[0].message.content
         elif os.getenv("ANTHROPIC_API_KEY"):
             client = Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
-            response = client.messages.create(
-                model="claude-3-5-sonnet-latest", max_tokens=1000, messages=[{"role": "user", "content": prompt}]
+            anthropic_response = client.messages.create(
+                model="claude-3-5-sonnet-latest",
+                max_tokens=1000,
+                messages=[{"role": "user", "content": prompt}],
             )
-            content = response.content[0].text
+            # Handle multiple response blocks safely
+            content_parts = []
+            for block in anthropic_response.content:
+                if hasattr(block, "text"):
+                    content_parts.append(block.text)
+            content = "".join(content_parts) if content_parts else None
         else:
             print("No API keys found for enrichment.")
+            return None
+
+        if content is None:
             return None
 
         # Extract JSON
