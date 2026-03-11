@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from api.routers import router
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
-from database import Base, SessionLocal, engine
+from db.database import Base, SessionLocal, engine
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from scripts.seed_data import seed_database

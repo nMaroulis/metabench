@@ -4,7 +4,7 @@ import sys
 # Add parent dir to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from normalization import (
+from services.scoring import (
     DEFAULT_WEIGHTS,
     compute_weighted_overall_score,
     normalize_score,

@@ -3,7 +3,7 @@ import io
 
 import schemas
 from crud import crud
-from database import get_db
+from db.database import get_db
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from sqlalchemy.orm import Session
 

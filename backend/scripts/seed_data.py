@@ -1,5 +1,6 @@
 from typing import Any
 
+from db.database import SessionLocal
 from models import (
     Benchmark,
     BenchmarkScore,
@@ -8,7 +9,8 @@ from models import (
     ModelPricing,
     TechnicalSpec,
 )
-from normalization import (
+from services.enrichment import enrich_model_metadata
+from services.scoring import (
     DEFAULT_WEIGHTS,
     compute_weighted_overall_score,
     normalize_score,
@@ -566,11 +568,16 @@ def seed_database(db: Session) -> None:
             db.flush()
         benchmark_objs[b_data["name"]] = benchmark
 
-    # If models already exist, we'll skip creating them but for this update
-    # we might want to ensure license_type is populated for existing ones if needed.
-    # However, the user asked to update seed_data.py logic for new seeds.
-    existing_model = db.query(Model).first()
-    if existing_model and not any(m.license_type == "Unknown" or not m.license_type for m in db.query(Model).all()):
+    # If models already exist, we'll check if any need enrichment.
+    models_to_enrich = (
+        db.query(Model)
+        .filter((Model.license_type == "Unknown") | (Model.parameters == "Unknown") | (Model.architecture == "Unknown"))
+        .all()
+    )
+
+    # If no models need enrichment and models exist, we can potentially skip fetching.
+    # However, for the first run or if we want to ensure everything is up to date, we fetch.
+    if not models_to_enrich and db.query(Model).first():
         return
 
     # Fetch models from Artificial Analysis
@@ -586,17 +593,36 @@ def seed_database(db: Session) -> None:
         price_out = m.get("pricing", {}).get("price_1m_output_tokens", 0)
         speed = m.get("median_time_to_first_answer_token", 0)
 
-        # Determine license type
+        # Determine initial license type and values
         license_type = get_license_type(m)
+        current_params = "Unknown"
+        current_arch = "Unknown"
+        current_context = 0
+        current_license = license_type
+        current_desc = m.get("slug", "")
+
+        # LLM Enrichment for missing data
+        enriched = None
+
+        # Check if we should enrich (e.g., if basic info is unknown)
+        if current_params == "Unknown" or current_arch == "Unknown" or current_license == "Unknown":
+            print(f"Enriching metadata for {m.get('name')}...")
+            enriched = enrich_model_metadata(m.get("name", ""), m.get("model_creator", {}).get("name", "Unknown"))
+            if enriched:
+                current_params = enriched.parameters
+                current_arch = enriched.architecture
+                current_context = enriched.context_window
+                current_license = enriched.license_type
+                current_desc = enriched.description
 
         tech_details = get_technical_details(
             model_name=m.get("name", ""),
             model_provider=m.get("model_creator", {}).get("name", "Unknown"),
             model_release_date=m.get("release_date", "Unknown"),
-            model_parameters="Unknown",
-            model_architecture="Unknown",
-            model_license_type=license_type,
-            model_context_window=0,
+            model_parameters=current_params,
+            model_architecture=current_arch,
+            model_license_type=current_license,
+            model_context_window=current_context,
         )
 
         # Extract evaluations (including composite indexes)
@@ -618,8 +644,11 @@ def seed_database(db: Session) -> None:
             model.slug = m.get("slug", "")
             model.provider = m.get("model_creator", {}).get("name", "Unknown")
             model.model_creator_slug = m.get("model_creator", {}).get("slug", "")
-            model.license_type = license_type
+            model.license_type = current_license
             model.release_date = m.get("release_date")
+            model.parameters = current_params
+            model.architecture = current_arch
+            model.description = current_desc
         else:
             # Create new model
             model = Model(
@@ -627,10 +656,10 @@ def seed_database(db: Session) -> None:
                 slug=m.get("slug", ""),
                 provider=m.get("model_creator", {}).get("name", "Unknown"),
                 model_creator_slug=m.get("model_creator", {}).get("slug", ""),
-                description=m.get("slug", ""),
-                parameters="Unknown",
-                architecture="Unknown",
-                license_type=license_type,
+                description=current_desc,
+                parameters=current_params,
+                architecture=current_arch,
+                license_type=current_license,
                 release_date=m.get("release_date"),
             )
             db.add(model)
@@ -667,6 +696,8 @@ def seed_database(db: Session) -> None:
             model.performance.median_ttft_seconds = median_ttft
             model.performance.median_ttfa_seconds = median_ttfa
             model.performance.avg_latency_ms = speed * 1000 if speed else 0
+            if current_context > 0:
+                model.performance.context_window = current_context
 
         # Update technical specs (delete and recreate for simplicity)
         db.query(TechnicalSpec).filter(TechnicalSpec.model_id == model.id).delete()
@@ -729,3 +760,11 @@ def seed_database(db: Session) -> None:
         model.confidence = confidence
 
     db.commit()
+
+
+if __name__ == "__main__":
+    db = SessionLocal()
+    try:
+        seed_database(db)
+    finally:
+        db.close()

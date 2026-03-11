@@ -11,3 +11,5 @@ python-dotenv==1.2.2
 requests==2.32.5
 ruff==0.15.5
 ty==0.0.21
+openai==1.61.1
+anthropic==0.45.2

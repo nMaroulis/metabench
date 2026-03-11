@@ -3,15 +3,15 @@ Update Script for MetaBench Database
 Runs all scrapers to fetch the latest model pricing and scores, then updates the SQLite database.
 """
 
-from database import SessionLocal
+from db.database import SessionLocal
 from models import Benchmark, BenchmarkScore, Model, ModelPerformance, ModelPricing
-from normalization import (
+from scrapers.chatbot_arena import fetch_arena_elo_ratings
+from scrapers.openrouter import get_pricing_map
+from services.scoring import (
     DEFAULT_WEIGHTS,
     compute_weighted_overall_score,
     normalize_score,
 )
-from scrapers.chatbot_arena import fetch_arena_elo_ratings
-from scrapers.openrouter import get_pricing_map
 
 
 def update_database():

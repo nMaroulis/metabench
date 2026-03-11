@@ -1,6 +1,6 @@
 import models as db_models
 import schemas
-from normalization import (
+from services.scoring import (
     DEFAULT_WEIGHTS,
     compute_weighted_overall_score,
 )

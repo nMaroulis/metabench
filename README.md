@@ -110,7 +110,7 @@ docker-compose up --build
 metabench/
 ├── backend/
 │   ├── main.py              # FastAPI entry point
-│   ├── database.py          # SQLAlchemy engine + session
+│   ├── db/database.py       # SQLAlchemy engine + session
 │   ├── models.py            # DB models (Model, Benchmark, Score)
 │   ├── schemas.py           # Pydantic request/response schemas
 │   ├── normalization.py     # Score normalization + weighted scoring

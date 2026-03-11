@@ -1,4 +1,4 @@
-from database import SessionLocal
+from db.database import SessionLocal
 from models import Model
 
 
