@@ -142,7 +142,7 @@ python -m pytest tests/ -v
 ## 🤝 Contributing
 
 1. Fork the repository
-2. Add new benchmark scrapers in `backend/scrapers/`
+2. Add new benchmarks or indexes in `backend/clients/`
 3. Submit community evaluations via the web form or API
 4. Open a PR with your changes
 

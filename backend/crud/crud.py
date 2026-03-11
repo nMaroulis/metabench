@@ -113,7 +113,14 @@ def get_leaderboard(
         if not benchmark:
             return {"task": task, "language": language, "entries": []}
 
-        query = db.query(db_models.BenchmarkScore).filter(db_models.BenchmarkScore.benchmark_id == benchmark.id)
+        query = (
+            db.query(db_models.BenchmarkScore)
+            .options(
+                joinedload(db_models.BenchmarkScore.model).joinedload(db_models.Model.pricing),
+                joinedload(db_models.BenchmarkScore.model).joinedload(db_models.Model.performance),
+            )
+            .filter(db_models.BenchmarkScore.benchmark_id == benchmark.id)
+        )
         if language:
             query = query.filter(db_models.BenchmarkScore.language == language)
 
@@ -122,10 +129,12 @@ def get_leaderboard(
         for rank, s in enumerate(scores, 1):
             model = db.query(db_models.Model).get(s.model_id)
             if model:
+                # Explicitly validate and dump to ensure relationships are included
+                model_out = schemas.ModelOut.model_validate(model).model_dump()
                 entries.append(
                     {
                         "rank": rank,
-                        "model": model,
+                        "model": model_out,
                         "score": s.normalized_score,
                         "benchmark_name": benchmark.name,
                     }
@@ -133,13 +142,21 @@ def get_leaderboard(
         return {"task": task, "language": language, "entries": entries}
     else:
         # Overall leaderboard
-        models = db.query(db_models.Model).order_by(desc(db_models.Model.overall_score)).limit(limit).all()
+        models = (
+            db.query(db_models.Model)
+            .options(joinedload(db_models.Model.pricing), joinedload(db_models.Model.performance))
+            .order_by(desc(db_models.Model.overall_score))
+            .limit(limit)
+            .all()
+        )
         entries = []
         for rank, m in enumerate(models, 1):
+            # Explicitly validate and dump to ensure relationships are included
+            model_out = schemas.ModelOut.model_validate(m).model_dump()
             entries.append(
                 {
                     "rank": rank,
-                    "model": m,
+                    "model": model_out,
                     "score": m.overall_score,
                     "benchmark_name": None,
                 }

@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowUpDown, ArrowUp, ArrowDown, Search, Zap } from 'lucide-react';
+import { ArrowUpDown, ArrowUp, ArrowDown, Search, Zap, Clock } from 'lucide-react';
 import ScoreBar from './ScoreBar';
 
 export default function LeaderboardTable({ entries, showBenchmark = false }) {
@@ -85,7 +85,7 @@ export default function LeaderboardTable({ entries, showBenchmark = false }) {
                                 <span className="flex items-center gap-1">Cost <SortIcon columnKey="cost" /></span>
                             </th>
                             <th className="px-6 py-3 text-left hidden lg:table-cell cursor-pointer hover:text-gray-700 dark:hover:text-gray-200 transition-colors" onClick={() => handleSort('speed')}>
-                                <span className="flex items-center gap-1">Speed <Zap className="w-3 h-3" /> <SortIcon columnKey="speed" /></span>
+                                <span className="flex items-center gap-1">Speed <Clock className="w-3 h-3" /> <SortIcon columnKey="speed" /></span>
                             </th>
                             <th className="px-6 py-3 text-left hidden lg:table-cell w-48">Score Bar</th>
                         </tr>
@@ -138,7 +138,7 @@ export default function LeaderboardTable({ entries, showBenchmark = false }) {
                                 </td>
                                 <td className="px-6 py-4 hidden lg:table-cell text-sm text-gray-500 dark:text-gray-400">
                                     {entry.model.performance?.median_output_tokens_per_second != null
-                                        ? `${entry.model.performance.median_output_tokens_per_second.toFixed(1)} tok/s`
+                                        ? `${entry.model.performance.median_output_tokens_per_second.toFixed(1)} tokens/s`
                                         : '—'}
                                 </td>
                                 <td className="px-6 py-4 hidden lg:table-cell">

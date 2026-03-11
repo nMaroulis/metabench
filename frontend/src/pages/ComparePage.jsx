@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { GitCompareArrows, Plus, X, Search } from 'lucide-react';
+import { GitCompareArrows, Plus, X, Search, Clock } from 'lucide-react';
 import api from '../services/api';
 import BenchmarkRadarChart from '../charts/RadarChart';
 import BenchmarkBarChart from '../charts/BarChart';
@@ -234,7 +234,7 @@ export default function ComparePage() {
                                             <span className="font-medium">{m.model.name}</span>
                                             <span className="text-gray-500">
                                                 {m.model.performance?.median_output_tokens_per_second != null
-                                                    ? `${m.model.performance.median_output_tokens_per_second.toFixed(1)} tok/s`
+                                                    ? `${m.model.performance.median_output_tokens_per_second.toFixed(1)} tokens/s`
                                                     : 'N/A'}
                                             </span>
                                         </div>

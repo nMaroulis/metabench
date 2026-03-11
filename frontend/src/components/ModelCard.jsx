@@ -77,8 +77,8 @@ export default function ModelCard({ model, rank }) {
                 )}
                 {model.performance?.median_output_tokens_per_second != null && (
                     <span className="flex items-center gap-1">
-                        <Zap className="w-3 h-3" />
-                        {model.performance.median_output_tokens_per_second.toFixed(1)} tok/s
+                        <Clock className="w-3 h-3" />
+                        {model.performance.median_output_tokens_per_second.toFixed(1)} tokens/s
                     </span>
                 )}
                 {model.performance?.context_window != null && (

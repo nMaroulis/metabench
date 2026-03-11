@@ -90,7 +90,7 @@ def compare_models(
 # ---------- Leaderboard ----------
 
 
-@router.get("/leaderboard", tags=["Leaderboard"])
+@router.get("/leaderboard", response_model=schemas.LeaderboardResponse, tags=["Leaderboard"])
 def get_leaderboard(
     task: str | None = None,
     language: str | None = None,
