@@ -171,7 +171,7 @@ export default function ModelDetailPage() {
                     {[
                         { icon: DollarSign, label: 'Input Cost', value: model.pricing?.cost_per_1m_input_tokens != null ? `$${model.pricing.cost_per_1m_input_tokens}/1M` : 'N/A' },
                         { icon: DollarSign, label: 'Output Cost', value: model.pricing?.cost_per_1m_output_tokens != null ? `$${model.pricing.cost_per_1m_output_tokens}/1M` : 'N/A' },
-                        { icon: Clock, label: 'Avg Latency', value: model.performance?.avg_latency_ms != null ? (model.performance.avg_latency_ms < 1000 ? `${model.performance.avg_latency_ms}ms` : `${(model.performance.avg_latency_ms / 1000).toFixed(1)}s`) : 'N/A' },
+                        { icon: Clock, label: 'Output tokens per second', value: model.performance?.median_output_tokens_per_second != null ? `${model.performance.median_output_tokens_per_second.toFixed(1)} tokens/s` : 'N/A' },
                         { icon: Zap, label: 'Context Window', value: model.performance?.context_window != null ? (model.performance.context_window >= 1000000 ? `${(model.performance.context_window / 1000000).toFixed(0)}M tokens` : `${(model.performance.context_window / 1000).toFixed(0)}K tokens`) : 'N/A' },
                     ].map(({ icon: Icon, label, value }) => (
                         <div key={label} className="p-4 rounded-xl bg-gray-50 dark:bg-surface-700/50">

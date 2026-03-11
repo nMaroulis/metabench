@@ -75,10 +75,10 @@ export default function ModelCard({ model, rank }) {
                         ${model.pricing.cost_per_1m_input_tokens}/1M in
                     </span>
                 )}
-                {model.performance?.avg_latency_ms != null && (
+                {model.performance?.median_output_tokens_per_second != null && (
                     <span className="flex items-center gap-1">
-                        <Clock className="w-3 h-3" />
-                        {model.performance.avg_latency_ms < 1000 ? `${model.performance.avg_latency_ms}ms` : `${(model.performance.avg_latency_ms / 1000).toFixed(1)}s`}
+                        <Zap className="w-3 h-3" />
+                        {model.performance.median_output_tokens_per_second.toFixed(1)} tok/s
                     </span>
                 )}
                 {model.performance?.context_window != null && (

@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowUpDown, ArrowUp, ArrowDown, Search } from 'lucide-react';
+import { ArrowUpDown, ArrowUp, ArrowDown, Search, Zap } from 'lucide-react';
 import ScoreBar from './ScoreBar';
 
 export default function LeaderboardTable({ entries, showBenchmark = false }) {
@@ -29,7 +29,7 @@ export default function LeaderboardTable({ entries, showBenchmark = false }) {
                 case 'name': valA = a.model.name.toLowerCase(); valB = b.model.name.toLowerCase(); break;
                 case 'provider': valA = a.model.provider.toLowerCase(); valB = b.model.provider.toLowerCase(); break;
                 case 'cost': valA = a.model.pricing?.cost_per_1m_input_tokens || 999; valB = b.model.pricing?.cost_per_1m_input_tokens || 999; break;
-                case 'latency': valA = a.model.performance?.avg_latency_ms || 99999; valB = b.model.performance?.avg_latency_ms || 99999; break;
+                case 'speed': valA = a.model.performance?.median_output_tokens_per_second || 0; valB = b.model.performance?.median_output_tokens_per_second || 0; break;
                 default: valA = a.score; valB = b.score;
             }
             if (typeof valA === 'string') {
@@ -84,8 +84,8 @@ export default function LeaderboardTable({ entries, showBenchmark = false }) {
                             <th className="px-6 py-3 text-left hidden md:table-cell cursor-pointer hover:text-gray-700 dark:hover:text-gray-200 transition-colors" onClick={() => handleSort('cost')}>
                                 <span className="flex items-center gap-1">Cost <SortIcon columnKey="cost" /></span>
                             </th>
-                            <th className="px-6 py-3 text-left hidden lg:table-cell cursor-pointer hover:text-gray-700 dark:hover:text-gray-200 transition-colors" onClick={() => handleSort('latency')}>
-                                <span className="flex items-center gap-1">Latency <SortIcon columnKey="latency" /></span>
+                            <th className="px-6 py-3 text-left hidden lg:table-cell cursor-pointer hover:text-gray-700 dark:hover:text-gray-200 transition-colors" onClick={() => handleSort('speed')}>
+                                <span className="flex items-center gap-1">Speed <Zap className="w-3 h-3" /> <SortIcon columnKey="speed" /></span>
                             </th>
                             <th className="px-6 py-3 text-left hidden lg:table-cell w-48">Score Bar</th>
                         </tr>
@@ -137,10 +137,8 @@ export default function LeaderboardTable({ entries, showBenchmark = false }) {
                                         : '—'}
                                 </td>
                                 <td className="px-6 py-4 hidden lg:table-cell text-sm text-gray-500 dark:text-gray-400">
-                                    {entry.model.avg_latency_ms != null
-                                        ? entry.model.avg_latency_ms < 1000
-                                            ? `${entry.model.avg_latency_ms}ms`
-                                            : `${(entry.model.avg_latency_ms / 1000).toFixed(1)}s`
+                                    {entry.model.performance?.median_output_tokens_per_second != null
+                                        ? `${entry.model.performance.median_output_tokens_per_second.toFixed(1)} tok/s`
                                         : '—'}
                                 </td>
                                 <td className="px-6 py-4 hidden lg:table-cell">

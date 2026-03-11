@@ -226,22 +226,20 @@ export default function ComparePage() {
                             </div>
                         </div>
                         <div className="glass-card p-6">
-                            <h3 className="text-lg font-display font-bold mb-4">Latency Comparison</h3>
+                            <h3 className="text-lg font-display font-bold mb-4">Speed Comparison</h3>
                             <div className="space-y-4">
                                 {comparisonData.models.map(m => (
                                     <div key={m.model.name}>
                                         <div className="flex justify-between text-sm mb-1">
                                             <span className="font-medium">{m.model.name}</span>
                                             <span className="text-gray-500">
-                                                {m.model.performance?.avg_latency_ms != null
-                                                    ? (m.model.performance.avg_latency_ms < 1000
-                                                        ? `${m.model.performance.avg_latency_ms}ms`
-                                                        : `${(m.model.performance.avg_latency_ms / 1000).toFixed(1)}s`)
+                                                {m.model.performance?.median_output_tokens_per_second != null
+                                                    ? `${m.model.performance.median_output_tokens_per_second.toFixed(1)} tok/s`
                                                     : 'N/A'}
                                             </span>
                                         </div>
                                         <ScoreBar
-                                            score={Math.max(0, 100 - (m.model.performance?.avg_latency_ms || 0) / 100)}
+                                            score={Math.min(100, (m.model.performance?.median_output_tokens_per_second || 0) / 2)}
                                             showLabel={false}
                                             height="h-2"
                                         />

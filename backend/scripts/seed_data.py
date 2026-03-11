@@ -1,3 +1,5 @@
+from typing import Any
+
 from models import (
     Benchmark,
     BenchmarkScore,
@@ -12,6 +14,10 @@ from normalization import (
     normalize_score,
 )
 from sqlalchemy.orm import Session
+
+# -----------------------------------------------------------------------------
+# Model License Classification
+# -----------------------------------------------------------------------------
 
 OPEN_SOURCE_PROVIDERS = {
     "Meta",
@@ -28,8 +34,16 @@ CLOSED_SOURCE_PROVIDERS = {
 }
 
 
-def get_license_type(model_data: dict) -> str:
-    """Classify model as Proprietary or Open Source based on provider."""
+def get_license_type(model_data: dict[str, Any]) -> str:
+    """
+    Classify a model as 'Proprietary' or 'Open Source' based on its provider.
+
+    Args:
+        model_data (dict[str, Any]): Raw model data containing creator information.
+
+    Returns:
+        str: 'Open Source', 'Proprietary', or 'Unknown'.
+    """
     provider = model_data.get("model_creator", {}).get("name")
 
     if provider in OPEN_SOURCE_PROVIDERS:
@@ -40,6 +54,11 @@ def get_license_type(model_data: dict) -> str:
     return "Unknown"
 
 
+# -----------------------------------------------------------------------------
+# Model Technical Details
+# -----------------------------------------------------------------------------
+
+
 def get_technical_details(
     model_name: str,
     model_provider: str,
@@ -48,7 +67,22 @@ def get_technical_details(
     model_architecture: str,
     model_license_type: str,
     model_context_window: int,
-) -> list:
+) -> list[dict[str, Any]]:
+    """
+    Generate a structured list of technical details for a model.
+
+    Args:
+        model_name (str): Name of the model.
+        model_provider (str): Name of the provider.
+        model_release_date (str): Release date string.
+        model_parameters (str): Formatted parameter count.
+        model_architecture (str): Architecture description.
+        model_license_type (str): Determined license type.
+        model_context_window (int): Context window size in tokens.
+
+    Returns:
+        list[dict[str, Any]]: List of sections with fact labels and values.
+    """
     name = (model_name or "").lower()
 
     # Format context window
@@ -246,6 +280,11 @@ def get_technical_details(
     return output
 
 
+# -----------------------------------------------------------------------------
+# Benchmark Data
+# -----------------------------------------------------------------------------
+
+
 BENCHMARKS = [
     {
         "name": "MMLU",
@@ -439,8 +478,16 @@ BENCHMARKS = [
 ]
 
 
-def map_aa_scores(evals: dict) -> dict:
-    """Map Artificial Analysis evaluation keys to local benchmark names."""
+def map_aa_scores(evals: dict[str, Any]) -> dict[str, float]:
+    """
+    Map Artificial Analysis evaluation keys to local benchmark names.
+
+    Args:
+        evals (dict[str, Any]): Raw evaluations dictionary from AA API.
+
+    Returns:
+        dict[str, float]: Mapped scores by benchmark name.
+    """
     if not evals:
         return {}
 
@@ -481,19 +528,33 @@ def map_aa_scores(evals: dict) -> dict:
     return mapped_scores
 
 
-def populate_missing_scores(mapped_scores: dict) -> dict:
-    """Safely populate any missing scores across the known BENCHMARKS."""
+def populate_missing_scores(mapped_scores: dict[str, Any]) -> dict[str, Any]:
+    """
+    Safely populate any missing scores across the known BENCHMARKS with placeholder values.
+
+    Args:
+        mapped_scores (dict[str, Any]): Dictionary of existing scores.
+
+    Returns:
+        dict[str, Any]: Dictionary with all benchmarks populated.
+    """
     from scripts.seed_data import BENCHMARKS  # ensure we know what the system needs
 
     populated = mapped_scores.copy()
     for b in BENCHMARKS:
         if b["name"] not in populated:
-            populated[b["name"]] = 75.0  # Placeholder dummy value
+            populated[str(b["name"])] = 75.0  # Placeholder dummy value
     return populated
 
 
-def seed_database(db: Session):
-    """Seed the database with benchmarks and top LLM models from Artificial Analysis."""
+def seed_database(db: Session) -> None:
+    """
+    Seed the database with benchmarks and top LLM models from Artificial Analysis.
+    This function handles both record creation and updates.
+
+    Args:
+        db (Session): SQLAlchemy database session.
+    """
 
     # Create benchmarks
     benchmark_objs = {}
