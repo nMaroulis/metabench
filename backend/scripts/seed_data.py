@@ -484,16 +484,26 @@ def map_aa_scores(evals: dict[str, Any]) -> dict[str, float]:
     """
     Map Artificial Analysis evaluation keys to local benchmark names.
 
+    This function translates between AA's internal benchmark naming convention
+    and our standardized benchmark names. It handles two types of scores:
+    1. Regular benchmarks (0-1 scale) which are multiplied by 100
+    2. Composite indexes (already 0-100+ scale) which are kept as-is
+
     Args:
         evals (dict[str, Any]): Raw evaluations dictionary from AA API.
+                               Keys are AA's internal benchmark names,
+                               values are scores.
 
     Returns:
-        dict[str, float]: Mapped scores by benchmark name.
+        dict[str, float]: Mapped scores by our benchmark names.
+                         All scores normalized to 0-100 scale.
     """
     if not evals:
         return {}
 
     # Regular benchmarks (0-1 scale, will be multiplied by 100)
+    # These are standard benchmarks where AA returns a decimal score (0.0-1.0)
+    # that we convert to percentage (0-100) for consistency
     benchmark_mapping = {
         "mmlu_pro": "MMLU-Pro",
         "gpqa": "GPQA Diamond",
@@ -510,6 +520,8 @@ def map_aa_scores(evals: dict[str, Any]) -> dict[str, float]:
     }
 
     # Composite indexes (already 0-100+ scale, NOT multiplied by 100)
+    # These are AA's proprietary composite scores that combine multiple benchmarks
+    # They're already on a 0-100+ scale, so we don't multiply them
     index_mapping = {
         "artificial_analysis_intelligence_index": "AA Intelligence Index",
         "artificial_analysis_coding_index": "AA Coding Index",
@@ -517,11 +529,14 @@ def map_aa_scores(evals: dict[str, Any]) -> dict[str, float]:
     }
 
     mapped_scores = {}
+
+    # Process regular benchmarks - convert from decimal to percentage
     for aa_key, bench_name in benchmark_mapping.items():
         if aa_key in evals and evals[aa_key] is not None:
             # Multiply raw decimal stats to fit our local out of 100 system.
             mapped_scores[bench_name] = evals[aa_key] * 100
 
+    # Process composite indexes - already in correct scale
     for aa_key, bench_name in index_mapping.items():
         if aa_key in evals and evals[aa_key] is not None:
             # Already on 0-100+ scale, store as-is
@@ -534,11 +549,16 @@ def populate_missing_scores(mapped_scores: dict[str, Any]) -> dict[str, Any]:
     """
     Safely populate any missing scores across the known BENCHMARKS with placeholder values.
 
+    This function ensures all benchmarks have a value, even if the API didn't provide
+    a score. This is important for consistent UI display and score calculations.
+    Currently uses 75.0 as a neutral placeholder.
+
     Args:
-        mapped_scores (dict[str, Any]): Dictionary of existing scores.
+        mapped_scores (dict[str, Any]): Dictionary of existing scores from API.
 
     Returns:
-        dict[str, Any]: Dictionary with all benchmarks populated.
+        dict[str, Any]: Dictionary with all benchmarks populated,
+                        including placeholders for missing scores.
     """
     from scripts.seed_data import BENCHMARKS  # ensure we know what the system needs
 
@@ -552,8 +572,25 @@ def populate_missing_scores(mapped_scores: dict[str, Any]) -> dict[str, Any]:
 def process_and_add_model(db: Session, m: dict[str, Any], benchmark_objs: dict[str, Benchmark]) -> Model:
     """
     Process a single model's data from AA API, enrich it, and add/update it in the DB.
+
+    This function handles both creation of new models and updating existing ones.
+    It will:
+    1. Extract pricing, performance, and evaluation data from the API response
+    2. Enrich model metadata using LLM if critical fields are unknown
+    3. Create or update the model record with is_active = 1
+    4. Update all related data (pricing, performance, technical specs, benchmarks)
+    5. Compute and store the weighted overall score
+
+    Args:
+        db (Session): SQLAlchemy database session
+        m (dict[str, Any]): Model data from Artificial Analysis API
+        benchmark_objs (dict[str, Benchmark]): Mapping of benchmark names to DB objects
+
+    Returns:
+        Model: The created or updated model instance
     """
-    # Standardize parameters that AA does not expose.
+    # Extract pricing data from API response
+    # Note: AA provides prices per 1M tokens
     price_in = m.get("pricing", {}).get("price_1m_input_tokens", 0)
     price_out = m.get("pricing", {}).get("price_1m_output_tokens", 0)
     speed = m.get("median_time_to_first_answer_token", 0)
@@ -569,7 +606,8 @@ def process_and_add_model(db: Session, m: dict[str, Any], benchmark_objs: dict[s
     # LLM Enrichment for missing data
     enriched = None
 
-    # Check if we should enrich (e.g., if basic info is unknown)
+    # Only call the enrichment service if we're missing critical metadata
+    # This saves API calls and improves performance for models with complete data
     if current_params == "Unknown" or current_arch == "Unknown" or current_license == "Unknown":
         print(f"Enriching metadata for {m.get('name')}...")
         enriched = enrich_model_metadata(m.get("name", ""), m.get("model_creator", {}).get("name", "Unknown"))
@@ -601,7 +639,8 @@ def process_and_add_model(db: Session, m: dict[str, Any], benchmark_objs: dict[s
     # Blended pricing
     blended = m.get("pricing", {}).get("price_1m_blended_3_to_1")
 
-    # Try to find existing model by name
+    # Check if model already exists in DB
+    # We use name as the unique identifier for models
     model = db.query(Model).filter(Model.name == m.get("name")).first()
 
     if model:
@@ -614,7 +653,8 @@ def process_and_add_model(db: Session, m: dict[str, Any], benchmark_objs: dict[s
         model.parameters = current_params
         model.architecture = current_arch
         model.description = current_desc
-        # Ensure it's active if we're seeing it in the seed/update
+        # IMPORTANT: Set is_active = 1 since we're seeing it in the current API data
+        # This ensures that models remain active when they're still available
         model.is_active = 1
     else:
         # Create new model
@@ -634,7 +674,7 @@ def process_and_add_model(db: Session, m: dict[str, Any], benchmark_objs: dict[s
 
     db.flush()
 
-    # Update or create pricing
+    # Handle pricing data - create if doesn't exist, update if it does
     if not model.pricing:
         pricing = ModelPricing(
             model_id=model.id,
@@ -667,7 +707,8 @@ def process_and_add_model(db: Session, m: dict[str, Any], benchmark_objs: dict[s
         if current_context > 0:
             model.performance.context_window = current_context
 
-    # Update technical specs (delete and recreate for simplicity)
+    # Update technical specs
+    # We delete and recreate rather than updating to handle structural changes cleanly
     db.query(TechnicalSpec).filter(TechnicalSpec.model_id == model.id).delete()
     for sec in tech_details:
         section_title = sec["title"]
@@ -680,16 +721,17 @@ def process_and_add_model(db: Session, m: dict[str, Any], benchmark_objs: dict[s
             )
             db.add(spec)
 
-    # Map Scores
+    # Process benchmark scores from API evaluations
     scores_data = map_aa_scores(evals)
-    score_list = []
+    score_list = []  # Collect normalized scores for overall score calculation
     for bench_name, raw_score in scores_data.items():
         benchmark = benchmark_objs.get(bench_name)
         if not benchmark:
             continue
         normalized = normalize_score(raw_score, float(str(benchmark.max_score)))
 
-        # Check for existing score
+        # Check if we already have a score for this model/benchmark combination
+        # This allows us to update existing scores rather than creating duplicates
         existing_score = (
             db.query(BenchmarkScore)
             .filter(BenchmarkScore.model_id == model.id, BenchmarkScore.benchmark_id == benchmark.id)
@@ -713,6 +755,7 @@ def process_and_add_model(db: Session, m: dict[str, Any], benchmark_objs: dict[s
             )
             db.add(score)
 
+        # Track this score for overall score calculation
         score_list.append(
             {
                 "benchmark_name": bench_name,
@@ -720,6 +763,8 @@ def process_and_add_model(db: Session, m: dict[str, Any], benchmark_objs: dict[s
             }
         )
 
+    # Compute weighted overall score based on all available benchmarks
+    # The confidence score indicates how many benchmarks contributed to the overall score
     overall, confidence = compute_weighted_overall_score(score_list, DEFAULT_WEIGHTS)
     model.overall_score = overall
     model.confidence = confidence
@@ -730,43 +775,58 @@ def process_and_add_model(db: Session, m: dict[str, Any], benchmark_objs: dict[s
 def seed_database(db: Session) -> None:
     """
     Seed the database with benchmarks and top LLM models from Artificial Analysis.
-    This function handles both record creation and updates.
+
+    This is the main entry point for initial database population. It:
+    1. Creates all benchmark definitions if they don't exist
+    2. Checks if models need enrichment (optimization to avoid unnecessary API calls)
+    3. Fetches all models from Artificial Analysis API
+    4. Processes each model (create/update with enrichment as needed)
+
+    Note: This function is safe to run multiple times - it will update existing
+    records rather than creating duplicates.
 
     Args:
         db (Session): SQLAlchemy database session.
     """
 
-    # Create benchmarks
+    # Step 1: Ensure all benchmarks exist in the database
+    # We need these before processing models since scores reference benchmarks
     benchmark_objs = {}
     for b_data in BENCHMARKS:
         benchmark = db.query(Benchmark).filter(Benchmark.name == b_data["name"]).first()
         if not benchmark:
+            # Create new benchmark definition
             benchmark = Benchmark(**b_data)
             db.add(benchmark)
-            db.flush()
+            db.flush()  # Flush to get the ID without committing
         benchmark_objs[b_data["name"]] = benchmark
 
-    # If models already exist, we'll check if any need enrichment.
+    # Step 2: Check if we can skip processing (optimization)
+    # If all existing models have complete metadata, we might skip the API fetch
     models_to_enrich = (
         db.query(Model)
         .filter((Model.license_type == "Unknown") | (Model.parameters == "Unknown") | (Model.architecture == "Unknown"))
         .all()
     )
 
-    # If no models need enrichment and models exist, we can potentially skip fetching.
-    # However, for the first run or if we want to ensure everything is up to date, we fetch.
+    # Skip if:
+    # 1. No models need enrichment AND
+    # 2. We already have models in the database
+    # This avoids unnecessary API calls on subsequent runs
     if not models_to_enrich and db.query(Model).first():
         return
 
-    # Fetch models from Artificial Analysis
+    # Step 3: Fetch current model data from Artificial Analysis API
     from services.fetch_models import get_models
 
     models = get_models()
 
-    # Create models and scores dynamically
+    # Step 4: Process each model - create new or update existing
+    # The process_and_add_model function handles all the complex logic
     for m in models:
         process_and_add_model(db, m, benchmark_objs)
 
+    # Commit all changes in a single transaction
     db.commit()
 
 

@@ -154,3 +154,4 @@ __marimo__/
 
 # Database
 *.db.backup
+*.db-journal
