@@ -18,6 +18,15 @@ class ModelMetadataEnrichment(BaseModel):
     multimodal: bool = Field(..., description="Whether the model supports multimodal inputs (vision, audio, etc.)")
     training_data_estimate: str = Field(..., description="Estimated training data size, e.g., '15T tokens', 'Unknown'")
     release_date: str | None = Field(None, description="Release date in YYYY-MM-DD format if available.")
+    model_family: str = Field(..., description="Model family, e.g., 'GPT', 'LLaMA', 'Claude', 'Gemini', 'Unknown'")
+    attention_type: str = Field(
+        ..., description="Attention mechanism, e.g., 'Multi-Head Attention', 'Grouped Query Attention', 'Unknown'"
+    )
+    layers: str = Field(..., description="Number of transformer layers, e.g., '80', '126', 'Unknown'")
+    optimizer: str = Field(..., description="Training optimizer, e.g., 'AdamW', 'Adam', 'Unknown'")
+    quantization_formats: str = Field(
+        ..., description="Supported quantization formats, e.g., 'GGUF, AWQ, GPTQ', 'Proprietary only', 'Unknown'"
+    )
 
 
 def enrich_model_metadata(model_name: str, provider: str) -> ModelMetadataEnrichment | None:
@@ -42,7 +51,12 @@ def enrich_model_metadata(model_name: str, provider: str) -> ModelMetadataEnrich
         "description": "string (1-2 sentence brief technical summary)",
         "multimodal": boolean (true if it natively supports vision/audio/etc),
         "training_data_estimate": "string (e.g., '15T tokens')",
-        "release_date": "string (YYYY-MM-DD if known, otherwise null)"
+        "release_date": "string (YYYY-MM-DD if known, otherwise null)",
+        "model_family": "string (e.g., 'GPT', 'LLaMA', 'Claude', 'Gemini', 'Unknown')",
+        "attention_type": "string (e.g., 'Multi-Head Attention', 'Grouped Query Attention', 'Unknown')",
+        "layers": "string (e.g., '80', '126', 'Unknown')",
+        "optimizer": "string (e.g., 'AdamW', 'Adam', 'Unknown')",
+        "quantization_formats": "string (e.g., 'GGUF, AWQ, GPTQ', 'Proprietary only', 'Unknown')"
     }}
     """
 

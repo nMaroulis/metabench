@@ -35,27 +35,6 @@ CLOSED_SOURCE_PROVIDERS = {
     "Google",
 }
 
-
-def get_license_type(model_data: dict[str, Any]) -> str:
-    """
-    Classify a model as 'Proprietary' or 'Open Source' based on its provider.
-
-    Args:
-        model_data (dict[str, Any]): Raw model data containing creator information.
-
-    Returns:
-        str: 'Open Source', 'Proprietary', or 'Unknown'.
-    """
-    provider = model_data.get("model_creator", {}).get("name")
-
-    if provider in OPEN_SOURCE_PROVIDERS:
-        return "Open Source"
-    if provider in CLOSED_SOURCE_PROVIDERS:
-        return "Proprietary"
-
-    return "Unknown"
-
-
 # -----------------------------------------------------------------------------
 # Model Technical Details
 # -----------------------------------------------------------------------------
@@ -69,9 +48,18 @@ def get_technical_details(
     model_architecture: str,
     model_license_type: str,
     model_context_window: int,
+    model_family: str = "Unknown",
+    attention_type: str = "Unknown",
+    layers: str = "Unknown",
+    optimizer: str = "Unknown",
+    quantization_formats: str = "Unknown",
 ) -> list[dict[str, Any]]:
     """
     Generate a structured list of technical details for a model.
+
+    This function creates a generic template based on the available model data
+    without making hardcoded assumptions about specific model families or
+    architectures.
 
     Args:
         model_name (str): Name of the model.
@@ -81,12 +69,15 @@ def get_technical_details(
         model_architecture (str): Architecture description.
         model_license_type (str): Determined license type.
         model_context_window (int): Context window size in tokens.
+        model_family (str): Model family (e.g., 'GPT', 'LLaMA').
+        attention_type (str): Attention mechanism type.
+        layers (str): Number of transformer layers.
+        optimizer (str): Training optimizer used.
+        quantization_formats (str): Supported quantization formats.
 
     Returns:
         list[dict[str, Any]]: List of sections with fact labels and values.
     """
-    name = (model_name or "").lower()
-
     # Format context window
     context_str = "Unknown"
     if model_context_window:
@@ -95,183 +86,78 @@ def get_technical_details(
         else:
             context_str = f"{int(model_context_window / 1000)}K tokens"
 
-    # Default template structured by the user's requested 20 categories
+    # Generic template based on available data
     details = {
         "Core Model Identity": {
             "Model Name": model_name or "Unknown",
             "Organization": model_provider or "Unknown",
             "Release Date": model_release_date or "Unknown",
-            "Model Family": "LLaMA"
-            if "llama" in name
-            else "GPT"
-            if "gpt" in name
-            else "Qwen"
-            if "qwen" in name
-            else "Mistral"
-            if "mistral" in name
-            else "Claude"
-            if "claude" in name
-            else "Gemini"
-            if "gemini" in name
-            else "DeepSeek"
-            if "deepseek" in name
-            else "Custom / Unspecified",
-            "Model Type": "Dense Transformer",
+            "Model Family": model_family or "Unknown",
+            "Model Type": model_architecture or "Unknown",
             "License": model_license_type or "Unknown",
-            "Multimodal Support": "No",
+            "Multimodal Support": "Unknown",
         },
         "Model Size": {
             "Total Parameters": model_parameters or "Unknown",
-            "Active Parameters per Token": "N/A (Dense)",
-            "Number of Experts": "N/A",
-            "Parameter Density": "Dense",
+            "Active Parameters per Token": "Unknown",
+            "Number of Experts": "Unknown",
+            "Parameter Density": "Unknown",
         },
         "Transformer Architecture": {
-            "Architecture Type": model_architecture or "Decoder-only Transformer",
-            "Layers": "Unknown",
+            "Architecture Type": model_architecture or "Unknown",
+            "Layers": layers or "Unknown",
             "Hidden Size (d_model)": "Unknown",
             "FFN Intermediate Size": "Unknown",
         },
         "Attention Architecture": {
-            "Attention Type": "Multi-Head Attention (MHA)",
+            "Attention Type": attention_type or "Unknown",
             "Number of Attention Heads": "Unknown",
             "Number of KV Heads": "Unknown",
-            "Sliding Window Attention": "No",
+            "Sliding Window Attention": "Unknown",
         },
         "Positional Encoding": {
-            "Type": "RoPE (Rotary Position Embedding)",
+            "Type": "Unknown",
             "RoPE Scaling Method": "Unknown",
         },
         "Context Window": {
             "Maximum Context Length": context_str,
-            "KV Cache Compression": "None",
+            "KV Cache Compression": "Unknown",
         },
         "Feed Forward Network Details": {
-            "Activation Function": "SwiGLU",
-            "FFN Expansion Ratio": "x4 (Standard)",
+            "Activation Function": "Unknown",
+            "FFN Expansion Ratio": "Unknown",
         },
         "Tokenization": {
-            "Tokenizer Type": "BPE (Byte-Pair Encoding)",
+            "Tokenizer Type": "Unknown",
             "Vocabulary Size": "Unknown",
         },
         "Training Dataset": {
             "Total Training Tokens": "Unknown",
-            "Dataset Composition": "Web, Books, Code, Math",
+            "Dataset Composition": "Unknown",
         },
         "Training Process": {
-            "Pretraining Objective": "Next token prediction",
-            "Optimizer": "AdamW",
-            "Mixed Precision Type": "BF16",
+            "Pretraining Objective": "Unknown",
+            "Optimizer": optimizer or "Unknown",
+            "Mixed Precision Type": "Unknown",
         },
         "Post-Training": {
-            "Fine-Tuning": "SFT + RLHF (PPO / DPO)",
+            "Fine-Tuning": "Unknown",
         },
         "Quantization Support": {
-            "Native Precision": "BF16",
-            "Supported Formats": "Not officially specified",
+            "Native Precision": "Unknown",
+            "Supported Formats": quantization_formats or "Unknown",
         },
         "Inference Characteristics": {
             "Memory Footprint": "Unknown",
         },
         "Hardware Requirements": {
             "Minimum VRAM": "Unknown",
-            "Distributed Inference": "Required for >70B",
+            "Distributed Inference": "Unknown",
         },
         "System / Infrastructure": {
-            "Optimizations": "FlashAttention, Continuous Batching, PagedAttention",
+            "Optimizations": "Unknown",
         },
     }
-
-    # Override based on model family
-    if "gpt-4" in name:
-        details["Core Model Identity"]["Model Type"] = "Mixture-of-Experts (MoE)"
-        details["Core Model Identity"]["Multimodal Support"] = "Yes (Native Vision/Audio)"
-        details["Model Size"]["Active Parameters per Token"] = "~200B"
-        details["Model Size"]["Number of Experts"] = "16 (Estimated)"
-        details["Model Size"]["Parameter Density"] = "Sparse MoE"
-        details["Attention Architecture"]["Attention Type"] = "Grouped Query Attention (GQA)"
-        details["Tokenization"]["Tokenizer Type"] = "tiktoken (o200k_base)"
-        details["Tokenization"]["Vocabulary Size"] = "200,000"
-        details["Training Dataset"]["Total Training Tokens"] = "~15T+ tokens"
-        details["Quantization Support"]["Supported Formats"] = "Proprietary (API only)"
-        details["Post-Training"]["Fine-Tuning"] = "RLHF, RL, RLAIF"
-    elif "deepseek-r1" in name or "deepseek-v3" in name:
-        details["Core Model Identity"]["Model Type"] = "Mixture-of-Experts (MoE)"
-        details["Model Size"]["Total Parameters"] = "671B"
-        details["Model Size"]["Active Parameters per Token"] = "37B"
-        details["Model Size"]["Number of Experts"] = "256"
-        details["Model Size"]["Parameter Density"] = "Highly Sparse MoE"
-        details["Transformer Architecture"]["Layers"] = "61"
-        details["Transformer Architecture"]["Hidden Size (d_model)"] = "7168"
-        details["Attention Architecture"]["Attention Type"] = "Multi-head Latent Attention (MLA)"
-        details["Attention Architecture"]["Number of Attention Heads"] = "128"
-        details["Positional Encoding"]["Type"] = "YaRN RoPE"
-        details["Tokenization"]["Tokenizer Type"] = "Byte-level BPE"
-        details["Tokenization"]["Vocabulary Size"] = "129,280"
-        details["Training Dataset"]["Total Training Tokens"] = "14.8T tokens"
-        details["Training Process"]["Optimizer"] = "AdamW"
-        details["Training Process"]["Mixed Precision Type"] = "FP8 Mixed Precision"
-        details["Post-Training"]["Fine-Tuning"] = "Pure RL (GRPO)" if "r1" in name else "SFT + DPO"
-        details["System / Infrastructure"]["Optimizations"] = "FlashAttention-3, MLA, FP8 native"
-        details["Quantization Support"]["Supported Formats"] = "AWQ, GGUF, EXL2, FP8"
-    elif "llama 3" in name or "llama-3" in name or "llama 4" in name:
-        is405b = "405b" in name
-        is70b = "70b" in name
-        is109b = "109b" in name or "scout" in name
-        is400b = "400b" in name or "maverick" in name
-
-        if is400b:
-            details["Model Size"]["Total Parameters"] = "400B"
-        elif is405b:
-            details["Model Size"]["Total Parameters"] = "405B"
-        elif is109b:
-            details["Model Size"]["Total Parameters"] = "109B"
-        elif is70b:
-            details["Model Size"]["Total Parameters"] = "70B"
-        else:
-            details["Model Size"]["Total Parameters"] = "8B"
-
-        if "4 " in name or "-4" in name:
-            details["Core Model Identity"]["Model Type"] = "Mixture-of-Experts (MoE)"
-            details["Model Size"]["Active Parameters per Token"] = "17B"
-            details["Model Size"]["Parameter Density"] = "Sparse MoE"
-
-        details["Transformer Architecture"]["Layers"] = (
-            "126" if (is405b or is400b) else "80" if (is70b or is109b) else "32"
-        )
-        details["Transformer Architecture"]["Hidden Size (d_model)"] = (
-            "16384" if (is405b or is400b) else "8192" if (is70b or is109b) else "4096"
-        )
-        details["Attention Architecture"]["Attention Type"] = "Grouped Query Attention (GQA)"
-        details["Positional Encoding"]["Type"] = "RoPE (Theta: 500k)"
-        details["Tokenization"]["Tokenizer Type"] = "tiktoken (Llama)"
-        details["Tokenization"]["Vocabulary Size"] = "128,256"
-        details["Training Dataset"]["Total Training Tokens"] = "15T+ tokens"
-        details["Quantization Support"]["Supported Formats"] = "GGUF, AWQ, GPTQ, EXL2"
-        details["Inference Characteristics"]["Memory Footprint"] = (
-            "~800GB (FP16)" if is400b or is405b else "~140GB (FP16)" if is70b or is109b else "~16GB (FP16)"
-        )
-        details["Post-Training"]["Fine-Tuning"] = "SFT, Rejection Sampling, PPO/DPO"
-    elif "claude 3" in name:
-        details["Core Model Identity"]["Multimodal Support"] = "Yes (Vision)"
-        details["Training Dataset"]["Total Training Tokens"] = "Proprietary High-Quality Mix"
-        details["Quantization Support"]["Supported Formats"] = "Proprietary (API only)"
-        details["Post-Training"]["Fine-Tuning"] = "Constitutional AI, SFT, RLHF"
-        details["Attention Architecture"]["Attention Type"] = "Grouped Query Attention (GQA) / MQA"
-    elif "gemini" in name:
-        details["Core Model Identity"]["Model Type"] = "Mixture-of-Experts (MoE)"
-        details["Core Model Identity"]["Multimodal Support"] = "Yes (Interleaved Text, Vision, Audio)"
-        details["Attention Architecture"]["Attention Type"] = "Multimodal Block GQA"
-        details["Tokenization"]["Tokenizer Type"] = "SentencePiece (Multimodal)"
-        details["Training Dataset"]["Total Training Tokens"] = "Google Proprietary Multimodal Data"
-        details["Hardware Requirements"]["Minimum VRAM"] = "TPU v5p / TPU v5e Native"
-        details["System / Infrastructure"]["Optimizations"] = "Ring Attention, Blockwise Compute Context"
-    elif "o1" in name or "o3" in name:
-        details["Core Model Identity"]["Model Type"] = "RL Reasoning Model (MoE)"
-        details["Core Model Identity"]["Reasoning Variant"] = "Yes (Chain-of-Thought / RL Search)"
-        details["Training Process"]["Pretraining Objective"] = "RL Search, Next token prediction"
-        details["Post-Training"]["Fine-Tuning"] = "Massive RL, Value Networks"
-        details["Quantization Support"]["Supported Formats"] = "Proprietary (API only)"
 
     # Format as array of categories strictly matching frontend
     output = []
@@ -603,11 +489,10 @@ def process_and_add_model(
     speed = m.get("median_time_to_first_answer_token", 0)
 
     # Determine initial license type and values
-    license_type = get_license_type(m)
     current_params = "Unknown"
     current_arch = "Unknown"
     current_context = 0
-    current_license = license_type
+    current_license = "Unknown"
     current_desc = m.get("slug", "")
 
     # LLM Enrichment for missing data (only for new models)
@@ -636,6 +521,11 @@ def process_and_add_model(
         model_architecture=current_arch,
         model_license_type=current_license,
         model_context_window=current_context,
+        model_family=enriched.model_family if enriched else "Unknown",
+        attention_type=enriched.attention_type if enriched else "Unknown",
+        layers=enriched.layers if enriched else "Unknown",
+        optimizer=enriched.optimizer if enriched else "Unknown",
+        quantization_formats=enriched.quantization_formats if enriched else "Unknown",
     )
 
     # Extract evaluations (including composite indexes)
