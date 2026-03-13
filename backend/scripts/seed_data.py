@@ -9,7 +9,7 @@ from models import (
     ModelPricing,
     TechnicalSpec,
 )
-from services.enrichment import enrich_model_metadata
+from services.enrichment import ModelMetadataEnrichment, enrich_model_metadata
 from services.scoring import (
     DEFAULT_WEIGHTS,
     compute_weighted_overall_score,
@@ -40,51 +40,27 @@ CLOSED_SOURCE_PROVIDERS = {
 # -----------------------------------------------------------------------------
 
 
-def get_technical_details(
+def format_technical_details(
     model_name: str,
     model_provider: str,
     model_release_date: str,
-    model_parameters: str,
-    model_architecture: str,
-    model_license_type: str,
-    model_context_window: int,
-    model_family: str = "Unknown",
-    attention_type: str = "Unknown",
-    layers: str = "Unknown",
-    optimizer: str = "Unknown",
-    quantization_formats: str = "Unknown",
+    tech_details: ModelMetadataEnrichment | None = None,
 ) -> list[dict[str, Any]]:
     """
     Generate a structured list of technical details for a model.
 
-    This function creates a generic template based on the available model data
-    without making hardcoded assumptions about specific model families or
-    architectures.
+    This function creates a generic template based on available model data
+    and enriches it with LLM-provided technical specifications when available.
 
     Args:
         model_name (str): Name of the model.
         model_provider (str): Name of the provider.
         model_release_date (str): Release date string.
-        model_parameters (str): Formatted parameter count.
-        model_architecture (str): Architecture description.
-        model_license_type (str): Determined license type.
-        model_context_window (int): Context window size in tokens.
-        model_family (str): Model family (e.g., 'GPT', 'LLaMA').
-        attention_type (str): Attention mechanism type.
-        layers (str): Number of transformer layers.
-        optimizer (str): Training optimizer used.
-        quantization_formats (str): Supported quantization formats.
+        tech_details (ModelMetadataEnrichment | None): LLM enrichment data if available.
 
     Returns:
         list[dict[str, Any]]: List of sections with fact labels and values.
     """
-    # Format context window
-    context_str = "Unknown"
-    if model_context_window:
-        if model_context_window >= 1000000:
-            context_str = f"{int(model_context_window / 1000000)}M tokens"
-        else:
-            context_str = f"{int(model_context_window / 1000)}K tokens"
 
     # Generic template based on available data
     details = {
@@ -92,70 +68,72 @@ def get_technical_details(
             "Model Name": model_name or "Unknown",
             "Organization": model_provider or "Unknown",
             "Release Date": model_release_date or "Unknown",
-            "Model Family": model_family or "Unknown",
-            "Model Type": model_architecture or "Unknown",
-            "License": model_license_type or "Unknown",
-            "Multimodal Support": "Unknown",
+            "Model Family": tech_details.get_field("model_family") if tech_details else "N/A",
+            "Model Type": tech_details.get_field("architecture") if tech_details else "N/A",
+            "License": tech_details.get_field("license_type") if tech_details else "N/A",
+            "Multimodal Support": "Yes" if (tech_details and tech_details.get_field("multimodal")) else "No",
         },
         "Model Size": {
-            "Total Parameters": model_parameters or "Unknown",
-            "Active Parameters per Token": "Unknown",
-            "Number of Experts": "Unknown",
-            "Parameter Density": "Unknown",
+            "Total Parameters": tech_details.get_field("parameters") if tech_details else "N/A",
+            "Active Parameters per Token": tech_details.get_field("active_parameters_per_token")
+            if tech_details
+            else "N/A",
+            "Number of Experts": tech_details.get_field("number_of_experts") if tech_details else "N/A",
+            "Parameter Density": tech_details.get_field("parameter_density") if tech_details else "N/A",
         },
         "Transformer Architecture": {
-            "Architecture Type": model_architecture or "Unknown",
-            "Layers": layers or "Unknown",
-            "Hidden Size (d_model)": "Unknown",
-            "FFN Intermediate Size": "Unknown",
+            "Architecture Type": tech_details.get_field("architecture") if tech_details else "N/A",
+            "Layers": tech_details.get_field("layers") if tech_details else "N/A",
+            "Hidden Size (d_model)": tech_details.get_field("hidden_size") if tech_details else "N/A",
+            "FFN Intermediate Size": tech_details.get_field("ffn_intermediate_size") if tech_details else "N/A",
         },
         "Attention Architecture": {
-            "Attention Type": attention_type or "Unknown",
-            "Number of Attention Heads": "Unknown",
-            "Number of KV Heads": "Unknown",
-            "Sliding Window Attention": "Unknown",
+            "Attention Type": tech_details.get_field("attention_type") if tech_details else "N/A",
+            "Number of Attention Heads": tech_details.get_field("number_of_attention_heads") if tech_details else "N/A",
+            "Number of KV Heads": tech_details.get_field("number_of_kv_heads") if tech_details else "N/A",
+            "Sliding Window Attention": tech_details.get_field("sliding_window_attention") if tech_details else "N/A",
         },
         "Positional Encoding": {
-            "Type": "Unknown",
-            "RoPE Scaling Method": "Unknown",
+            "Type": tech_details.get_field("positional_encoding_type") if tech_details else "N/A",
+            "RoPE Scaling Method": tech_details.get_field("rope_scaling_method") if tech_details else "N/A",
         },
         "Context Window": {
-            "Maximum Context Length": context_str,
-            "KV Cache Compression": "Unknown",
+            "Maximum Context Length": tech_details.get_field("context_window") if tech_details else "N/A",
+            "KV Cache Compression": tech_details.get_field("kv_cache_compression") if tech_details else "N/A",
         },
         "Feed Forward Network Details": {
-            "Activation Function": "Unknown",
-            "FFN Expansion Ratio": "Unknown",
+            "Activation Function": tech_details.get_field("activation_function") if tech_details else "N/A",
+            "FFN Expansion Ratio": tech_details.get_field("ffn_expansion_ratio") if tech_details else "N/A",
         },
         "Tokenization": {
-            "Tokenizer Type": "Unknown",
-            "Vocabulary Size": "Unknown",
+            "Tokenizer Type": tech_details.get_field("tokenizer_type") if tech_details else "N/A",
+            "Vocabulary Size": tech_details.get_field("vocabulary_size") if tech_details else "N/A",
         },
         "Training Dataset": {
-            "Total Training Tokens": "Unknown",
-            "Dataset Composition": "Unknown",
+            "Total Training Tokens": tech_details.get_field("training_data_estimate") if tech_details else "N/A",
+            "Dataset Composition": tech_details.get_field("dataset_composition") if tech_details else "N/A",
         },
         "Training Process": {
-            "Pretraining Objective": "Unknown",
-            "Optimizer": optimizer or "Unknown",
-            "Mixed Precision Type": "Unknown",
+            "Pretraining Objective": tech_details.get_field("pretraining_objective") if tech_details else "N/A",
+            "Optimizer": tech_details.get_field("optimizer") if tech_details else "N/A",
+            "Mixed Precision Type": tech_details.get_field("mixed_precision_type") if tech_details else "N/A",
         },
         "Post-Training": {
-            "Fine-Tuning": "Unknown",
+            "Fine-Tuning": tech_details.get_field("fine_tuning") if tech_details else "N/A",
         },
         "Quantization Support": {
-            "Native Precision": "Unknown",
-            "Supported Formats": quantization_formats or "Unknown",
+            "Native Precision": tech_details.get_field("native_precision") if tech_details else "N/A",
+            "Supported Formats": tech_details.get_field("quantization_formats") if tech_details else "N/A",
         },
         "Inference Characteristics": {
-            "Memory Footprint": "Unknown",
+            "Memory Footprint": tech_details.get_field("memory_footprint") if tech_details else "N/A",
         },
         "Hardware Requirements": {
-            "Minimum VRAM": "Unknown",
-            "Distributed Inference": "Unknown",
+            "Minimum VRAM": tech_details.get_field("minimum_vram") if tech_details else "N/A",
+            "Distributed Inference": tech_details.get_field("distributed_inference") if tech_details else "N/A",
         },
         "System / Infrastructure": {
-            "Optimizations": "Unknown",
+            "Optimizations": tech_details.get_field("optimizations") if tech_details else "N/A",
         },
     }
 
@@ -489,43 +467,21 @@ def process_and_add_model(
     speed = m.get("median_time_to_first_answer_token", 0)
 
     # Determine initial license type and values
-    current_params = "Unknown"
-    current_arch = "Unknown"
-    current_context = 0
-    current_license = "Unknown"
     current_desc = m.get("slug", "")
 
-    # LLM Enrichment for missing data (only for new models)
-    enriched = None
-
-    # Only call the enrichment service if:
-    # 1. We're not skipping enrichment (i.e., this is a new model)
-    # 2. We're missing critical metadata
-    if not skip_enrichment and (
-        current_params == "Unknown" or current_arch == "Unknown" or current_license == "Unknown"
-    ):
+    enriched_tech_details: ModelMetadataEnrichment | None = None
+    # Enrich LLM technical details using an LLM
+    if not skip_enrichment:
         print(f"Enriching metadata for {m.get('name')}...")
-        enriched = enrich_model_metadata(m.get("name", ""), m.get("model_creator", {}).get("name", "Unknown"))
-        if enriched:
-            current_params = enriched.parameters
-            current_arch = enriched.architecture
-            current_context = enriched.context_window
-            current_license = enriched.license_type
-            current_desc = enriched.description
+        enriched_tech_details = enrich_model_metadata(
+            m.get("name", ""), m.get("model_creator", {}).get("name", "Unknown")
+        )
 
-    tech_details = get_technical_details(
+    tech_details = format_technical_details(
         model_name=m.get("name", ""),
         model_provider=m.get("model_creator", {}).get("name", "Unknown"),
         model_release_date=m.get("release_date", "Unknown"),
-        model_parameters=current_params,
-        model_architecture=current_arch,
-        model_license_type=current_license,
-        model_context_window=current_context,
-        model_family=enriched.model_family if enriched else "Unknown",
-        attention_type=enriched.attention_type if enriched else "Unknown",
-        layers=enriched.layers if enriched else "Unknown",
-        optimizer=enriched.optimizer if enriched else "Unknown",
-        quantization_formats=enriched.quantization_formats if enriched else "Unknown",
+        tech_details=enriched_tech_details,
     )
 
     # Extract evaluations (including composite indexes)
@@ -548,12 +504,12 @@ def process_and_add_model(
         model.slug = m.get("slug", "")
         model.provider = m.get("model_creator", {}).get("name", "Unknown")
         model.model_creator_slug = m.get("model_creator", {}).get("slug", "")
-        model.license_type = current_license
+        model.license_type = enriched_tech_details.get_field("license_type") if enriched_tech_details else "N/A"
         model.release_date = m.get("release_date")
-        model.parameters = current_params
-        model.architecture = current_arch
+        model.parameters = enriched_tech_details.get_field("parameters") if enriched_tech_details else "N/A"
+        model.architecture = enriched_tech_details.get_field("architecture") if enriched_tech_details else "N/A"
         model.description = current_desc
-        # IMPORTANT: Set is_active = 1 since we're seeing it in the current API data
+        # IMPORTANT: Set is_active = 1 since we're seeing it in current API data
         # This ensures that models remain active when they're still available
         model.is_active = 1
     else:
@@ -564,9 +520,9 @@ def process_and_add_model(
             provider=m.get("model_creator", {}).get("name", "Unknown"),
             model_creator_slug=m.get("model_creator", {}).get("slug", ""),
             description=current_desc,
-            parameters=current_params,
-            architecture=current_arch,
-            license_type=current_license,
+            parameters=enriched_tech_details.get_field("parameters") if enriched_tech_details else "N/A",
+            architecture=enriched_tech_details.get_field("architecture") if enriched_tech_details else "N/A",
+            license_type=enriched_tech_details.get_field("license_type") if enriched_tech_details else "N/A",
             release_date=m.get("release_date"),
             is_active=1,
         )
@@ -594,7 +550,7 @@ def process_and_add_model(
             median_ttft_seconds=median_ttft,
             median_ttfa_seconds=median_ttfa,
             avg_latency_ms=speed * 1000 if speed else 0,
-            context_window=0,
+            context_window=enriched_tech_details.get_field("context_window") if enriched_tech_details else 0,
         )
         db.add(performance)
     else:
@@ -602,8 +558,15 @@ def process_and_add_model(
         model.performance.median_ttft_seconds = median_ttft
         model.performance.median_ttfa_seconds = median_ttfa
         model.performance.avg_latency_ms = speed * 1000 if speed else 0
-        if current_context > 0:
-            model.performance.context_window = current_context
+        if enriched_tech_details:
+            model.performance.context_window = enriched_tech_details.get_field("context_window")
+
+    tech_details = format_technical_details(
+        model_name=m.get("name", ""),
+        model_provider=m.get("model_creator", {}).get("name", "Unknown"),
+        model_release_date=m.get("release_date", "Unknown"),
+        tech_details=enriched_tech_details,
+    )
 
     # Update technical specs (only for existing models with valid IDs)
     # For new models, technical specs are added after the model gets its ID on commit

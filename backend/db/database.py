@@ -1,7 +1,9 @@
+import os
+
 from sqlalchemy import create_engine, event, text
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
-DATABASE_URL = "sqlite:///./metabench.db"
+DATABASE_URL = "sqlite:///storage/metabench.db"
 
 # Configure engine with timeout for waiting on locks
 engine = create_engine(
@@ -35,6 +37,18 @@ def get_db():
         yield db
     finally:
         db.close()
+
+
+def check_db_exists() -> bool:
+    """
+    Check if the database file exists.
+    """
+    db_path = DATABASE_URL.replace("sqlite:///", "")
+    # Ensure the storage directory exists
+    storage_dir = os.path.dirname(db_path)
+    if storage_dir and not os.path.exists(storage_dir):
+        os.makedirs(storage_dir, exist_ok=True)
+    return os.path.exists(db_path)
 
 
 def is_database_populated():

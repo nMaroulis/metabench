@@ -11,6 +11,7 @@ database. It implements a three-way sync strategy:
 from db.database import SessionLocal
 from models import Benchmark, Model
 from scripts.seed_data import process_and_add_model, update_model_benchmarks
+from services.fetch_models import get_models
 from sqlalchemy.orm import Session
 
 
@@ -53,8 +54,6 @@ def update_database(db: Session | None = None) -> None:
         benchmark_objs: dict[str, Benchmark] = {str(b.name): b for b in benchmarks}
 
         # 2. Fetch models from API
-        from services.fetch_models import get_models
-
         api_models = get_models()
 
         # Track all model names from API
@@ -70,9 +69,8 @@ def update_database(db: Session | None = None) -> None:
             existing_model = db.query(Model).filter(Model.name == model_name).first()
 
             if not existing_model:
-                # NEW MODEL: Not in our DB yet
+                # NEW MODEL: Not in the DB yet
                 # Add it with full enrichment (LLM call for missing metadata)
-                print(f"Adding new model: {model_name}")
                 process_and_add_model(db, m_data, benchmark_objs)
                 newly_added_model.append(model_name)
             else:
