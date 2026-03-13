@@ -64,7 +64,7 @@ class AnthropicClient(LLMClient):
             response = self.client.messages.create(
                 model=model or self.model,
                 max_tokens=5000,
-                messages=[
+                messages=[  # type: ignore[list-item]
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt},
                 ],

@@ -35,7 +35,49 @@ class ArtificialAnalysisAPIClient:
     def get_models(self) -> list[dict[str, Any]]:
         """
         Returns all models available in Artificial Analysis.
-        """
+
+        Artificial Analysis Model Object Fields:
+            Top-level fields
+                id: Unique UUID identifying the model in the Artificial Analysis database.
+                name: Human-readable model name (e.g., Qwen3 14B (Reasoning)).
+                slug: URL-safe identifier for the model (used as a stable key in APIs).
+                release_date: Official model release date in YYYY-MM-DD format.
+                model_creator: Object describing the organization that created the model.
+                evaluations: Object containing benchmark scores for the model across multiple evaluations.
+                pricing: Object containing pricing information for API usage.
+                median_output_tokens_per_second: Median generation speed measured in output tokens per second.
+                median_time_to_first_token_seconds: Median latency between request and first token returned.
+                median_time_to_first_answer_token: Median time until the first meaningful answer token appears.
+            model_creator Object
+                model_creator.id: Unique identifier of the model creator organization.
+                model_creator.name: Organization name (e.g., Alibaba, OpenAI).
+                model_creator.slug: URL-safe organization identifier.
+            evaluations Object (Benchmarks)
+                artificial_analysis_intelligence_index: Composite score representing overall model intelligence across multiple benchmarks.
+                artificial_analysis_coding_index: Composite score measuring coding ability.
+                artificial_analysis_math_index: Composite score measuring math reasoning ability.
+                mmlu_pro: Score on MMLU-Pro, a harder version of the Massive Multitask Language Understanding benchmark.
+                gpqa: Score on GPQA (Graduate-Level Google-Proof Q&A) benchmark measuring advanced reasoning.
+                hle: Score on Humanity's Last Exam, an extremely difficult reasoning benchmark.
+                livecodebench	Score on LiveCodeBench, measuring real-world coding performance.
+                scicode	Score on SciCode, evaluating scientific programming tasks.
+                math_500	Score on MATH-500, a benchmark of challenging mathematical problems.
+                aime	Score on AIME (American Invitational Mathematics Examination) problems.
+                aime_25	Score on AIME 2025 benchmark variant.
+                ifbench	Score on Instruction Following Benchmark evaluating adherence to instructions.
+                lcr	Score on Long Context Reasoning benchmark measuring reasoning with large context windows.
+                terminalbench_hard	Score on TerminalBench Hard, measuring autonomous coding/terminal tasks.
+                tau2	Score on TAU-Bench v2, evaluating agentic tool-use tasks.
+                - Values are usually 0-1 normalized accuracy scores (except composite indexes which can exceed 100).
+            pricing Object
+                price_1m_input_tokens: Cost in USD for 1 million input tokens.
+                price_1m_output_tokens: Cost in USD for 1 million output tokens.
+                price_1m_blended_3_to_1: Estimated blended cost assuming a 3:1 input-to-output token ratio.
+            Performance Metrics
+                median_output_tokens_per_second: Median generation throughput across providers.
+                median_time_to_first_token_seconds: Median latency to the first token.
+                median_time_to_first_answer_token: Median latency until the first meaningful answer token.
+        """  # noqa: E501
         data = self._get("/data/llms/models")
         return data.get("data", [])
 
