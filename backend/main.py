@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from api.routers import router
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
-from db.database import Base, SessionLocal, engine
+from db.database import Base, SessionLocal, engine, is_database_populated
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from scripts.seed_data import seed_database
@@ -14,16 +14,22 @@ from scripts.update_db import update_database
 async def lifespan(app: FastAPI):
     # Create tables and seed data on startup
     Base.metadata.create_all(bind=engine)
+
     db = SessionLocal()
     try:
-        seed_database(db)
+        if is_database_populated():
+            print("backend :: main :: Database exists, running update_database")
+            update_database(db)
+        else:
+            print("backend :: main :: Database empty, running seed_database")
+            seed_database(db)
     finally:
         db.close()
 
     # Scheduling the background updates
     scheduler = BackgroundScheduler()
-    # Run twice a day (e.g. at 00:00 and 12:00)
-    scheduler.add_job(update_database, trigger=CronTrigger(hour="0,12", minute=0))
+    # Run every 6 hours (e.g. at 00:00, 06:00, 12:00, 18:00)
+    scheduler.add_job(update_database, trigger=CronTrigger(hour="0,6,12,18", minute=0, second=0))
     scheduler.start()
 
     print("--- Background Scheduler Started ---")

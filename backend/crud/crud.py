@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session, joinedload
 
 
 def get_models(db: Session, skip: int = 0, limit: int = 100, provider: str | None = None):
-    query = db.query(db_models.Model)
+    query = db.query(db_models.Model).filter(db_models.Model.is_active == 1)
     if provider:
         query = query.filter(db_models.Model.provider == provider)
     return query.order_by(desc(db_models.Model.overall_score)).offset(skip).limit(limit).all()
@@ -115,11 +115,13 @@ def get_leaderboard(
 
         query = (
             db.query(db_models.BenchmarkScore)
+            .join(db_models.Model)
             .options(
                 joinedload(db_models.BenchmarkScore.model).joinedload(db_models.Model.pricing),
                 joinedload(db_models.BenchmarkScore.model).joinedload(db_models.Model.performance),
             )
             .filter(db_models.BenchmarkScore.benchmark_id == benchmark.id)
+            .filter(db_models.Model.is_active == 1)
         )
         if language:
             query = query.filter(db_models.BenchmarkScore.language == language)
@@ -145,6 +147,7 @@ def get_leaderboard(
         models = (
             db.query(db_models.Model)
             .options(joinedload(db_models.Model.pricing), joinedload(db_models.Model.performance))
+            .filter(db_models.Model.is_active == 1)
             .order_by(desc(db_models.Model.overall_score))
             .limit(limit)
             .all()
@@ -202,7 +205,12 @@ def recompute_overall_scores(db: Session):
 
 def get_all_data_for_export(db: Session):
     """Get all models with their scores for CSV/JSON export."""
-    models = db.query(db_models.Model).order_by(desc(db_models.Model.overall_score)).all()
+    models = (
+        db.query(db_models.Model)
+        .filter(db_models.Model.is_active == 1)
+        .order_by(desc(db_models.Model.overall_score))
+        .all()
+    )
     export_data = []
     for model in models:
         scores = get_scores_for_model(db, str(model.name))

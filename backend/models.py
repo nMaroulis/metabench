@@ -21,6 +21,7 @@ class Model(Base):
     release_date = Column(String, default="")
     overall_score = Column(Float, default=0.0)
     confidence = Column(Float, default=0.0)
+    is_active = Column(Integer, default=1, index=True)  # 1 for active, 0 for archived
     technical_details = Column(JSON, nullable=True)
     created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 

@@ -549,6 +549,184 @@ def populate_missing_scores(mapped_scores: dict[str, Any]) -> dict[str, Any]:
     return populated
 
 
+def process_and_add_model(db: Session, m: dict[str, Any], benchmark_objs: dict[str, Benchmark]) -> Model:
+    """
+    Process a single model's data from AA API, enrich it, and add/update it in the DB.
+    """
+    # Standardize parameters that AA does not expose.
+    price_in = m.get("pricing", {}).get("price_1m_input_tokens", 0)
+    price_out = m.get("pricing", {}).get("price_1m_output_tokens", 0)
+    speed = m.get("median_time_to_first_answer_token", 0)
+
+    # Determine initial license type and values
+    license_type = get_license_type(m)
+    current_params = "Unknown"
+    current_arch = "Unknown"
+    current_context = 0
+    current_license = license_type
+    current_desc = m.get("slug", "")
+
+    # LLM Enrichment for missing data
+    enriched = None
+
+    # Check if we should enrich (e.g., if basic info is unknown)
+    if current_params == "Unknown" or current_arch == "Unknown" or current_license == "Unknown":
+        print(f"Enriching metadata for {m.get('name')}...")
+        enriched = enrich_model_metadata(m.get("name", ""), m.get("model_creator", {}).get("name", "Unknown"))
+        if enriched:
+            current_params = enriched.parameters
+            current_arch = enriched.architecture
+            current_context = enriched.context_window
+            current_license = enriched.license_type
+            current_desc = enriched.description
+
+    tech_details = get_technical_details(
+        model_name=m.get("name", ""),
+        model_provider=m.get("model_creator", {}).get("name", "Unknown"),
+        model_release_date=m.get("release_date", "Unknown"),
+        model_parameters=current_params,
+        model_architecture=current_arch,
+        model_license_type=current_license,
+        model_context_window=current_context,
+    )
+
+    # Extract evaluations (including composite indexes)
+    evals = m.get("evaluations", {})
+
+    # Performance metrics
+    median_otps = m.get("median_output_tokens_per_second")
+    median_ttft = m.get("median_time_to_first_token_seconds")
+    median_ttfa = m.get("median_time_to_first_answer_token")
+
+    # Blended pricing
+    blended = m.get("pricing", {}).get("price_1m_blended_3_to_1")
+
+    # Try to find existing model by name
+    model = db.query(Model).filter(Model.name == m.get("name")).first()
+
+    if model:
+        # Update existing model
+        model.slug = m.get("slug", "")
+        model.provider = m.get("model_creator", {}).get("name", "Unknown")
+        model.model_creator_slug = m.get("model_creator", {}).get("slug", "")
+        model.license_type = current_license
+        model.release_date = m.get("release_date")
+        model.parameters = current_params
+        model.architecture = current_arch
+        model.description = current_desc
+        # Ensure it's active if we're seeing it in the seed/update
+        model.is_active = 1
+    else:
+        # Create new model
+        model = Model(
+            name=m.get("name", "Unknown"),
+            slug=m.get("slug", ""),
+            provider=m.get("model_creator", {}).get("name", "Unknown"),
+            model_creator_slug=m.get("model_creator", {}).get("slug", ""),
+            description=current_desc,
+            parameters=current_params,
+            architecture=current_arch,
+            license_type=current_license,
+            release_date=m.get("release_date"),
+            is_active=1,
+        )
+        db.add(model)
+
+    db.flush()
+
+    # Update or create pricing
+    if not model.pricing:
+        pricing = ModelPricing(
+            model_id=model.id,
+            cost_per_1m_input_tokens=price_in,
+            cost_per_1m_output_tokens=price_out,
+            cost_per_1m_blended=blended,
+        )
+        db.add(pricing)
+    else:
+        model.pricing.cost_per_1m_input_tokens = price_in
+        model.pricing.cost_per_1m_output_tokens = price_out
+        model.pricing.cost_per_1m_blended = blended
+
+    # Update or create performance
+    if not model.performance:
+        performance = ModelPerformance(
+            model_id=model.id,
+            median_output_tokens_per_second=median_otps,
+            median_ttft_seconds=median_ttft,
+            median_ttfa_seconds=median_ttfa,
+            avg_latency_ms=speed * 1000 if speed else 0,
+            context_window=0,
+        )
+        db.add(performance)
+    else:
+        model.performance.median_output_tokens_per_second = median_otps
+        model.performance.median_ttft_seconds = median_ttft
+        model.performance.median_ttfa_seconds = median_ttfa
+        model.performance.avg_latency_ms = speed * 1000 if speed else 0
+        if current_context > 0:
+            model.performance.context_window = current_context
+
+    # Update technical specs (delete and recreate for simplicity)
+    db.query(TechnicalSpec).filter(TechnicalSpec.model_id == model.id).delete()
+    for sec in tech_details:
+        section_title = sec["title"]
+        for fact in sec["facts"]:
+            spec = TechnicalSpec(
+                model_id=model.id,
+                section=section_title,
+                label=fact["label"],
+                value=fact["value"],
+            )
+            db.add(spec)
+
+    # Map Scores
+    scores_data = map_aa_scores(evals)
+    score_list = []
+    for bench_name, raw_score in scores_data.items():
+        benchmark = benchmark_objs.get(bench_name)
+        if not benchmark:
+            continue
+        normalized = normalize_score(raw_score, float(str(benchmark.max_score)))
+
+        # Check for existing score
+        existing_score = (
+            db.query(BenchmarkScore)
+            .filter(BenchmarkScore.model_id == model.id, BenchmarkScore.benchmark_id == benchmark.id)
+            .first()
+        )
+
+        if existing_score:
+            # Update existing score
+            existing_score.raw_score = raw_score
+            existing_score.normalized_score = normalized
+            existing_score.evaluation_date = model.release_date
+        else:
+            # Create new score
+            score = BenchmarkScore(
+                model_id=model.id,
+                benchmark_id=benchmark.id,
+                raw_score=raw_score,
+                normalized_score=normalized,
+                language="en",
+                evaluation_date=model.release_date,
+            )
+            db.add(score)
+
+        score_list.append(
+            {
+                "benchmark_name": bench_name,
+                "normalized_score": normalized,
+            }
+        )
+
+    overall, confidence = compute_weighted_overall_score(score_list, DEFAULT_WEIGHTS)
+    model.overall_score = overall
+    model.confidence = confidence
+
+    return model
+
+
 def seed_database(db: Session) -> None:
     """
     Seed the database with benchmarks and top LLM models from Artificial Analysis.
@@ -587,179 +765,17 @@ def seed_database(db: Session) -> None:
 
     # Create models and scores dynamically
     for m in models:
-        # Standardize parameters that AA does not expose.
-        # Ensure we don't trip over Missing keys
-        price_in = m.get("pricing", {}).get("price_1m_input_tokens", 0)
-        price_out = m.get("pricing", {}).get("price_1m_output_tokens", 0)
-        speed = m.get("median_time_to_first_answer_token", 0)
-
-        # Determine initial license type and values
-        license_type = get_license_type(m)
-        current_params = "Unknown"
-        current_arch = "Unknown"
-        current_context = 0
-        current_license = license_type
-        current_desc = m.get("slug", "")
-
-        # LLM Enrichment for missing data
-        enriched = None
-
-        # Check if we should enrich (e.g., if basic info is unknown)
-        if current_params == "Unknown" or current_arch == "Unknown" or current_license == "Unknown":
-            print(f"Enriching metadata for {m.get('name')}...")
-            enriched = enrich_model_metadata(m.get("name", ""), m.get("model_creator", {}).get("name", "Unknown"))
-            if enriched:
-                current_params = enriched.parameters
-                current_arch = enriched.architecture
-                current_context = enriched.context_window
-                current_license = enriched.license_type
-                current_desc = enriched.description
-
-        tech_details = get_technical_details(
-            model_name=m.get("name", ""),
-            model_provider=m.get("model_creator", {}).get("name", "Unknown"),
-            model_release_date=m.get("release_date", "Unknown"),
-            model_parameters=current_params,
-            model_architecture=current_arch,
-            model_license_type=current_license,
-            model_context_window=current_context,
-        )
-
-        # Extract evaluations (including composite indexes)
-        evals = m.get("evaluations", {})
-
-        # Performance metrics
-        median_otps = m.get("median_output_tokens_per_second")
-        median_ttft = m.get("median_time_to_first_token_seconds")
-        median_ttfa = m.get("median_time_to_first_answer_token")
-
-        # Blended pricing
-        blended = m.get("pricing", {}).get("price_1m_blended_3_to_1")
-
-        # Try to find existing model by name
-        model = db.query(Model).filter(Model.name == m.get("name")).first()
-
-        if model:
-            # Update existing model
-            model.slug = m.get("slug", "")
-            model.provider = m.get("model_creator", {}).get("name", "Unknown")
-            model.model_creator_slug = m.get("model_creator", {}).get("slug", "")
-            model.license_type = current_license
-            model.release_date = m.get("release_date")
-            model.parameters = current_params
-            model.architecture = current_arch
-            model.description = current_desc
-        else:
-            # Create new model
-            model = Model(
-                name=m.get("name", "Unknown"),
-                slug=m.get("slug", ""),
-                provider=m.get("model_creator", {}).get("name", "Unknown"),
-                model_creator_slug=m.get("model_creator", {}).get("slug", ""),
-                description=current_desc,
-                parameters=current_params,
-                architecture=current_arch,
-                license_type=current_license,
-                release_date=m.get("release_date"),
-            )
-            db.add(model)
-
-        db.flush()
-
-        # Update or create pricing
-        if not model.pricing:
-            pricing = ModelPricing(
-                model_id=model.id,
-                cost_per_1m_input_tokens=price_in,
-                cost_per_1m_output_tokens=price_out,
-                cost_per_1m_blended=blended,
-            )
-            db.add(pricing)
-        else:
-            model.pricing.cost_per_1m_input_tokens = price_in
-            model.pricing.cost_per_1m_output_tokens = price_out
-            model.pricing.cost_per_1m_blended = blended
-
-        # Update or create performance
-        if not model.performance:
-            performance = ModelPerformance(
-                model_id=model.id,
-                median_output_tokens_per_second=median_otps,
-                median_ttft_seconds=median_ttft,
-                median_ttfa_seconds=median_ttfa,
-                avg_latency_ms=speed * 1000 if speed else 0,
-                context_window=0,
-            )
-            db.add(performance)
-        else:
-            model.performance.median_output_tokens_per_second = median_otps
-            model.performance.median_ttft_seconds = median_ttft
-            model.performance.median_ttfa_seconds = median_ttfa
-            model.performance.avg_latency_ms = speed * 1000 if speed else 0
-            if current_context > 0:
-                model.performance.context_window = current_context
-
-        # Update technical specs (delete and recreate for simplicity)
-        db.query(TechnicalSpec).filter(TechnicalSpec.model_id == model.id).delete()
-        for sec in tech_details:
-            section_title = sec["title"]
-            for fact in sec["facts"]:
-                spec = TechnicalSpec(
-                    model_id=model.id,
-                    section=section_title,
-                    label=fact["label"],
-                    value=fact["value"],
-                )
-                db.add(spec)
-
-        # Map scores and populate missing fields dummy values
-        # scores_data = populate_missing_scores(map_aa_scores(evals))
-
-        # Map Scores
-        scores_data = map_aa_scores(evals)
-        score_list = []
-        for bench_name, raw_score in scores_data.items():
-            benchmark = benchmark_objs.get(bench_name)
-            if not benchmark:
-                continue
-            normalized = normalize_score(raw_score, benchmark.max_score)
-
-            # Check for existing score
-            existing_score = (
-                db.query(BenchmarkScore)
-                .filter(BenchmarkScore.model_id == model.id, BenchmarkScore.benchmark_id == benchmark.id)
-                .first()
-            )
-
-            if existing_score:
-                # Update existing score
-                existing_score.raw_score = raw_score
-                existing_score.normalized_score = normalized
-                existing_score.evaluation_date = model.release_date
-            else:
-                # Create new score
-                score = BenchmarkScore(
-                    model_id=model.id,
-                    benchmark_id=benchmark.id,
-                    raw_score=raw_score,
-                    normalized_score=normalized,
-                    language="en",
-                    evaluation_date=model.release_date,
-                )
-                db.add(score)
-
-            score_list.append(
-                {
-                    "benchmark_name": bench_name,
-                    "normalized_score": normalized,
-                }
-            )
-
-        overall, confidence = compute_weighted_overall_score(score_list, DEFAULT_WEIGHTS)
-        model.overall_score = overall
-        model.confidence = confidence
+        process_and_add_model(db, m, benchmark_objs)
 
     db.commit()
+
+
+if __name__ == "__main__":
+    db = SessionLocal()
+    try:
+        seed_database(db)
+    finally:
+        db.close()
 
 
 if __name__ == "__main__":

@@ -135,7 +135,7 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
-
+ßs
 # Visual Studio Code
 .vscode/
 
@@ -151,3 +151,6 @@ marimo/_lsp/
 __marimo__/
 
 .DS_Store
+
+# Database
+*.db.backup
