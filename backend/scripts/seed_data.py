@@ -569,14 +569,20 @@ def populate_missing_scores(mapped_scores: dict[str, Any]) -> dict[str, Any]:
     return populated
 
 
-def process_and_add_model(db: Session, m: dict[str, Any], benchmark_objs: dict[str, Benchmark]) -> Model:
+def process_and_add_model(
+    db: Session,
+    m: dict[str, Any],
+    benchmark_objs: dict[str, Benchmark],
+    *,
+    skip_enrichment: bool = False,
+) -> Model:
     """
     Process a single model's data from AA API, enrich it, and add/update it in the DB.
 
     This function handles both creation of new models and updating existing ones.
     It will:
     1. Extract pricing, performance, and evaluation data from the API response
-    2. Enrich model metadata using LLM if critical fields are unknown
+    2. Enrich model metadata using LLM if critical fields are unknown (and not skipped)
     3. Create or update the model record with is_active = 1
     4. Update all related data (pricing, performance, technical specs, benchmarks)
     5. Compute and store the weighted overall score
@@ -585,6 +591,7 @@ def process_and_add_model(db: Session, m: dict[str, Any], benchmark_objs: dict[s
         db (Session): SQLAlchemy database session
         m (dict[str, Any]): Model data from Artificial Analysis API
         benchmark_objs (dict[str, Benchmark]): Mapping of benchmark names to DB objects
+        skip_enrichment (bool): If True, skip LLM enrichment (use for existing models)
 
     Returns:
         Model: The created or updated model instance
@@ -603,12 +610,15 @@ def process_and_add_model(db: Session, m: dict[str, Any], benchmark_objs: dict[s
     current_license = license_type
     current_desc = m.get("slug", "")
 
-    # LLM Enrichment for missing data
+    # LLM Enrichment for missing data (only for new models)
     enriched = None
 
-    # Only call the enrichment service if we're missing critical metadata
-    # This saves API calls and improves performance for models with complete data
-    if current_params == "Unknown" or current_arch == "Unknown" or current_license == "Unknown":
+    # Only call the enrichment service if:
+    # 1. We're not skipping enrichment (i.e., this is a new model)
+    # 2. We're missing critical metadata
+    if not skip_enrichment and (
+        current_params == "Unknown" or current_arch == "Unknown" or current_license == "Unknown"
+    ):
         print(f"Enriching metadata for {m.get('name')}...")
         enriched = enrich_model_metadata(m.get("name", ""), m.get("model_creator", {}).get("name", "Unknown"))
         if enriched:
@@ -671,10 +681,8 @@ def process_and_add_model(db: Session, m: dict[str, Any], benchmark_objs: dict[s
             is_active=1,
         )
         db.add(model)
-
-    db.flush()
-
-    # Handle pricing data - create if doesn't exist, update if it does
+        # Flush to get model.id for new models before adding related records
+        db.flush()
     if not model.pricing:
         pricing = ModelPricing(
             model_id=model.id,
@@ -707,14 +715,19 @@ def process_and_add_model(db: Session, m: dict[str, Any], benchmark_objs: dict[s
         if current_context > 0:
             model.performance.context_window = current_context
 
-    # Update technical specs
-    # We delete and recreate rather than updating to handle structural changes cleanly
-    db.query(TechnicalSpec).filter(TechnicalSpec.model_id == model.id).delete()
+    # Update technical specs (only for existing models with valid IDs)
+    # For new models, technical specs are added after the model gets its ID on commit
+    if model.id is not None:
+        # Delete old specs for existing models
+        db.query(TechnicalSpec).filter(TechnicalSpec.model_id == model.id).delete()
+
+    # Add technical specs for both new and existing models
+    # For new models, SQLAlchemy will set model_id after commit via relationship
     for sec in tech_details:
         section_title = sec["title"]
         for fact in sec["facts"]:
             spec = TechnicalSpec(
-                model_id=model.id,
+                model_id=model.id,  # Will be None for new models, set by SQLAlchemy on commit
                 section=section_title,
                 label=fact["label"],
                 value=fact["value"],
@@ -772,6 +785,115 @@ def process_and_add_model(db: Session, m: dict[str, Any], benchmark_objs: dict[s
     return model
 
 
+def update_model_benchmarks(
+    db: Session,
+    model: Model,
+    m: dict[str, Any],
+    benchmark_objs: dict[str, Benchmark],
+) -> None:
+    """
+    Lightweight update for existing models - only updates benchmarks, pricing, and performance.
+
+    This function is used during database updates to refresh benchmark scores and
+    performance metrics without touching model metadata (parameters, architecture,
+    technical specs, etc.). This is much faster than full enrichment since it
+    skips the LLM enrichment step entirely.
+
+    Args:
+        db (Session): SQLAlchemy database session
+        model (Model): Existing model instance from database
+        m (dict[str, Any]): Model data from Artificial Analysis API
+        benchmark_objs (dict[str, Benchmark]): Mapping of benchmark names to DB objects
+    """
+    # Extract pricing data from API
+    price_in = m.get("pricing", {}).get("price_1m_input_tokens", 0)
+    price_out = m.get("pricing", {}).get("price_1m_output_tokens", 0)
+    blended = m.get("pricing", {}).get("price_1m_blended_3_to_1")
+
+    # Performance metrics
+    speed = m.get("median_time_to_first_answer_token", 0)
+    median_otps = m.get("median_output_tokens_per_second")
+    median_ttft = m.get("median_time_to_first_token_seconds")
+    median_ttfa = m.get("median_time_to_first_answer_token")
+
+    # Extract evaluations (including composite indexes)
+    evals = m.get("evaluations", {})
+
+    # Update pricing (create if doesn't exist, update if it does)
+    if not model.pricing:
+        pricing = ModelPricing(
+            model_id=model.id,
+            cost_per_1m_input_tokens=price_in,
+            cost_per_1m_output_tokens=price_out,
+            cost_per_1m_blended=blended,
+        )
+        db.add(pricing)
+    else:
+        model.pricing.cost_per_1m_input_tokens = price_in
+        model.pricing.cost_per_1m_output_tokens = price_out
+        model.pricing.cost_per_1m_blended = blended
+
+    # Update performance metrics
+    if not model.performance:
+        performance = ModelPerformance(
+            model_id=model.id,
+            median_output_tokens_per_second=median_otps,
+            median_ttft_seconds=median_ttft,
+            median_ttfa_seconds=median_ttfa,
+            avg_latency_ms=speed * 1000 if speed else 0,
+            context_window=0,
+        )
+        db.add(performance)
+    else:
+        model.performance.median_output_tokens_per_second = median_otps
+        model.performance.median_ttft_seconds = median_ttft
+        model.performance.median_ttfa_seconds = median_ttfa
+        model.performance.avg_latency_ms = speed * 1000 if speed else 0
+
+    # Update benchmark scores
+    scores_data = map_aa_scores(evals)
+    score_list = []
+    for bench_name, raw_score in scores_data.items():
+        benchmark = benchmark_objs.get(bench_name)
+        if not benchmark:
+            continue
+        normalized = normalize_score(raw_score, float(str(benchmark.max_score)))
+
+        # Check for existing score
+        existing_score = (
+            db.query(BenchmarkScore)
+            .filter(BenchmarkScore.model_id == model.id, BenchmarkScore.benchmark_id == benchmark.id)
+            .first()
+        )
+
+        if existing_score:
+            existing_score.raw_score = raw_score
+            existing_score.normalized_score = normalized
+            existing_score.evaluation_date = model.release_date
+        else:
+            score = BenchmarkScore(
+                model_id=model.id,
+                benchmark_id=benchmark.id,
+                raw_score=raw_score,
+                normalized_score=normalized,
+                language="en",
+                evaluation_date=model.release_date,
+            )
+            db.add(score)
+
+        score_list.append(
+            {
+                "benchmark_name": bench_name,
+                "normalized_score": normalized,
+            }
+        )
+
+    # Recompute overall score with updated benchmarks
+    overall, confidence = compute_weighted_overall_score(score_list, DEFAULT_WEIGHTS)
+    model.overall_score = overall
+    model.confidence = confidence
+
+
 def seed_database(db: Session) -> None:
     """
     Seed the database with benchmarks and top LLM models from Artificial Analysis.
@@ -798,7 +920,7 @@ def seed_database(db: Session) -> None:
             # Create new benchmark definition
             benchmark = Benchmark(**b_data)
             db.add(benchmark)
-            db.flush()  # Flush to get the ID without committing
+            # Note: We don't flush here to avoid holding DB locks
         benchmark_objs[b_data["name"]] = benchmark
 
     # Step 2: Check if we can skip processing (optimization)

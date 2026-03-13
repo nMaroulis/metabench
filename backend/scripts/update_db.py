@@ -10,7 +10,7 @@ database. It implements a three-way sync strategy:
 
 from db.database import SessionLocal
 from models import Benchmark, Model
-from scripts.seed_data import process_and_add_model
+from scripts.seed_data import process_and_add_model, update_model_benchmarks
 from sqlalchemy.orm import Session
 
 
@@ -50,7 +50,7 @@ def update_database(db: Session | None = None) -> None:
     try:
         # 1. Fetch existing benchmarks to map scores correctly
         benchmarks = db.query(Benchmark).all()
-        benchmark_objs = {b.name: b for b in benchmarks}
+        benchmark_objs: dict[str, Benchmark] = {str(b.name): b for b in benchmarks}
 
         # 2. Fetch models from API
         from services.fetch_models import get_models
@@ -62,7 +62,7 @@ def update_database(db: Session | None = None) -> None:
         api_model_names = {m.get("name") for m in api_models}
 
         # 3. Process each model from API
-        newly_added = 0
+        newly_added_model: list[str] = []
         updated = 0
 
         for m_data in api_models:
@@ -74,39 +74,55 @@ def update_database(db: Session | None = None) -> None:
                 # Add it with full enrichment (LLM call for missing metadata)
                 print(f"Adding new model: {model_name}")
                 process_and_add_model(db, m_data, benchmark_objs)
-                newly_added += 1
+                newly_added_model.append(model_name)
             else:
                 # EXISTING MODEL: Already in our DB
                 # Only update if it's currently active
                 if existing_model.is_active == 1:
-                    print(f"Updating existing model: {model_name}")
-                    process_and_add_model(db, m_data, benchmark_objs)
+                    # Use lightweight update - only benchmarks/pricing/performance
+                    # Does NOT touch metadata (parameters, architecture, technical specs)
+                    update_model_benchmarks(db, existing_model, m_data, benchmark_objs)
                     updated += 1
                 # Note: We don't update inactive models to preserve their historical state
 
         # 4. Deactivate models not in the fetched data
         # These are models that were previously available but are no longer
         # returned by the AA API (possibly deprecated or removed)
-        stale_models = db.query(Model).filter(
-            Model.name.notin_(api_model_names),
-            Model.is_active == 1
-        ).all()
+        stale_models = db.query(Model).filter(Model.name.notin_(api_model_names), Model.is_active == 1).all()
 
-        deactivated = 0
+        deactivated_models: list[str] = []
         for model in stale_models:
-            print(f"Deactivating stale model: {model.name}")
             model.is_active = 0  # Mark as inactive but keep the data
-            deactivated += 1
+            deactivated_models.append(str(model.name))
 
         # Commit all changes in a single transaction
         # This ensures consistency - either all updates succeed or none do
         db.commit()
 
         # Print summary of what changed
-        print("\nUpdate summary:")
-        print(f"- Added {newly_added} new models")
-        print(f"- Updated {updated} existing models")
-        print(f"- Deactivated {deactivated} stale models")
+        print("\n" + "=" * 50)
+        print("DATABASE UPDATE SUMMARY")
+        print("=" * 50)
+
+        print(
+            f"\n📦 Added {len(newly_added_model)} new model(s):",
+        )
+        if newly_added_model:
+            for name in newly_added_model:
+                print(f"   • {name}")
+        else:
+            print("   (none)")
+
+        print(f"\n🔄 Updated {updated} existing model(s)")
+
+        print(f"\n🚫 Deactivated {len(deactivated_models)} stale model(s):")
+        if deactivated_models:
+            for name in deactivated_models:
+                print(f"   • {name}")
+        else:
+            print("   (none)")
+
+        print("\n" + "=" * 50)
 
     finally:
         # Clean up database session if we created it
