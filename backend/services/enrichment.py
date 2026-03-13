@@ -61,16 +61,38 @@ def enrich_model_metadata(model_name: str, provider: str) -> ModelMetadataEnrich
     Uses an LLM to research and return structured metadata for a given model.
     Prioritizes OpenAI if available, otherwise falls back to Anthropic.
     """
-    prompt = f"""
-    Research the following Large Language Model and provide structured technical metadata.
-    Model Name: {model_name}
-    Provider: {provider}
+    system_prompt: str = """
+    You are a technical AI researcher specializing in large language models (LLMs).
 
-    Provide your BEST technical estimate for each field based on technical papers, blogs, and public benchmarks.
-    If a value is truly speculative but widely accepted (e.g., GPT-4 architecture), provide the consensus estimate.
-    In case of uncertainty, use "N/A" as the value.
+    Your task is to extract accurate technical metadata about AI models using reliable sources
+    such as research papers, model cards, official announcements, and benchmark reports.
 
-    The output MUST be a valid JSON object matching this structure:
+    Strict Rules:
+    - Search the web.
+    - Prefer documented facts over speculation.
+    - If information is not publicly documented, fill the field with the value "N/A".
+    - If confidence in a field is low, fill the field with the value "N/A" instead of guessing.
+    - Do NOT invent specifications.
+    - Use consensus estimates only if widely reported.
+    - All outputs must be valid JSON.
+    - Do not include explanations, markdown, or comments.
+    """
+    user_prompt: str = f"""
+    Research the following Large Language Model and produce structured technical metadata.
+
+    Model Information:
+    - Model Name: {model_name}
+    - Provider: {provider}
+
+    Instructions:
+    - Use official documentation, research papers, and technical blogs when possible.
+    - If a field is unknown or undisclosed, return "N/A".
+    - Numeric values must remain numeric when specified as integers.
+    - The response must match the JSON schema exactly.
+
+    Return ONLY the JSON object.
+
+    JSON Schema:
     {{
         "parameters": "string (e.g., '1.8T', '70B', '8x7B')",
         "architecture": "string (e.g., 'Dense Transformer', 'Sparse MoE', 'Mixture-of-Experts')",
@@ -85,8 +107,8 @@ def enrich_model_metadata(model_name: str, provider: str) -> ModelMetadataEnrich
         "layers": "string (e.g., '80', '126', 'N/A')",
         "optimizer": "string (e.g., 'AdamW', 'Adam', 'N/A')",
         "quantization_formats": "string (e.g., 'GGUF, AWQ, GPTQ', 'Proprietary only', 'N/A')",
-        "active_parameters_per_token": "string (e.g., '37B', 'N/A', 'N/A')",
-        "number_of_experts": "string (e.g., '16', '256', 'N/A', 'N/A')",
+        "active_parameters_per_token": "string (e.g., '37B', 'N/A')",
+        "number_of_experts": "string (e.g., '16', '256', 'N/A')",
         "parameter_density": "string (e.g., 'Dense', 'Sparse MoE', 'N/A')",
         "hidden_size": "string (e.g., '8192', '16384', 'N/A')",
         "ffn_intermediate_size": "string (e.g., '32768', 'N/A')",
@@ -124,8 +146,8 @@ def enrich_model_metadata(model_name: str, provider: str) -> ModelMetadataEnrich
             return None
 
         content = client.get_response(
-            system_prompt="You are a specialized technical researcher for Large Language Models. Provide your best technical estimates based on public knowledge. Return ONLY valid JSON.",  # noqa: E501
-            user_prompt=prompt,
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
         )
 
         if content is None:
