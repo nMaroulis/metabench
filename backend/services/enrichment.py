@@ -1,15 +1,11 @@
 import json
 import os
 
-from anthropic import Anthropic
+from clients.llms import AnthropicClient, OpenAIClient
 from dotenv import load_dotenv
-from openai import OpenAI
 from pydantic import BaseModel, Field
 
 load_dotenv()
-
-OPENAI_MODEL = "gpt-4o"
-ANTHROPIC_MODEL = "claude-3-5-sonnet-20241022"
 
 
 class ModelMetadataEnrichment(BaseModel):
@@ -63,7 +59,7 @@ class ModelMetadataEnrichment(BaseModel):
 def enrich_model_metadata(model_name: str, provider: str) -> ModelMetadataEnrichment | None:
     """
     Uses an LLM to research and return structured metadata for a given model.
-    Prioritizes OPENAI_MODEL if available, otherwise falls back to ANTHROPIC_MODEL.
+    Prioritizes OpenAI if available, otherwise falls back to Anthropic.
     """
     prompt = f"""
     Research the following Large Language Model and provide structured technical metadata.
@@ -118,36 +114,19 @@ def enrich_model_metadata(model_name: str, provider: str) -> ModelMetadataEnrich
 
     try:
         # Prioritize OpenAI for reliability in this environment
+        client = None
         if os.getenv("OPENAI_API_KEY"):
-            client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-            response = client.chat.completions.create(
-                model=OPENAI_MODEL,
-                messages=[
-                    {
-                        "role": "system",
-                        "content": "You are a specialized technical researcher for Large Language Models. Provide your best technical estimates based on public knowledge. Return ONLY valid JSON.",  # noqa: E501
-                    },
-                    {"role": "user", "content": prompt},
-                ],
-                response_format={"type": "json_object"},
-            )
-            content = response.choices[0].message.content
+            client = OpenAIClient(model="gpt-4o")
         elif os.getenv("ANTHROPIC_API_KEY"):
-            client = Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
-            anthropic_response = client.messages.create(
-                model=ANTHROPIC_MODEL,
-                max_tokens=5000,
-                messages=[{"role": "user", "content": prompt}],
-            )
-            # Handle multiple response blocks safely
-            content_parts = []
-            for block in anthropic_response.content:
-                if hasattr(block, "text"):
-                    content_parts.append(block.text)
-            content = "".join(content_parts) if content_parts else None
+            client = AnthropicClient(model="claude-3-5-sonnet-20241022")
         else:
             print("No API keys found for enrichment.")
             return None
+
+        content = client.get_response(
+            system_prompt="You are a specialized technical researcher for Large Language Models. Provide your best technical estimates based on public knowledge. Return ONLY valid JSON.",  # noqa: E501
+            user_prompt=prompt,
+        )
 
         if content is None:
             return None

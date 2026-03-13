@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Trophy, TrendingUp, BarChart3, Users, ArrowRight, Sparkles, Zap, Shield, Code } from 'lucide-react';
+import { Trophy, TrendingUp, BarChart3, Users, ArrowRight, Sparkles, Zap, Shield, Code, Terminal } from 'lucide-react';
 import api from '../services/api';
 import ModelCard from '../components/ModelCard';
 import ScoreBar from '../components/ScoreBar';
@@ -36,6 +36,9 @@ export default function LandingPage() {
         { icon: BarChart3, title: 'Deep Analytics', desc: 'Per-task breakdowns, radar charts, and historical performance trends', color: 'from-blue-500 to-cyan-500' },
         { icon: Shield, title: 'Confidence Rating', desc: 'Statistical confidence based on benchmark coverage and score consistency', color: 'from-emerald-500 to-green-500' },
         { icon: Users, title: 'Community Driven', desc: 'Submit your own evaluations and contribute to the knowledge base', color: 'from-purple-500 to-violet-500' },
+        { icon: Code, title: 'Open Source', desc: 'Fully open source codebase. Inspect, contribute, or fork the project', color: 'from-rose-500 to-pink-500' },
+        { icon: Terminal, title: 'Code Evaluation', desc: 'Comprehensive code benchmarks including HumanEval and advanced coding tasks', color: 'from-indigo-500 to-blue-500' },
+        { icon: Zap, title: 'REST API', desc: 'Simple REST API to access model data, benchmarks, and leaderboards programmatically', color: 'from-yellow-500 to-amber-500' },
     ];
 
     return (

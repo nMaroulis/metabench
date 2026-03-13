@@ -9,10 +9,10 @@ export default function Footer() {
                     {/* Brand */}
                     <div className="md:col-span-1">
                         <Link to="/" className="flex items-center gap-2 mb-4">
-                            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-brand-500 to-accent-500 flex items-center justify-center">
-                                <Brain className="w-4 h-4 text-white" />
-                            </div>
-                            <span className="text-lg font-display font-bold">MetaBench</span>
+                            <img src="/logos/logo.png" alt="MetaBench Logo" className="w-8 h-8 object-contain" />
+                            <span className="text-lg font-display font-bold tracking-tight">
+                                Meta<span className="gradient-text">Bench</span>
+                            </span>
                         </Link>
                         <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
                             The definitive aggregator of LLM benchmark scores. Compare models, explore leaderboards, and make informed decisions.

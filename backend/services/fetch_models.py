@@ -9,7 +9,7 @@ MAX_MODEL_AGE_DAYS = 600
 client = ArtificialAnalysisAPIClient()
 
 
-def get_models(limit: int = -1):
+def get_models(limit: int = 2):
     """
     Fetches models from Artificial Analysis, filtering out models older than MAX_MODEL_AGE_DAYS.
     """
