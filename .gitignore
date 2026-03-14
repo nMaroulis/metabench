@@ -157,3 +157,7 @@ __marimo__/
 *.db-journal
 *.db-wal
 *.db-shm
+
+#notebooks
+*.ipynb_checkpoints
+*.ipynb
