@@ -16,7 +16,7 @@ MetaBench aggregates **composite indexes** from well-known evaluation sites (e.g
 
 *Scoring methodology whitepaper — TBA.*
 
-[View Leaderboard](#features) · [Compare Models](#features) · [API Docs](http://localhost:8000/docs)
+[View Leaderboard](#features) · [Compare Models](#features) · [API Docs](http://localhost:8080/docs)
 
 </div>
 
@@ -69,10 +69,10 @@ pip install -r requirements.txt
 
 ```bash
 cd backend
-uvicorn main:app --reload --port 8000
+uvicorn main:app --reload --port 8080
 ```
 
-The API will be available at http://localhost:8000 with interactive docs at http://localhost:8000/docs.
+The API will be available at http://localhost:8080 with interactive docs at http://localhost:8080/docs.
 
 > The database is automatically created and seeded with **15 models** and **12 benchmarks** on first startup.
 

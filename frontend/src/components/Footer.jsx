@@ -54,7 +54,7 @@ export default function Footer() {
                         <h4 className="font-semibold text-sm uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-4">Resources</h4>
                         <ul className="space-y-2">
                             <li>
-                                <a href="http://localhost:8000/docs" target="_blank" rel="noopener noreferrer"
+                                <a href="http://localhost:8080/docs" target="_blank" rel="noopener noreferrer"
                                     className="text-sm text-gray-600 dark:text-gray-400 hover:text-brand-500 transition-colors inline-flex items-center gap-1">
                                     API Docs <ExternalLink className="w-3 h-3" />
                                 </a>
