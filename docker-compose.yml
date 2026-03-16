@@ -3,24 +3,22 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    ports:
+    expose:
       - "8080"
     environment:
       - DATABASE_URL=sqlite:///./storage/metabench.db
     volumes:
-      - ./backend:/app
+      - ./backend:/app   # make sure main.py is inside ./backend
       - backend-data:/app/data
 
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    ports:
-      - "5173:5173"
+    expose:
+      - "5173"
     environment:
-      - VITE_API_URL=http://localhost:8080
-    volumes:
-      - ./frontend/src:/app/src
+      - VITE_API_URL=http://backend:8080
     depends_on:
       - backend
   # Optional: PostgreSQL for production
