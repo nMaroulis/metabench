@@ -61,6 +61,7 @@ source .venv/bin/activate  # macOS/Linux
 # .venv\Scripts\activate   # Windows
 
 # Install dependencies
+cd backend
 pip install -r requirements.txt
 ```
 
@@ -110,6 +111,7 @@ docker-compose up --build
 metabench/
 ├── backend/
 │   ├── main.py              # FastAPI entry point
+│   ├── requirements.txt     # Python dependencies
 │   ├── db/database.py       # SQLAlchemy engine + session
 │   ├── models.py            # DB models (Model, Benchmark, Score)
 │   ├── schemas.py           # Pydantic request/response schemas
@@ -133,7 +135,6 @@ metabench/
 │   │   └── App.jsx          # Root component + routing
 │   └── tailwind.config.js   # Custom design tokens
 ├── docker-compose.yml
-├── requirements.txt
 └── README.md
 ```
 

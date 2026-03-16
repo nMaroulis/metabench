@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   backend:
     build:
@@ -8,7 +6,7 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=sqlite:///./metabench.db
+      - DATABASE_URL=sqlite:///./storage/metabench.db
     volumes:
       - ./backend:/app
       - backend-data:/app/data
