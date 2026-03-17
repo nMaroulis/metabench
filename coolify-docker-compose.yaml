@@ -1,22 +1,23 @@
-backend:
-  build:
-    context: ./backend
-    dockerfile: Dockerfile
-  expose:
-    - "80"
-  environment:
-    - DATABASE_URL=sqlite:///./storage/metabench.db
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    expose:
+      - "80"
+    environment:
+      - DATABASE_URL=sqlite:///./storage/metabench.db
 
-frontend:
-  build:
-    context: ./frontend
-    dockerfile: Dockerfile
-  expose:
-    - "80"
-  environment:
-    - VITE_API_URL=http://fqzefh8alsmicovnxdo36zre.83.212.96.37.sslip.io
-  depends_on:
-    - backend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    expose:
+      - "80"
+    environment:
+      - VITE_API_URL=http://fqzefh8alsmicovnxdo36zre.83.212.96.37.sslip.io
+    depends_on:
+      - backend
 
 # services:
 #   backend:
