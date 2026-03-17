@@ -16,6 +16,9 @@ from services.scoring import (
     normalize_score,
 )
 from sqlalchemy.orm import Session
+from utils.logger import get_logger
+
+logger = get_logger("seed_data")
 
 # -----------------------------------------------------------------------------
 # Model License Classification
@@ -472,7 +475,7 @@ def process_and_add_model(
     enriched_tech_details: ModelMetadataEnrichment | None = None
     # Enrich LLM technical details using an LLM
     if not skip_enrichment:
-        print(f"Enriching metadata for {m.get('name')}...")
+        logger.info(f"Enriching metadata for {m.get('name')}...")
         enriched_tech_details = enrich_model_metadata(
             m.get("name", ""), m.get("model_creator", {}).get("name", "Unknown")
         )
@@ -794,7 +797,12 @@ def seed_database(db: Session) -> None:
     # Step 3: Fetch current model data from Artificial Analysis API
     from services.fetch_models import get_models
 
-    models = get_models()
+    try:
+        models = get_models()
+    except Exception as e:
+        logger.error(f"Failed to fetch models from API: {e}")
+        logger.error("Skipping model seeding due to API failure")
+        return
 
     # Step 4: Process each model - create new or update existing
     # The process_and_add_model function handles all the complex logic

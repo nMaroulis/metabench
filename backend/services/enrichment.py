@@ -4,6 +4,9 @@ import os
 from clients.llms import AnthropicClient, OpenAIClient
 from dotenv import load_dotenv
 from pydantic import BaseModel, Field
+from utils.logger import get_logger
+
+logger = get_logger("LLM enrichment")
 
 load_dotenv()
 
@@ -142,7 +145,7 @@ def enrich_model_metadata(model_name: str, provider: str) -> ModelMetadataEnrich
         elif os.getenv("ANTHROPIC_API_KEY"):
             client = AnthropicClient(model="claude-3-5-sonnet-20241022")
         else:
-            print("No API keys found for enrichment.")
+            logger.warning("No API keys found for enrichment.")
             return None
 
         content = client.get_response(
@@ -163,5 +166,5 @@ def enrich_model_metadata(model_name: str, provider: str) -> ModelMetadataEnrich
         return ModelMetadataEnrichment.model_validate(data)
 
     except Exception as e:
-        print(f"Error enriching model {model_name}: {e}")
+        logger.error(f"Error enriching model {model_name}: {e}")
         return None

@@ -3,6 +3,9 @@ from abc import ABC, abstractmethod
 
 from anthropic import Anthropic
 from openai import OpenAI
+from utils.logger import get_logger
+
+logger = get_logger("llms")
 
 
 class LLMClient(ABC):
@@ -25,7 +28,7 @@ class OpenAIClient(LLMClient):
     def get_response(self, system_prompt: str = "", user_prompt: str = "", model: str | None = None) -> str | None:
         """Get response using OpenAI Responses API with web search."""
         if not self.client:
-            print("No OpenAI API key found.")
+            logger.error("No OpenAI API key found.")
             return None
 
         try:
@@ -42,7 +45,7 @@ class OpenAIClient(LLMClient):
             )
             return response.output_text
         except Exception as e:
-            print(f"OpenAI API error: {e}")
+            logger.error(f"OpenAI API error: {e}")
             return None
 
 
@@ -57,7 +60,7 @@ class AnthropicClient(LLMClient):
     def get_response(self, system_prompt: str = "", user_prompt: str = "", model: str | None = None) -> str | None:
         """Get response using Anthropic API."""
         if not self.client:
-            print("No Anthropic API key found.")
+            logger.error("No Anthropic API key found.")
             return None
 
         try:
@@ -76,5 +79,5 @@ class AnthropicClient(LLMClient):
                     content_parts.append(block.text)
             return "".join(content_parts) if content_parts else None
         except Exception as e:
-            print(f"Anthropic API error: {e}")
+            logger.error(f"Anthropic API error: {e}")
             return None

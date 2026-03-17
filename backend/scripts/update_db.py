@@ -13,6 +13,9 @@ from models import Benchmark, Model
 from scripts.seed_data import process_and_add_model, update_model_benchmarks
 from services.fetch_models import get_models
 from sqlalchemy.orm import Session
+from utils.logger import get_logger
+
+logger = get_logger("update_db")
 
 
 def update_database(db: Session | None = None) -> None:
@@ -98,29 +101,29 @@ def update_database(db: Session | None = None) -> None:
         db.commit()
 
         # Print summary of what changed
-        print("\n" + "=" * 50)
-        print("DATABASE UPDATE SUMMARY")
-        print("=" * 50)
+        logger.simple_print("\n" + "=" * 50)
+        logger.simple_print("DATABASE UPDATE SUMMARY")
+        logger.simple_print("=" * 50)
 
-        print(
+        logger.simple_print(
             f"\n📦 Added {len(newly_added_model)} new model(s):",
         )
         if newly_added_model:
             for name in newly_added_model:
-                print(f"   • {name}")
+                logger.simple_print(f"   • {name}")
         else:
-            print("   (none)")
+            logger.simple_print("   (none)")
 
-        print(f"\n🔄 Updated {updated} existing model(s)")
+        logger.simple_print(f"\n🔄 Updated {updated} existing model(s)")
 
-        print(f"\n🚫 Deactivated {len(deactivated_models)} stale model(s):")
+        logger.simple_print(f"\n🚫 Deactivated {len(deactivated_models)} stale model(s):")
         if deactivated_models:
             for name in deactivated_models:
-                print(f"   • {name}")
+                logger.simple_print(f"   • {name}")
         else:
-            print("   (none)")
+            logger.simple_print("   (none)")
 
-        print("\n" + "=" * 50)
+        logger.simple_print("\n" + "=" * 50)
 
     finally:
         # Clean up database session if we created it

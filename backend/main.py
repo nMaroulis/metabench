@@ -8,6 +8,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from scripts.seed_data import seed_database
 from scripts.update_db import update_database
+from utils.logger import get_logger
+
+logger = get_logger("main")
 
 
 @asynccontextmanager
@@ -15,10 +18,10 @@ async def lifespan(app: FastAPI):
     db = SessionLocal()
     try:
         if check_db_exists():
-            print("backend :: main :: Database exists, running update_database")
+            logger.info("Database exists, running update_database")
             update_database(db)
         else:
-            print("backend :: main :: Database doesn't exist, creating tables and seeding data")
+            logger.info("Database doesn't exist, creating tables and seeding data")
             Base.metadata.create_all(bind=engine)
             seed_database(db)
     finally:
@@ -30,7 +33,7 @@ async def lifespan(app: FastAPI):
     scheduler.add_job(update_database, trigger=CronTrigger(hour="0,6,12,18", minute=0, second=0))
     scheduler.start()
 
-    print("--- Background Scheduler Started ---")
+    logger.info("Background Scheduler Started")
 
     yield
 

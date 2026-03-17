@@ -1,6 +1,9 @@
 from datetime import datetime, timedelta
 
 from clients.artificial_analysis import ArtificialAnalysisAPIClient
+from utils.logger import get_logger
+
+logger = get_logger("fetch_models")
 
 # Fetch models released within this many days
 MAX_MODEL_AGE_DAYS = 600
@@ -32,11 +35,12 @@ def get_models(limit: int = -1):
 
     if limit > 0:
         filtered = filtered[:limit]
+    logger.info(f"Fetched {len(filtered)} models.")
     return filtered
 
 
 if __name__ == "__main__":
     models = get_models()
-    print(f"Fetched {len(models)} models (max age: {MAX_MODEL_AGE_DAYS} days)")
+    logger.info(f"Fetched {len(models)} models (max age: {MAX_MODEL_AGE_DAYS} days)")
     if models:
-        print(models[0]["name"])
+        logger.info(models[0]["name"])
