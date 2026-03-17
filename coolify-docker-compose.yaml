@@ -15,7 +15,7 @@ services:
     expose:
       - "80"
     environment:
-      - VITE_API_URL=http://fqzefh8alsmicovnxdo36zre.83.212.96.37.sslip.io
+      - VITE_API_URL=http://mcn1mz990od7yt3ocvsfdnth.83.212.96.37.sslip.io
     depends_on:
       - backend
 
