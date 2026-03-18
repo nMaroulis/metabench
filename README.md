@@ -14,6 +14,8 @@
 
 MetaBench aggregates **composite indexes** from well-known evaluation sites (e.g. Artificial Analysis, Chatbot Arena) alongside **raw benchmark scores** (MMLU-Pro, GPQA, LiveCodeBench, AIME, and 15+ more) to compute a single **Overall Intelligence Score** for every model, enabling fair, cross-source ranking on one unified leaderboard.
 
+🌐 The original deployment can be found at  **[metabench.dev](https://metabench.dev)**
+
 *Scoring methodology whitepaper — TBA.*
 
 [View Leaderboard](#features) · [Compare Models](#features) · [API Docs](http://localhost:8080/docs)
@@ -91,6 +93,22 @@ The app will be available at http://localhost:5173.
 ```bash
 docker-compose up --build
 ```
+
+## 🗄️ Database Population & Synchronization
+
+MetaBench employs a rigorous system to acquire, enrich, and stay up to date with the latest AI model data, coordinated across three core components:
+
+1. **Application Lifecycle (`backend/main.py`)**: 
+   When the FastAPI application starts, it checks if the database exists. If the database is empty, it initializes the tables and triggers the initial data seed. If it already exists, it runs an update script to ensure the latest data is present. It also initializes an APScheduler background job that seamlessly pulls in new data every 6 hours (at 00:00, 06:00, 12:00, and 18:00).
+
+2. **Initial Seeding (`backend/scripts/seed_data.py`)**: 
+   The seeder handles the initial population of standard benchmarks and models. It fetches model data from the Artificial Analysis API. For every new model, it delegates heavy lifting to an LLM (such as OpenAI, Gemini, or Anthropic via `services/enrichment.py`) to search the web and extract intricate technical specifications (parameters, context window, architecture, etc.). It maps the benchmark scores, calculates a weighted overall intelligence score, and persists everything into the database.
+
+3. **Incremental Updates (`backend/scripts/update_db.py`)**:
+   To keep data fresh without significant overhead, MetaBench uses a fast three-way synchronization strategy:
+   - **New Models**: Automatically discovered and fully enriched with technical specifications using the LLM pipeline.
+   - **Existing Models**: Refreshed via a lightweight fast-path that updates pricing, throughput performance, and changing benchmark scores, completely bypassing the expensive LLM calls. 
+   - **Stale Models**: Models present in the database but no longer returned by the upstream API are softly deactivated (`is_active=0`) to preserve historical benchmark performance without cluttering active leaderboards.
 
 ## 📡 API Endpoints
 

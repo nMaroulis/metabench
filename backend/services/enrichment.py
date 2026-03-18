@@ -1,7 +1,7 @@
 import json
-import os
+from typing import Literal
 
-from clients.llms import AnthropicClient, OpenAIClient
+from clients.llms import get_llm_client
 from dotenv import load_dotenv
 from pydantic import BaseModel, Field
 from utils.logger import get_logger
@@ -9,6 +9,8 @@ from utils.logger import get_logger
 logger = get_logger("LLM enrichment")
 
 load_dotenv()
+
+_PROVIDER: Literal["openai", "gemini", "anthropic"] = "gemini"
 
 
 class ModelMetadataEnrichment(BaseModel):
@@ -139,14 +141,7 @@ def enrich_model_metadata(model_name: str, provider: str) -> ModelMetadataEnrich
 
     try:
         # Prioritize OpenAI for reliability in this environment
-        client = None
-        if os.getenv("OPENAI_API_KEY"):
-            client = OpenAIClient(model="gpt-4o")
-        elif os.getenv("ANTHROPIC_API_KEY"):
-            client = AnthropicClient(model="claude-3-5-sonnet-20241022")
-        else:
-            logger.warning("No API keys found for enrichment.")
-            return None
+        client = get_llm_client(provider=_PROVIDER)
 
         content = client.get_response(
             system_prompt=system_prompt,

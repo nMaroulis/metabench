@@ -2,6 +2,8 @@ import os
 from abc import ABC, abstractmethod
 
 from anthropic import Anthropic
+from google import genai
+from google.genai import types
 from openai import OpenAI
 from utils.logger import get_logger
 
@@ -20,9 +22,9 @@ class LLMClient(ABC):
 class OpenAIClient(LLMClient):
     """OpenAI client using the Responses API with web search."""
 
-    def __init__(self, api_key: str | None = None, model: str = "gpt-4o"):
+    def __init__(self, api_key: str | None = None, model: str | None = None):
         self.api_key = api_key or os.getenv("OPENAI_API_KEY")
-        self.model = model
+        self.model = model or "gpt-4o"
         self.client = OpenAI(api_key=self.api_key) if self.api_key else None
 
     def get_response(self, system_prompt: str = "", user_prompt: str = "", model: str | None = None) -> str | None:
@@ -52,9 +54,9 @@ class OpenAIClient(LLMClient):
 class AnthropicClient(LLMClient):
     """Anthropic client for Claude models."""
 
-    def __init__(self, api_key: str | None = None, model: str = "claude-3-5-sonnet-20241022"):
+    def __init__(self, api_key: str | None = None, model: str | None = None):
         self.api_key = api_key or os.getenv("ANTHROPIC_API_KEY")
-        self.model = model
+        self.model = model or "claude-3-5-sonnet-20241022"
         self.client = Anthropic(api_key=self.api_key) if self.api_key else None
 
     def get_response(self, system_prompt: str = "", user_prompt: str = "", model: str | None = None) -> str | None:
@@ -81,3 +83,44 @@ class AnthropicClient(LLMClient):
         except Exception as e:
             logger.error(f"Anthropic API error: {e}")
             return None
+
+
+class GeminiClient(LLMClient):
+    """Gemini client using the google-genai SDK with Google Search search."""
+
+    def __init__(self, api_key: str | None = None, model: str | None = None):
+        self.api_key = api_key or os.getenv("GEMINI_API_KEY")
+        self.model = model or "gemini-2.5-flash"
+        self.client = genai.Client(api_key=self.api_key) if self.api_key else None
+
+    def get_response(self, system_prompt: str = "", user_prompt: str = "", model: str | None = None) -> str | None:
+        """Get response using Gemini API with Google Search grounding."""
+        if not self.client:
+            logger.error("No Gemini API key found.")
+            return None
+
+        try:
+            response = self.client.models.generate_content(
+                model=model or self.model,
+                contents=user_prompt,
+                config=types.GenerateContentConfig(
+                    system_instruction=system_prompt,
+                    tools=[types.Tool(google_search=types.GoogleSearch())],
+                ),
+            )
+            return response.text
+        except Exception as e:
+            logger.error(f"Gemini API error: {e}")
+            return None
+
+
+def get_llm_client(provider: str = "openai", model: str | None = None) -> LLMClient:
+    """LLM client factory for the given provider."""
+    if provider == "openai":
+        return OpenAIClient(model=model)
+    elif provider == "gemini":
+        return GeminiClient(model=model)
+    elif provider == "anthropic":
+        return AnthropicClient(model=model)
+    else:
+        raise ValueError(f"Unknown provider: {provider}")

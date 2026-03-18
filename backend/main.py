@@ -1,16 +1,19 @@
+import os
 from contextlib import asynccontextmanager
 
 from api.routers import router
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 from db.database import Base, SessionLocal, check_db_exists, engine
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from scripts.seed_data import seed_database
 from scripts.update_db import update_database
 from utils.logger import get_logger
 
 logger = get_logger("main")
+
+FRONTEND_ADDRESS = os.getenv("FRONTEND_ADDRESS", "http://localhost:5173")
 
 
 @asynccontextmanager
@@ -29,7 +32,6 @@ async def lifespan(app: FastAPI):
 
     # Scheduling the background updates
     scheduler = BackgroundScheduler()
-    # Run every 6 hours (e.g. at 00:00, 06:00, 12:00, 18:00)
     scheduler.add_job(update_database, trigger=CronTrigger(hour="0,6,12,18", minute=0, second=0))
     scheduler.start()
 
@@ -48,14 +50,30 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# === CORS Middleware ===
+# Only allow all origins for /docs
 app.add_middleware(
     CORSMiddleware,  # type: ignore
     allow_origins=["*"],
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "HEAD", "OPTIONS"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
+
+# === Middleware to restrict /api to frontend only ===
+@app.middleware("http")
+async def restrict_api_to_frontend(request: Request, call_next):
+    if request.url.path.startswith("/api"):
+        origin = request.headers.get("origin") or request.headers.get("referer")
+        if not origin or FRONTEND_ADDRESS not in origin:
+            raise HTTPException(status_code=403, detail="Forbidden: invalid origin")
+    response = await call_next(request)
+    return response
+
+
+# === Routers ===
 app.include_router(router, prefix="/api")
 
 
