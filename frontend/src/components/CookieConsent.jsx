@@ -28,11 +28,10 @@ export default function CookieConsent({ onAccept, onDecline }) {
 
   return (
     <div
-      className={`fixed bottom-0 left-0 right-0 z-50 p-4 sm:p-6 transition-all duration-500 ease-out ${
-        visible && !animatingOut
+      className={`fixed bottom-0 left-0 right-0 z-50 p-4 sm:p-6 transition-all duration-500 ease-out ${visible && !animatingOut
           ? 'translate-y-0 opacity-100'
           : 'translate-y-full opacity-0'
-      }`}
+        }`}
     >
       <div className="max-w-2xl mx-auto">
         <div className="relative overflow-hidden rounded-2xl border border-white/20 dark:border-white/10 bg-white/80 dark:bg-surface-800/80 backdrop-blur-2xl shadow-2xl shadow-black/10 dark:shadow-black/40">
@@ -60,7 +59,7 @@ export default function CookieConsent({ onAccept, onDecline }) {
               MetaBench is an <span className="font-semibold text-gray-800 dark:text-gray-100">open-source project</span> and
               the only tracking we use is <span className="font-semibold text-gray-800 dark:text-gray-100">Google Analytics</span> to
               understand site usage. No personal data is collected or shared with third parties. You
-              can accept or decline — the site works perfectly either way.
+              can accept or decline, the site works perfectly either way.
             </p>
 
             {/* Actions */}

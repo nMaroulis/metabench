@@ -13,13 +13,20 @@ import SEO from '../components/SEO';
 export default function ModelDetailPage() {
     const { modelName } = useParams();
     const [model, setModel] = useState(null);
+    const [allBenchmarks, setAllBenchmarks] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
     useEffect(() => {
         setLoading(true);
-        api.getModelDetail(decodeURIComponent(modelName))
-            .then(setModel)
+        Promise.all([
+            api.getModelDetail(decodeURIComponent(modelName)),
+            api.getBenchmarks(),
+        ])
+            .then(([modelData, benchmarksData]) => {
+                setModel(modelData);
+                setAllBenchmarks(benchmarksData);
+            })
             .catch((err) => setError(err.message))
             .finally(() => setLoading(false));
     }, [modelName]);
@@ -77,6 +84,42 @@ export default function ModelDetailPage() {
         acc[cat].push(s);
         return acc;
     }, {});
+
+    // Build a merged view: all benchmarks grouped by category, with score data where available
+    const scoredBenchmarkNames = new Set((model.scores || []).map(s => s.benchmark_name));
+    const allScoresByCategory = {};
+
+    // First, add all scored benchmarks
+    for (const [cat, scores] of Object.entries(scoresByCategory)) {
+        if (!allScoresByCategory[cat]) allScoresByCategory[cat] = [];
+        for (const s of scores) {
+            allScoresByCategory[cat].push({ ...s, available: true });
+        }
+    }
+
+    // Then, add missing benchmarks as unavailable
+    for (const b of allBenchmarks) {
+        if (!scoredBenchmarkNames.has(b.name)) {
+            const cat = b.category || 'other';
+            if (!allScoresByCategory[cat]) allScoresByCategory[cat] = [];
+            allScoresByCategory[cat].push({
+                benchmark_name: b.name,
+                benchmark_category: cat,
+                benchmark_type: b.type || 'benchmark',
+                normalized_score: null,
+                raw_score: null,
+                available: false,
+            });
+        }
+    }
+
+    // Sort: available first, then alphabetical
+    for (const cat of Object.keys(allScoresByCategory)) {
+        allScoresByCategory[cat].sort((a, b) => {
+            if (a.available !== b.available) return a.available ? -1 : 1;
+            return a.benchmark_name.localeCompare(b.benchmark_name);
+        });
+    }
 
     // Separate scores for radar charts
     const benchmarkScores = (model.scores || []).filter(s => s.benchmark_type === 'benchmark');
@@ -226,8 +269,9 @@ export default function ModelDetailPage() {
                 <div className="glass-card p-6">
                     <h3 className="text-lg font-display font-bold mb-4">Scores by Category</h3>
                     <div className="space-y-6">
-                        {Object.entries(scoresByCategory).map(([category, scores]) => {
+                        {Object.entries(allScoresByCategory).map(([category, scores]) => {
                             const CatIcon = getCategoryIcon(category);
+                            const availableCount = scores.filter(s => s.available).length;
                             return (
                                 <div key={category}>
                                     <div className="flex items-center gap-2 mb-3">
@@ -235,14 +279,29 @@ export default function ModelDetailPage() {
                                         <h4 className="text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
                                             {category}
                                         </h4>
+                                        <span className="text-[10px] font-medium text-gray-400 dark:text-gray-500 ml-1">
+                                            {availableCount}/{scores.length}
+                                        </span>
                                     </div>
                                     <div className="space-y-2">
                                         {scores.map(s => (
-                                            <ScoreBar
-                                                key={s.benchmark_name}
-                                                score={s.normalized_score}
-                                                label={s.benchmark_name}
-                                            />
+                                            s.available ? (
+                                                <ScoreBar
+                                                    key={s.benchmark_name}
+                                                    score={s.normalized_score}
+                                                    label={s.benchmark_name}
+                                                />
+                                            ) : (
+                                                <div key={s.benchmark_name} className="w-full opacity-40">
+                                                    <div className="flex justify-between items-center mb-1">
+                                                        <span className="text-xs font-medium text-gray-400 dark:text-gray-500 italic">{s.benchmark_name}</span>
+                                                        <span className="text-[10px] font-semibold text-gray-400 dark:text-gray-600 uppercase tracking-wider">N/A</span>
+                                                    </div>
+                                                    <div className="w-full h-2.5 rounded-full bg-gray-100 dark:bg-surface-700 overflow-hidden">
+                                                        <div className="h-full rounded-full bg-gray-200 dark:bg-gray-700 border border-dashed border-gray-300 dark:border-gray-600" style={{ width: '100%' }} />
+                                                    </div>
+                                                </div>
+                                            )
                                         ))}
                                     </div>
                                 </div>
@@ -269,18 +328,21 @@ export default function ModelDetailPage() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100/50 dark:divide-gray-800/50">
-                            {(model.scores || []).map(s => (
-                                <tr key={s.benchmark_name} className="hover:bg-gray-50/50 dark:hover:bg-surface-800/50 transition-colors">
-                                    <td className="px-6 py-3 text-sm font-medium">{s.benchmark_name}</td>
+                            {Object.values(allScoresByCategory).flat().map(s => (
+                                <tr key={s.benchmark_name} className={`hover:bg-gray-50/50 dark:hover:bg-surface-800/50 transition-colors ${!s.available ? 'opacity-50' : ''}`}>
+                                    <td className="px-6 py-3 text-sm font-medium">
+                                        {s.benchmark_name}
+                                        {!s.available && <span className="ml-2 text-[10px] text-gray-400 italic">(Missing)</span>}
+                                    </td>
                                     <td className="px-6 py-3">
                                         <span className="text-xs px-2 py-1 rounded-full bg-gray-100 dark:bg-surface-700 text-gray-600 dark:text-gray-400 capitalize">
                                             {s.benchmark_category}
                                         </span>
                                     </td>
-                                    <td className="px-6 py-3 text-center text-sm font-mono">{s.raw_score}</td>
+                                    <td className="px-6 py-3 text-center text-sm font-mono">{s.raw_score ?? '—'}</td>
                                     <td className="px-6 py-3 text-center">
-                                        <span className={`text-sm font-bold ${s.normalized_score >= 85 ? 'text-emerald-600 dark:text-emerald-400' : s.normalized_score >= 70 ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400'}`}>
-                                            {s.normalized_score?.toFixed(1)}
+                                        <span className={`text-sm font-bold ${!s.available ? 'text-gray-300' : s.normalized_score >= 85 ? 'text-emerald-600 dark:text-emerald-400' : s.normalized_score >= 70 ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400'}`}>
+                                            {s.normalized_score != null ? s.normalized_score.toFixed(1) : '—'}
                                         </span>
                                     </td>
                                     <td className="px-6 py-3 text-sm text-gray-500 hidden md:table-cell">{s.language || 'en'}</td>

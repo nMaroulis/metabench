@@ -36,15 +36,15 @@ const PAPER_LINKS = {
 
 // ─── Category metadata ──────────────────────────────────────────────────────
 const CATEGORY_META = {
-    knowledge:           { label: 'Knowledge',              icon: BookOpen,      color: 'from-blue-500 to-cyan-500',      badge: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' },
-    reasoning:           { label: 'Reasoning',              icon: Brain,         color: 'from-purple-500 to-violet-500',  badge: 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400' },
-    math:                { label: 'Mathematics',            icon: Calculator,    color: 'from-amber-500 to-orange-500',   badge: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400' },
-    coding:              { label: 'Coding',                 icon: Code,          color: 'from-emerald-500 to-green-500',  badge: 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' },
-    instruction:         { label: 'Instruction Following',  icon: MessageSquare, color: 'from-rose-500 to-pink-500',      badge: 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400' },
-    agentic:             { label: 'Agentic',                icon: Bot,           color: 'from-indigo-500 to-blue-500',    badge: 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400' },
-    human_preference:    { label: 'Human Preference',       icon: Heart,         color: 'from-pink-500 to-rose-500',      badge: 'bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-400' },
-    emotional_intelligence: { label: 'Emotional Intelligence', icon: Sparkles,   color: 'from-fuchsia-500 to-purple-500',badge: 'bg-fuchsia-100 dark:bg-fuchsia-900/30 text-fuchsia-700 dark:text-fuchsia-400' },
-    composite:           { label: 'Composite Indexes',      icon: Layers,        color: 'from-gray-500 to-slate-500',     badge: 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300' },
+    knowledge: { label: 'Knowledge', icon: BookOpen, color: 'from-blue-500 to-cyan-500', badge: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' },
+    reasoning: { label: 'Reasoning', icon: Brain, color: 'from-purple-500 to-violet-500', badge: 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400' },
+    math: { label: 'Mathematics', icon: Calculator, color: 'from-amber-500 to-orange-500', badge: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400' },
+    coding: { label: 'Coding', icon: Code, color: 'from-emerald-500 to-green-500', badge: 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' },
+    instruction: { label: 'Instruction Following', icon: MessageSquare, color: 'from-rose-500 to-pink-500', badge: 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400' },
+    agentic: { label: 'Agentic', icon: Bot, color: 'from-indigo-500 to-blue-500', badge: 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400' },
+    human_preference: { label: 'Human Preference', icon: Heart, color: 'from-pink-500 to-rose-500', badge: 'bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-400' },
+    emotional_intelligence: { label: 'Emotional Intelligence', icon: Sparkles, color: 'from-fuchsia-500 to-purple-500', badge: 'bg-fuchsia-100 dark:bg-fuchsia-900/30 text-fuchsia-700 dark:text-fuchsia-400' },
+    composite: { label: 'Composite Indexes', icon: Layers, color: 'from-gray-500 to-slate-500', badge: 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300' },
 };
 
 const CATEGORY_ORDER = ['knowledge', 'reasoning', 'math', 'coding', 'instruction', 'agentic', 'human_preference', 'emotional_intelligence', 'composite'];
@@ -204,7 +204,7 @@ export default function BenchmarksPage() {
         <div>
             <SEO
                 title="Benchmarks Wiki"
-                description="Explore all LLM benchmarks tracked by MetaBench — descriptions, whitepaper links, and top performing models for each."
+                description="Explore all LLM benchmarks tracked by MetaBench - descriptions, whitepaper links, and top performing models for each."
             />
 
             {/* Hero */}
@@ -222,7 +222,7 @@ export default function BenchmarksPage() {
                         LLM <span className="gradient-text">Benchmarks</span>
                     </h1>
                     <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto animate-slide-up leading-relaxed">
-                        Comprehensive wiki of every benchmark we track — from knowledge and reasoning to coding and mathematics.
+                        Comprehensive wiki of every benchmark we track, from knowledge and reasoning to coding and mathematics.
                         Explore descriptions, reference papers, and see which models lead each evaluation.
                     </p>
                 </div>
@@ -234,11 +234,10 @@ export default function BenchmarksPage() {
                     <div className="flex gap-1 py-3 overflow-x-auto scrollbar-hide">
                         <button
                             onClick={() => { setActiveCategory(null); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-                            className={`px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all duration-200 cursor-pointer ${
-                                activeCategory === null
-                                    ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400'
-                                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-surface-800'
-                            }`}
+                            className={`px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all duration-200 cursor-pointer ${activeCategory === null
+                                ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400'
+                                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-surface-800'
+                                }`}
                         >
                             All
                         </button>
@@ -249,11 +248,10 @@ export default function BenchmarksPage() {
                                 <button
                                     key={cat}
                                     onClick={() => scrollToCategory(cat)}
-                                    className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all duration-200 cursor-pointer ${
-                                        activeCategory === cat
-                                            ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400'
-                                            : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-surface-800'
-                                    }`}
+                                    className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all duration-200 cursor-pointer ${activeCategory === cat
+                                        ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400'
+                                        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-surface-800'
+                                        }`}
                                 >
                                     <Icon className="w-3.5 h-3.5" />
                                     {meta?.label || cat}

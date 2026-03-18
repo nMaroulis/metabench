@@ -159,12 +159,12 @@ export default function LandingPage() {
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                     {[
-                        { name: 'MMLU', category: 'Knowledge', desc: 'Massive Multitask Language Understanding — 57 subjects', icon: BookOpen, color: 'from-blue-500 to-cyan-500', badge: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' },
-                        { name: 'HumanEval', category: 'Coding', desc: 'Python coding — functional correctness evaluation', icon: Code, color: 'from-emerald-500 to-green-500', badge: 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' },
-                        { name: 'GSM8K', category: 'Mathematics', desc: 'Grade School Math — multi-step word problems', icon: Calculator, color: 'from-amber-500 to-orange-500', badge: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400' },
-                        { name: 'GPQA Diamond', category: 'Knowledge', desc: 'Graduate-level science Q&A — PhD-level difficulty', icon: BookOpen, color: 'from-blue-500 to-cyan-500', badge: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' },
+                        { name: 'MMLU', category: 'Knowledge', desc: 'Massive Multitask Language Understanding - 57 subjects', icon: BookOpen, color: 'from-blue-500 to-cyan-500', badge: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' },
+                        { name: 'HumanEval', category: 'Coding', desc: 'Python coding - functional correctness evaluation', icon: Code, color: 'from-emerald-500 to-green-500', badge: 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' },
+                        { name: 'GSM8K', category: 'Mathematics', desc: 'Grade School Math - multi-step word problems', icon: Calculator, color: 'from-amber-500 to-orange-500', badge: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400' },
+                        { name: 'GPQA Diamond', category: 'Knowledge', desc: 'Graduate-level science Q&A - PhD-level difficulty', icon: BookOpen, color: 'from-blue-500 to-cyan-500', badge: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' },
                         { name: 'BigBench-Hard', category: 'Reasoning', desc: '23 challenging reasoning tasks from BIG-Bench', icon: Brain, color: 'from-purple-500 to-violet-500', badge: 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400' },
-                        { name: 'Arena Elo', category: 'Human Preference', desc: 'Chatbot Arena Elo — crowd-sourced human votes', icon: Heart, color: 'from-pink-500 to-rose-500', badge: 'bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-400' },
+                        { name: 'Arena Elo', category: 'Human Preference', desc: 'Chatbot Arena Elo - crowd-sourced human votes', icon: Heart, color: 'from-pink-500 to-rose-500', badge: 'bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-400' },
                     ].map(({ name, category, desc, icon: Icon, color, badge }) => (
                         <Link key={name} to="/benchmarks" className="glass-card p-5 flex items-start gap-4 group cursor-pointer">
                             <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${color} flex items-center justify-center shadow-lg flex-shrink-0`}>
