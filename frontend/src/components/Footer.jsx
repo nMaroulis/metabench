@@ -25,6 +25,7 @@ export default function Footer() {
                         <ul className="space-y-2">
                             {[
                                 { to: '/leaderboard', label: 'Leaderboard' },
+                                { to: '/benchmarks', label: 'Benchmarks' },
                                 { to: '/compare', label: 'Compare Models' },
                                 { to: '/submit', label: 'Submit Scores' },
                             ].map(({ to, label }) => (

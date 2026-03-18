@@ -9,6 +9,7 @@ import LeaderboardPage from './pages/LeaderboardPage';
 import ComparePage from './pages/ComparePage';
 import ModelDetailPage from './pages/ModelDetailPage';
 import SubmitPage from './pages/SubmitPage';
+import BenchmarksPage from './pages/BenchmarksPage';
 
 export const ThemeContext = createContext();
 
@@ -103,6 +104,7 @@ function App() {
               <Route path="/" element={<LandingPage />} />
               <Route path="/leaderboard" element={<LeaderboardPage />} />
               <Route path="/compare" element={<ComparePage />} />
+              <Route path="/benchmarks" element={<BenchmarksPage />} />
               <Route path="/model/:modelName" element={<ModelDetailPage />} />
               <Route path="/submit" element={<SubmitPage />} />
             </Routes>

@@ -11,6 +11,7 @@ export default function Navbar() {
     const links = [
         { to: '/', label: 'Home' },
         { to: '/leaderboard', label: 'Leaderboard' },
+        { to: '/benchmarks', label: 'Benchmarks' },
         { to: '/compare', label: 'Compare' },
         { to: '/submit', label: 'Submit' },
     ];
