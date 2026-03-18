@@ -16,7 +16,7 @@ MetaBench aggregates **composite indexes** from well-known evaluation sites (e.g
 
 🌐 The original deployment can be found at  **[metabench.dev](https://metabench.dev)**
 
-*Scoring methodology whitepaper — TBA.*
+*Scoring methodology whitepaper - TBA.*
 
 [View Leaderboard](#features) · [Compare Models](#features) · [API Docs](http://localhost:8080/docs)
 
