@@ -73,7 +73,7 @@ def enrich_model_metadata(model_name: str, provider: str) -> ModelMetadataEnrich
     such as research papers, model cards, official announcements, and benchmark reports.
 
     Strict Rules:
-    - Search the web.
+    - Always search the web.
     - Prefer documented facts over speculation.
     - If information is not publicly documented, fill the field with the value "N/A".
     - If confidence in a field is low, fill the field with the value "N/A" instead of guessing.

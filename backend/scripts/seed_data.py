@@ -9,6 +9,7 @@ from models import (
     ModelPricing,
     TechnicalSpec,
 )
+from scrappers.livebench import LivebenchScraper
 from services.enrichment import ModelMetadataEnrichment, enrich_model_metadata
 from services.scoring import (
     DEFAULT_WEIGHTS,
@@ -19,6 +20,12 @@ from sqlalchemy.orm import Session
 from utils.logger import get_logger
 
 logger = get_logger("seed_data")
+
+# -----------------------------------------------------------------------------
+# Benchmark Scrapers & Clients
+# -----------------------------------------------------------------------------
+
+livebench_scraper = LivebenchScraper()
 
 # -----------------------------------------------------------------------------
 # Model License Classification
@@ -436,6 +443,25 @@ def populate_missing_scores(mapped_scores: dict[str, Any]) -> dict[str, Any]:
     return populated
 
 
+def get_complementary_benchmark_scores(model_name: str) -> dict[str, float]:
+    """
+    Fetches complementary benchmark scores for a given model name.
+
+    Active Benchmarks:
+        - LiveBench
+    Args:
+        model_name (str): The name of the model to fetch scores for.
+
+    Returns:
+        dict[str, float]: A dictionary of benchmark scores.
+    """
+    scores = {}
+    livebench_score = livebench_scraper.get_score_for_model(model_name)
+    if livebench_score is not None:
+        scores["LiveBench"] = livebench_score
+    return scores
+
+
 def process_and_add_model(
     db: Session,
     m: dict[str, Any],
@@ -591,7 +617,10 @@ def process_and_add_model(
             db.add(spec)
 
     # Process benchmark scores from API evaluations
-    scores_data = map_aa_scores(evals)
+    # AA scores
+    scores_data: dict[str, float] = map_aa_scores(evals)
+    # All other benchmarks from all sources
+    scores_data.update(get_complementary_benchmark_scores(str(model.name)))
     score_list = []  # Collect normalized scores for overall score calculation
     for bench_name, raw_score in scores_data.items():
         benchmark = benchmark_objs.get(bench_name)
@@ -708,6 +737,9 @@ def update_model_benchmarks(
 
     # Update benchmark scores
     scores_data = map_aa_scores(evals)
+    # All other benchmarks from all sources
+    scores_data.update(get_complementary_benchmark_scores(str(model.name)))
+
     score_list = []
     for bench_name, raw_score in scores_data.items():
         benchmark = benchmark_objs.get(bench_name)
@@ -811,14 +843,6 @@ def seed_database(db: Session) -> None:
 
     # Commit all changes in a single transaction
     db.commit()
-
-
-if __name__ == "__main__":
-    db = SessionLocal()
-    try:
-        seed_database(db)
-    finally:
-        db.close()
 
 
 if __name__ == "__main__":
