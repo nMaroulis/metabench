@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowUpDown, ArrowUp, ArrowDown, Search, Zap, Clock } from 'lucide-react';
 import ScoreBar from './ScoreBar';
@@ -7,6 +7,13 @@ export default function LeaderboardTable({ entries, showBenchmark = false }) {
     const [sortKey, setSortKey] = useState('score');
     const [sortDir, setSortDir] = useState('desc');
     const [search, setSearch] = useState('');
+    const [visibleCount, setVisibleCount] = useState(50);
+    const loadMoreBtnRef = useRef(null);
+
+    // Reset visible count when filters or sorting change
+    useEffect(() => {
+        setVisibleCount(50);
+    }, [search, sortKey, sortDir]);
 
     const handleSort = (key) => {
         if (sortKey === key) {
@@ -38,6 +45,17 @@ export default function LeaderboardTable({ entries, showBenchmark = false }) {
             return sortDir === 'asc' ? valA - valB : valB - valA;
         });
     }, [entries, sortKey, sortDir, search]);
+
+    const visibleRows = useMemo(() => {
+        return sorted.slice(0, visibleCount);
+    }, [sorted, visibleCount]);
+
+    const handleLoadMore = () => {
+        setVisibleCount(prev => prev + 50);
+        setTimeout(() => {
+            window.scrollBy({ top: 350, behavior: 'smooth' });
+        }, 50);
+    };
 
     const SortIcon = ({ columnKey }) => {
         if (sortKey !== columnKey) return <ArrowUpDown className="w-3 h-3 opacity-30" />;
@@ -91,8 +109,12 @@ export default function LeaderboardTable({ entries, showBenchmark = false }) {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100/50 dark:divide-gray-800/50">
-                        {sorted.map((entry, idx) => (
-                            <tr key={entry.model.name} className="hover:bg-gray-50/50 dark:hover:bg-surface-800/50 transition-colors">
+                        {visibleRows.map((entry, idx) => (
+                            <tr 
+                                key={entry.model.name} 
+                                className="hover:bg-gray-50/50 dark:hover:bg-surface-800/50 transition-colors animate-fade-in group"
+                                style={{ animationDelay: `${(idx % 50) * 15}ms`, animationFillMode: 'both' }}
+                            >
                                 <td className="px-6 py-4">
                                     <span className={`text-sm font-bold ${idx < 3 ? 'text-brand-500' : 'text-gray-400'}`}>
                                         {idx + 1}
@@ -149,6 +171,22 @@ export default function LeaderboardTable({ entries, showBenchmark = false }) {
                     </tbody>
                 </table>
             </div>
+
+            {sorted.length > visibleCount && (
+                <div className="p-8 py-10 flex justify-center border-t border-gray-200/50 dark:border-gray-700/50 bg-gradient-to-b from-transparent to-gray-50/30 dark:to-surface-800/30">
+                    <button 
+                        ref={loadMoreBtnRef}
+                        onClick={handleLoadMore}
+                        className="px-8 py-3.5 rounded-xl font-bold text-sm bg-white dark:bg-surface-800 border-2 border-brand-500/20 shadow-[0_0_20px_-5px_rgba(59,130,246,0.15)] hover:shadow-[0_0_25px_-5px_rgba(59,130,246,0.3)] hover:border-brand-500/50 text-brand-600 dark:text-brand-400 transition-all active:scale-95 flex items-center gap-2 group"
+                    >
+                        Expand Leaderboard
+                        <span className="bg-brand-500/10 px-2 py-0.5 rounded-lg text-xs ml-1">
+                            {sorted.length - visibleCount} more
+                        </span>
+                        <ArrowDown className="w-4 h-4 ml-1 group-hover:translate-y-1 transition-transform" />
+                    </button>
+                </div>
+            )}
 
             {sorted.length === 0 && (
                 <div className="p-12 text-center text-gray-400 dark:text-gray-500">

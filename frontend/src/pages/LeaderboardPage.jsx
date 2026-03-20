@@ -16,7 +16,7 @@ export default function LeaderboardPage() {
 
     useEffect(() => {
         setLoading(true);
-        const params = {};
+        const params = { limit: 1000 };
         if (selectedTask) params.task = selectedTask;
         api.getLeaderboard(params)
             .then((data) => setEntries(data.entries || []))
