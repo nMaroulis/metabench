@@ -83,7 +83,7 @@ export default function TechnicalDetails({ model }) {
             'System / Infrastructure': Settings,
         };
         const IconNode = iconMap[title] || Cpu;
-        return <IconNode className="w-5 h-5" />;
+        return IconNode;
     };
 
     const getCategoryForSection = (sectionTitle) => {
@@ -93,37 +93,36 @@ export default function TechnicalDetails({ model }) {
         return 'other';
     };
 
-    const filteredSections = activeCategory === 'all' 
-        ? sections 
-        : sections.filter(s => getCategoryForSection(s.title) === activeCategory || 
-                              categories[activeCategory]?.sections.includes(s.title));
+    const filteredSections = activeCategory === 'all'
+        ? sections
+        : sections.filter(s => getCategoryForSection(s.title) === activeCategory ||
+            categories[activeCategory]?.sections.includes(s.title));
 
     return (
         <div className="mt-16 animate-fade-in">
             {/* Header */}
-            <div className="mb-10">
-                <div className="flex items-center gap-3 mb-4">
-                    <div className="p-3 bg-gradient-to-br from-brand-500 to-accent-500 rounded-xl shadow-lg shadow-brand-500/20">
-                        <Settings className="w-6 h-6 text-white" />
+            <div className="mb-6">
+                <div className="flex items-center gap-3 mb-2">
+                    <div className="p-2 bg-gradient-to-br from-brand-500 to-accent-500 rounded-lg shadow-sm shadow-brand-500/20">
+                        <Settings className="w-5 h-5 text-white" />
                     </div>
-                    <h2 className="text-3xl font-display font-black tracking-tight text-gray-900 dark:text-gray-100">
+                    <h2 className="text-2xl font-display font-bold tracking-tight text-gray-900 dark:text-gray-100">
                         Technical Specifications
                     </h2>
                 </div>
-                <p className="text-gray-500 dark:text-gray-400 text-lg max-w-3xl">
+                <p className="text-gray-500 dark:text-gray-400 text-sm max-w-2xl leading-relaxed">
                     Comprehensive technical breakdown of model architecture, training methodology, and deployment characteristics.
                 </p>
             </div>
 
             {/* Category Filter */}
-            <div className="flex flex-wrap gap-2 mb-8">
+            <div className="flex flex-wrap gap-2 mb-6">
                 <button
                     onClick={() => setActiveCategory('all')}
-                    className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
-                        activeCategory === 'all'
-                            ? 'bg-brand-500 text-white shadow-lg shadow-brand-500/25'
-                            : 'bg-gray-100 dark:bg-surface-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-surface-700'
-                    }`}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 cursor-pointer border ${activeCategory === 'all'
+                            ? 'bg-brand-500 border-brand-500 text-white shadow-sm'
+                            : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
+                        }`}
                 >
                     All Specs
                 </button>
@@ -133,13 +132,12 @@ export default function TechnicalDetails({ model }) {
                         <button
                             key={key}
                             onClick={() => setActiveCategory(key)}
-                            className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
-                                activeCategory === key
-                                    ? `bg-gradient-to-r ${category.color} text-white shadow-lg`
-                                    : 'bg-gray-100 dark:bg-surface-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-surface-700'
-                            }`}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 flex items-center gap-1.5 cursor-pointer border ${activeCategory === key
+                                    ? `bg-gradient-to-r ${category.color} border-transparent text-white shadow-sm`
+                                    : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
+                                }`}
                         >
-                            <Icon className="w-4 h-4" />
+                            <Icon className="w-3.5 h-3.5" />
                             {category.title}
                         </button>
                     );
@@ -156,35 +154,32 @@ export default function TechnicalDetails({ model }) {
                     return (
                         <div
                             key={idx}
-                            className="bg-white dark:bg-surface-800 rounded-xl border border-gray-200/50 dark:border-surface-700/50 overflow-hidden hover:shadow-lg transition-all duration-200"
+                            className="bg-white dark:bg-gray-900/40 rounded-xl border border-gray-200/75 dark:border-gray-800 overflow-hidden hover:shadow-md hover:border-gray-300 dark:hover:border-gray-700 transition-all duration-200 group"
                         >
                             {/* Card Header */}
-                            <div className="px-4 py-3 border-b border-gray-100 dark:border-surface-700/50 flex items-center gap-3">
-                                <div className={`p-2 bg-gradient-to-br ${categoryColor} rounded-lg text-white shadow-md`}>
-                                    {Icon}
+                            <div className="px-4 py-2.5 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30 flex items-center gap-2.5">
+                                <div className={`p-1.5 bg-gradient-to-br ${categoryColor} rounded-md text-white shadow-sm ring-1 ring-white/20`}>
+                                    <Icon className="w-3.5 h-3.5" />
                                 </div>
-                                <h3 className="font-display font-bold text-gray-900 dark:text-gray-100 text-sm">
+                                <h3 className="font-display font-semibold text-gray-900 dark:text-gray-100 text-sm tracking-tight">
                                     {section.title}
                                 </h3>
                             </div>
 
-                            {/* Card Content - Always visible */}
-                            <div className="p-4">
-                                <div className="space-y-3">
+                            {/* Card Content - Compact Table */}
+                            <div className="p-0">
+                                <ul className="divide-y divide-gray-100 dark:divide-gray-800/60">
                                     {section.facts.map((fact, fIdx) => (
-                                        <div key={fIdx} className="flex items-start gap-3">
-                                            <div className="w-1 h-1 rounded-full bg-brand-500 mt-2 shrink-0" />
-                                            <div className="min-w-0 flex-1">
-                                                <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                                    {fact.label}
-                                                </span>
-                                                <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate" title={fact.value}>
-                                                    {fact.value}
-                                                </p>
-                                            </div>
-                                        </div>
+                                        <li key={fIdx} className="px-4 py-2 flex flex-col sm:flex-row sm:justify-between items-start sm:items-baseline gap-1 sm:gap-4 hover:bg-gray-50/80 dark:hover:bg-gray-800/40 transition-colors">
+                                            <span className="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wider lg:w-1/3 shrink-0">
+                                                {fact.label}
+                                            </span>
+                                            <span className="text-sm font-medium text-gray-900 dark:text-gray-300 sm:text-right lg:w-2/3 break-words">
+                                                {fact.value}
+                                            </span>
+                                        </li>
                                     ))}
-                                </div>
+                                </ul>
                             </div>
                         </div>
                     );

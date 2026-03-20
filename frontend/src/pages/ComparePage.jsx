@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { GitCompareArrows, Plus, X, Search, Clock } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { GitCompareArrows, Plus, X, Search, Clapperboard } from 'lucide-react';
 import api from '../services/api';
 import BenchmarkRadarChart from '../charts/RadarChart';
 import BenchmarkBarChart from '../charts/BarChart';
@@ -14,6 +14,21 @@ export default function ComparePage() {
     const [showDropdown, setShowDropdown] = useState(false);
     const [loading, setLoading] = useState(false);
     const [chartType, setChartType] = useState('radar');
+    const [focusedIndex, setFocusedIndex] = useState(-1);
+
+    const containerRef = useRef(null);
+    const inputRef = useRef(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (containerRef.current && !containerRef.current.contains(event.target)) {
+                setShowDropdown(false);
+                setFocusedIndex(-1);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     useEffect(() => {
         api.getModels({ limit: 100 }).then(setAllModels).catch(console.error);
@@ -37,10 +52,41 @@ export default function ComparePage() {
         }
         setSearchQuery('');
         setShowDropdown(false);
+        setFocusedIndex(-1);
     };
 
     const removeModel = (name) => {
         setSelectedNames(selectedNames.filter(n => n !== name));
+    };
+
+    const handleKeyDown = (e) => {
+        const results = filteredModels.slice(0, 10);
+
+        if (e.key === 'Backspace' && searchQuery === '' && selectedNames.length > 0) {
+            // Remove last model if backspacing on empty input
+            removeModel(selectedNames[selectedNames.length - 1]);
+            return;
+        }
+
+        if (!showDropdown || results.length === 0) return;
+
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            setFocusedIndex(prev => (prev < results.length - 1 ? prev + 1 : prev));
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            setFocusedIndex(prev => (prev > 0 ? prev - 1 : prev));
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            if (focusedIndex >= 0 && focusedIndex < results.length) {
+                addModel(results[focusedIndex].name);
+            } else if (results.length > 0) {
+                addModel(results[0].name); // Select first by default
+            }
+        } else if (e.key === 'Escape') {
+            setShowDropdown(false);
+            setFocusedIndex(-1);
+        }
     };
 
     const filteredModels = allModels.filter(m =>
@@ -70,50 +116,96 @@ export default function ComparePage() {
             </div>
 
             {/* Model selector */}
-            <div className="glass-card p-6 mb-8">
-                <div className="flex flex-wrap gap-2 mb-4">
+            <div className="glass-card p-6 mb-8 w-full relative z-40">
+                <div className="mb-2 flex justify-between items-end">
+                    <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                        Models to compare
+                    </label>
+                    <span className="text-xs text-brand-500 font-medium bg-brand-500/10 px-2 py-0.5 rounded-full">
+                        {selectedNames.length}/5 selected
+                    </span>
+                </div>
+
+                <div
+                    ref={containerRef}
+                    className="relative flex items-center flex-wrap gap-2 p-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus-within:ring-2 focus-within:ring-brand-500 focus-within:border-brand-500 transition-all shadow-sm"
+                    onClick={() => inputRef.current?.focus()}
+                >
+                    <Search className="w-5 h-5 text-gray-400 ml-2 shrink-0" />
+
                     {selectedNames.map(name => (
-                        <span key={name} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-brand-500/10 text-brand-600 dark:text-brand-400 text-sm font-medium">
+                        <span key={name} className="inline-flex items-center gap-1 pl-3 pr-1 py-1 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 text-sm font-medium border border-gray-200 dark:border-gray-700 shadow-sm animate-fade-in group">
                             {name}
-                            <button onClick={() => removeModel(name)} className="hover:text-red-500 transition-colors">
+                            <button
+                                onClick={(e) => { e.stopPropagation(); removeModel(name); }}
+                                className="p-1 rounded-md text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+                            >
                                 <X className="w-3.5 h-3.5" />
                             </button>
                         </span>
                     ))}
+
                     {selectedNames.length < 5 && (
-                        <div className="relative">
-                            <div className="flex items-center gap-2">
-                                <Search className="w-4 h-4 text-gray-400" />
-                                <input
-                                    type="text"
-                                    placeholder="Add a model..."
-                                    value={searchQuery}
-                                    onChange={(e) => { setSearchQuery(e.target.value); setShowDropdown(true); }}
-                                    onFocus={() => setShowDropdown(true)}
-                                    className="bg-transparent border-none outline-none text-sm placeholder-gray-400 w-48"
-                                />
+                        <input
+                            ref={inputRef}
+                            type="text"
+                            placeholder={selectedNames.length === 0 ? "Search for a model (e.g. GPT-4)..." : "Add another model..."}
+                            value={searchQuery}
+                            onChange={(e) => {
+                                setSearchQuery(e.target.value);
+                                setShowDropdown(true);
+                                setFocusedIndex(0);
+                            }}
+                            onFocus={() => setShowDropdown(true)}
+                            onKeyDown={handleKeyDown}
+                            className="flex-1 bg-transparent border-none outline-none text-sm placeholder-gray-400 min-w-[150px] py-1"
+                        />
+                    )}
+
+                    {showDropdown && (searchQuery || filteredModels.length > 0) && selectedNames.length < 5 && (
+                        <div className="absolute top-[calc(100%+8px)] left-0 w-full glass-card border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl z-50 max-h-[360px] overflow-y-auto animate-slide-up origin-top">
+                            <div className="p-2 flex flex-col gap-0.5">
+                                {filteredModels.slice(0, 10).map((m, idx) => (
+                                    <button
+                                        key={m.name}
+                                        onClick={() => addModel(m.name)}
+                                        onMouseEnter={() => setFocusedIndex(idx)}
+                                        className={`w-full text-left px-4 py-2.5 rounded-lg flex items-center justify-between transition-colors ${focusedIndex === idx
+                                            ? 'bg-brand-500/10 text-brand-700 dark:bg-brand-500/20 dark:text-brand-300'
+                                            : 'hover:bg-gray-50 dark:hover:bg-surface-700'
+                                            }`}
+                                    >
+                                        <div className="flex flex-col">
+                                            <span className="font-semibold text-gray-900 dark:text-white text-sm">{m.name}</span>
+                                            <span className="text-gray-500 dark:text-gray-400 text-xs mt-0.5 max-w-[200px] truncate">{m.description}</span>
+                                        </div>
+                                        <div className="flex flex-col items-end gap-1">
+                                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700">
+                                                {m.provider}
+                                            </span>
+                                            {m.overall_score && (
+                                                <span className="text-xs font-mono font-medium text-amber-600 dark:text-amber-500">
+                                                    Score: {m.overall_score.toFixed(1)}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </button>
+                                ))}
+                                {filteredModels.length === 0 && (
+                                    <div className="px-4 py-6 text-center">
+                                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">No models found</p>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Try a different search term.</p>
+                                    </div>
+                                )}
                             </div>
-                            {showDropdown && searchQuery && (
-                                <div className="absolute top-full left-0 mt-2 w-64 glass-card rounded-xl shadow-xl z-50 max-h-60 overflow-y-auto">
-                                    {filteredModels.slice(0, 10).map(m => (
-                                        <button
-                                            key={m.name}
-                                            onClick={() => addModel(m.name)}
-                                            className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-surface-700 transition-colors first:rounded-t-xl last:rounded-b-xl"
-                                        >
-                                            <span className="font-medium">{m.name}</span>
-                                            <span className="text-gray-400 ml-2 text-xs">{m.provider} · {m.overall_score?.toFixed(1)}</span>
-                                        </button>
-                                    ))}
-                                    {filteredModels.length === 0 && (
-                                        <div className="px-4 py-3 text-sm text-gray-400">No models found</div>
-                                    )}
-                                </div>
-                            )}
                         </div>
                     )}
                 </div>
-                <p className="text-xs text-gray-400">{selectedNames.length}/5 models selected{selectedNames.length < 2 && ' • Select at least 2 to compare'}</p>
+                {selectedNames.length < 2 && (
+                    <p className="text-xs text-amber-600 dark:text-amber-500 mt-2 font-medium flex items-center gap-1">
+                        Select at least 2 models to see the comparison.
+                    </p>
+                )}
             </div>
 
             {/* Comparison results */}
