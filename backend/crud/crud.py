@@ -208,6 +208,7 @@ def get_leaderboard(
             .options(
                 joinedload(db_models.BenchmarkScore.model).joinedload(db_models.Model.pricing),
                 joinedload(db_models.BenchmarkScore.model).joinedload(db_models.Model.performance),
+                joinedload(db_models.BenchmarkScore.model).joinedload(db_models.Model.technical_specs),
             )
             .filter(db_models.BenchmarkScore.benchmark_id == benchmark.id)
             .filter(db_models.Model.is_active == 1)
@@ -218,7 +219,7 @@ def get_leaderboard(
         scores = query.order_by(desc(db_models.BenchmarkScore.normalized_score)).limit(limit).all()
         entries = []
         for rank, s in enumerate(scores, 1):
-            model = db.query(db_models.Model).get(s.model_id)
+            model = s.model  # Relationship is already joined and eager loaded
             if model:
                 # Explicitly validate and dump to ensure relationships are included
                 model_out = schemas.ModelOut.model_validate(model).model_dump()
@@ -235,7 +236,11 @@ def get_leaderboard(
         # Overall leaderboard
         models = (
             db.query(db_models.Model)
-            .options(joinedload(db_models.Model.pricing), joinedload(db_models.Model.performance))
+            .options(
+                joinedload(db_models.Model.pricing),
+                joinedload(db_models.Model.performance),
+                joinedload(db_models.Model.technical_specs),
+            )
             .filter(db_models.Model.is_active == 1)
             .order_by(desc(db_models.Model.overall_score))
             .limit(limit)

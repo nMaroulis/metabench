@@ -5,6 +5,7 @@ import schemas
 from crud import crud
 from db.database import get_db
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
+from fastapi_cache.decorator import cache
 from sqlalchemy.orm import Session
 
 from api.auth import verify_admin_key
@@ -116,10 +117,11 @@ def compare_models(
 
 
 @router.get("/leaderboard", response_model=schemas.LeaderboardResponse, tags=["Leaderboard"])
+@cache(expire=3600)
 def get_leaderboard(
     task: str | None = None,
     language: str | None = None,
-    limit: int = Query(50, ge=1, le=1000),
+    limit: int = Query(50, ge=1, le=500),
     db: Session = Depends(get_db),
 ):
     """Get ranked leaderboard, optionally filtered by task/benchmark and language."""
