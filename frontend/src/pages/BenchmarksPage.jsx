@@ -231,7 +231,7 @@ export default function BenchmarksPage() {
             {/* Category Filter Bar */}
             <section className="sticky top-16 z-30 bg-white/80 dark:bg-gray-950/80 backdrop-blur-xl border-b border-gray-200/50 dark:border-gray-700/50">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex gap-1 py-3 overflow-x-auto scrollbar-hide">
+                    <div className="flex flex-wrap justify-center gap-2 py-3">
                         <button
                             onClick={() => { setActiveCategory(null); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                             className={`px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all duration-200 cursor-pointer ${activeCategory === null

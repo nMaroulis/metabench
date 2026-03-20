@@ -16,6 +16,9 @@ export default function AdminPage() {
   const [models, setModels] = useState([]);
   const [selectedModel, setSelectedModel] = useState(null);
   const [formData, setFormData] = useState(null);
+  const [editMode, setEditMode] = useState('form');
+  const [jsonText, setJsonText] = useState('');
+  const [jsonError, setJsonError] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
 
@@ -48,6 +51,9 @@ export default function AdminPage() {
     setIsAuthenticated(false);
     setSelectedModel(null);
     setFormData(null);
+    setJsonText('');
+    setEditMode('form');
+    setJsonError('');
   };
 
   const handleSelectModel = async (e) => {
@@ -80,7 +86,7 @@ export default function AdminPage() {
           });
         }
 
-        setFormData({
+        const newFormData = {
           name: modelDetail.name || '',
           slug: modelDetail.slug || '',
           provider: modelDetail.provider || '',
@@ -109,7 +115,13 @@ export default function AdminPage() {
             raw_score: s.raw_score ?? '',
             normalized_score: s.normalized_score ?? ''
           })) : []
-        });
+        };
+        
+        setFormData(newFormData);
+        setJsonText(JSON.stringify(newFormData, null, 2));
+        setEditMode('form');
+        setJsonError('');
+
     } catch (err) {
       setMessage({ type: 'error', text: 'Failed to load model details.' });
     } finally {
@@ -133,6 +145,24 @@ export default function AdminPage() {
       }
       return { ...prev, [name]: finalValue };
     });
+  };
+
+  const handleModeToggle = (mode) => {
+    if (mode === 'form' && editMode === 'json') {
+      try {
+        const parsed = JSON.parse(jsonText);
+        setFormData(parsed);
+        setJsonError('');
+        setEditMode('form');
+      } catch (err) {
+        setJsonError('Invalid JSON format. Please fix errors before switching back to form view.');
+        return;
+      }
+    } else if (mode === 'json' && editMode === 'form') {
+      setJsonText(JSON.stringify(formData, null, 2));
+      setEditMode('json');
+      setJsonError('');
+    }
   };
 
   const handleTechSpecChange = (index, field, value) => {
@@ -168,19 +198,34 @@ export default function AdminPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!selectedModel || !formData) return;
+    if (!selectedModel) return;
+
+    let currentData = formData;
+
+    if (editMode === 'json') {
+      try {
+        currentData = JSON.parse(jsonText);
+        setFormData(currentData);
+        setJsonError('');
+      } catch (err) {
+        setJsonError('Invalid JSON format. Cannot save changes.');
+        return;
+      }
+    }
 
     setLoading(true);
     setMessage({ type: '', text: '' });
     
     // Clean up empty strings to nulls
-    const cleanData = JSON.parse(JSON.stringify(formData));
+    const cleanData = JSON.parse(JSON.stringify(currentData));
     ['pricing', 'performance'].forEach(section => {
-      Object.keys(cleanData[section]).forEach(key => {
-        if (cleanData[section][key] === '') {
-          cleanData[section][key] = null;
-        }
-      });
+      if (cleanData[section]) {
+        Object.keys(cleanData[section]).forEach(key => {
+          if (cleanData[section][key] === '') {
+            cleanData[section][key] = null;
+          }
+        });
+      }
     });
 
     if (cleanData.technical_specs) {
@@ -276,13 +321,40 @@ export default function AdminPage() {
       {loading && <div className="text-center py-10 dark:text-gray-300">Loading...</div>}
 
       {!loading && formData && (
-        <form onSubmit={handleSubmit} className="space-y-8 bg-white dark:bg-gray-800 rounded-xl shadow border border-gray-200 dark:border-gray-700 p-8">
-          
-          {/* Basic Info */}
-          <section>
-            <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100 border-b pb-2 dark:border-gray-700">Basic Information</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow border border-gray-200 dark:border-gray-700 p-8">
+          <div className="flex justify-between items-center mb-6 border-b pb-4 dark:border-gray-700">
+            <div className="flex p-1 bg-gray-100 dark:bg-gray-900 rounded-lg w-fit">
+              <button
+                type="button"
+                onClick={() => handleModeToggle('form')}
+                className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${editMode === 'form' ? 'bg-white dark:bg-gray-700 shadow text-blue-600 dark:text-blue-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'}`}
+              >
+                Form Editor
+              </button>
+              <button
+                type="button"
+                onClick={() => handleModeToggle('json')}
+                className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${editMode === 'json' ? 'bg-white dark:bg-gray-700 shadow text-blue-600 dark:text-blue-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'}`}
+              >
+                Raw JSON
+              </button>
+            </div>
+          </div>
+
+          {jsonError && (
+            <div className="p-3 mb-6 text-sm text-red-600 bg-red-100 border border-red-200 rounded-lg">
+              {jsonError}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-8">
+            {editMode === 'form' ? (
+              <>
+                {/* Basic Info */}
+                <section>
+                  <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100 border-b pb-2 dark:border-gray-700">Basic Information</h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
                 <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">Name</label>
                 <input type="text" name="name" value={formData.name || ''} onChange={handleInputChange} className="w-full px-3 py-2 border rounded dark:bg-gray-900 dark:border-gray-700 dark:text-white" />
               </div>
@@ -456,8 +528,25 @@ export default function AdminPage() {
               </div>
             </section>
           )}
+              </>
+            ) : (
+              <section className="mt-2">
+                <label className="block text-sm text-gray-600 dark:text-gray-400 mb-2">
+                  Edit the model's raw JSON payload directly.
+                </label>
+                <textarea
+                  value={jsonText}
+                  onChange={(e) => {
+                    setJsonText(e.target.value);
+                    setJsonError('');
+                  }}
+                  className="w-full h-[600px] p-4 font-mono text-sm border rounded-lg bg-gray-50 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-300 focus:ring-2 focus:ring-blue-500"
+                  spellCheck="false"
+                />
+              </section>
+            )}
 
-          <div className="pt-4 border-t dark:border-gray-700 flex justify-end">
+            <div className="pt-4 border-t dark:border-gray-700 flex justify-end">
             <button
               type="submit"
               disabled={loading}
@@ -467,6 +556,7 @@ export default function AdminPage() {
             </button>
           </div>
         </form>
+        </div>
       )}
     </div>
   );
