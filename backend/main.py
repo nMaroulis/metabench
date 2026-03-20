@@ -17,6 +17,10 @@ from utils.logger import get_logger
 logger = get_logger("main")
 
 FRONTEND_ADDRESS = os.getenv("FRONTEND_ADDRESS", "http://localhost:5173")
+_parsed_frontend = urlparse(FRONTEND_ADDRESS).netloc
+ALLOWED_HOSTS = {_parsed_frontend}
+if "localhost" in _parsed_frontend:
+    ALLOWED_HOSTS.add(_parsed_frontend.replace("localhost", "127.0.0.1"))
 
 
 @asynccontextmanager
@@ -72,34 +76,20 @@ app.add_middleware(
 # === Middleware to restrict /api to frontend only ===
 @app.middleware("http")
 async def restrict_api_to_frontend(request: Request, call_next):
-
     if request.url.path.startswith("/api"):
         origin = request.headers.get("origin") or request.headers.get("referer")
 
         if not origin:
-            raise HTTPException(status_code=403, detail="Forbidden: missing origin/referer")
-
-        # Parse the origin to get strictly the hostname and port (netloc)
+            raise HTTPException(status_code=403, detail="Forbidden")
+        # Just parse the incoming origin and check the set
         try:
-            origin_netloc = urlparse(origin).netloc
-            allowed_netloc = urlparse(FRONTEND_ADDRESS).netloc
-
-            allowed_hosts = {allowed_netloc}
-
-            # Specifically allow 127.0.0.1 equivalence for local development
-            if "localhost" in allowed_netloc:
-                allowed_hosts.add(allowed_netloc.replace("localhost", "127.0.0.1"))
-
-            is_valid = any(host == origin_netloc for host in allowed_hosts)
+            is_valid = urlparse(origin).netloc in ALLOWED_HOSTS
         except Exception:
             is_valid = False
-
         if not is_valid:
-            logger.warning(f"Rejected origin/referer: {origin}")
-            raise HTTPException(status_code=403, detail="Forbidden: invalid origin")
-
-    response = await call_next(request)
-    return response
+            logger.warning(f"Rejected origin: {origin}")
+            raise HTTPException(status_code=403, detail="Forbidden")
+    return await call_next(request)
 
 
 # === Routers ===
