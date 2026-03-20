@@ -7,7 +7,32 @@ from db.database import get_db
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from sqlalchemy.orm import Session
 
+from api.auth import verify_admin_key
+
 router = APIRouter()
+
+
+# ---------- Admin ----------
+
+
+@router.patch("/admin/update-model/{model_id}", tags=["Admin"])
+def update_model(
+    model_id: int,
+    update_data: schemas.ModelUpdate,
+    db: Session = Depends(get_db),
+    *,
+    is_admin: bool = Depends(verify_admin_key),
+):
+    """Admin endpoint to update any model field, pricing, performance, or technical details."""
+    model = crud.get_model_by_id(db, model_id)
+    if not model:
+        raise HTTPException(status_code=404, detail=f"Model with ID {model_id} not found")
+
+    updated_model = crud.update_model_dynamic(db, model_id, update_data)
+    if not updated_model:
+        raise HTTPException(status_code=500, detail="Failed to update model")
+
+    return {"message": "Model updated successfully", "model_id": model_id}
 
 
 # ---------- Models ----------

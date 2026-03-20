@@ -579,7 +579,7 @@ def process_and_add_model(
             median_ttft_seconds=median_ttft,
             median_ttfa_seconds=median_ttfa,
             avg_latency_ms=speed * 1000 if speed else 0,
-            context_window=enriched_tech_details.get_field("context_window") if enriched_tech_details else 0,
+            context_window=enriched_tech_details.get_field("context_window") if enriched_tech_details else None,
         )
         db.add(performance)
     else:
@@ -726,7 +726,7 @@ def update_model_benchmarks(
             median_ttft_seconds=median_ttft,
             median_ttfa_seconds=median_ttfa,
             avg_latency_ms=speed * 1000 if speed else 0,
-            context_window=0,
+            context_window=None,
         )
         db.add(performance)
     else:

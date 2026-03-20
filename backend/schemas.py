@@ -45,6 +45,50 @@ class ModelBase(BaseModel):
     release_date: str = ""
 
 
+class ModelPricingUpdate(BaseModel):
+    cost_per_1m_input_tokens: float | None = None
+    cost_per_1m_output_tokens: float | None = None
+    cost_per_1m_blended: float | None = None
+
+
+class ModelPerformanceUpdate(BaseModel):
+    median_output_tokens_per_second: float | None = None
+    median_ttft_seconds: float | None = None
+    median_ttfa_seconds: float | None = None
+    avg_latency_ms: float | None = None
+    context_window: int | None = None
+
+
+class BenchmarkScoreUpdate(BaseModel):
+    benchmark_id: int
+    raw_score: float | None = None
+    normalized_score: float | None = None
+    notes: str | None = None
+
+
+class TechnicalSpecUpdate(BaseModel):
+    section: str | None = None
+    label: str | None = None
+    value: str | None = None
+
+
+class ModelUpdate(BaseModel):
+    name: str | None = None
+    slug: str | None = None
+    provider: str | None = None
+    model_creator_slug: str | None = None
+    description: str | None = None
+    parameters: str | None = None
+    architecture: str | None = None
+    license_type: str | None = None
+    release_date: str | None = None
+
+    pricing: ModelPricingUpdate | None = None
+    performance: ModelPerformanceUpdate | None = None
+    technical_specs: list[TechnicalSpecUpdate] | None = None
+    benchmark_scores: list[BenchmarkScoreUpdate] | None = None
+
+
 class ModelOut(ModelBase):
     id: int
     overall_score: float = 0.0

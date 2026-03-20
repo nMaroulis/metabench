@@ -13,10 +13,25 @@ load_dotenv()
 _PROVIDER: Literal["openai", "gemini", "anthropic"] = "gemini"
 
 
+def sanitize_numeric_fields(data: dict) -> dict:
+    numeric_fields = ["context_window"]
+
+    for field in numeric_fields:
+        if data.get(field) in ["N/A", "", None]:
+            data[field] = None
+        elif isinstance(data[field], str):
+            try:
+                data[field] = int(data[field])
+            except ValueError:
+                data[field] = None
+
+    return data
+
+
 class ModelMetadataEnrichment(BaseModel):
     parameters: str = Field(..., description="Estimated parameter count, e.g., '70B', '8x7B', 'N/A'")
     architecture: str = Field(..., description="Model architecture, e.g., 'Dense Transformer', 'Sparse MoE', 'N/A'")
-    context_window: int = Field(..., description="Context window size in tokens, e.g., 128000. 0 if N/A.")
+    context_window: int | None = Field(None, description="Context window size in tokens, e.g., 128000. Null if N/A.")
     license_type: str = Field(..., description="License type, e.g., 'Open Source', 'Proprietary', 'N/A'")
     description: str = Field(..., description="A short (1-2 sentence) description of model.")
     multimodal: bool = Field(..., description="Whether the model supports multimodal inputs (vision, audio, etc.)")
@@ -158,6 +173,7 @@ def enrich_model_metadata(model_name: str, provider: str) -> ModelMetadataEnrich
             content = content.split("```")[1].split("```")[0].strip()
 
         data = json.loads(content)
+        data = sanitize_numeric_fields(data)
         return ModelMetadataEnrichment.model_validate(data)
 
     except Exception as e:

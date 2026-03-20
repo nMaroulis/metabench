@@ -18,6 +18,22 @@ export const api = {
     getModelDetail: (modelName) =>
         fetchJSON(`${API_BASE}/models/${encodeURIComponent(modelName)}`),
 
+    updateModel: async (modelId, data, adminKey) => {
+        const response = await fetch(`${API_BASE}/admin/update-model/${modelId}`, {
+            method: 'PATCH',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${adminKey}`
+            },
+            body: JSON.stringify(data),
+        });
+        if (!response.ok) {
+            const err = await response.json().catch(() => ({}));
+            throw new Error(err.detail || `Update error: ${response.status}`);
+        }
+        return response.json();
+    },
+
     // Benchmarks
     getBenchmarks: (modelName = null) => {
         const query = modelName ? `?model=${encodeURIComponent(modelName)}` : '';

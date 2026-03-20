@@ -35,6 +35,95 @@ def get_model_detail(db: Session, name: str):
     return model
 
 
+def update_model_dynamic(db: Session, model_id: int, update_data: schemas.ModelUpdate):
+    from utils.logger import get_logger
+
+    logger = get_logger("crud.update")
+
+    db_model = db.query(db_models.Model).filter(db_models.Model.id == model_id).first()
+    if not db_model:
+        return None
+
+    logger.info(f"Updating model id={model_id} with data: {update_data.model_dump(exclude_unset=True)}")
+
+    update_dict = update_data.model_dump(exclude_unset=True)
+
+    # 1. Update basic fields
+    basic_fields = [
+        "name",
+        "slug",
+        "provider",
+        "model_creator_slug",
+        "description",
+        "parameters",
+        "architecture",
+        "license_type",
+        "release_date",
+    ]
+    for field in basic_fields:
+        if field in update_dict and update_dict[field] is not None:
+            setattr(db_model, field, update_dict[field])
+
+    # 2. Update pricing
+    if "pricing" in update_dict and update_dict["pricing"] is not None:
+        pricing_data = update_dict["pricing"]
+        if not db_model.pricing:
+            db_model.pricing = db_models.ModelPricing(model_id=db_model.id)
+            db.add(db_model.pricing)
+        for p_field, p_value in pricing_data.items():
+            if p_value is not None:
+                setattr(db_model.pricing, p_field, p_value)
+
+    # 3. Update performance
+    if "performance" in update_dict and update_dict["performance"] is not None:
+        perf_data = update_dict["performance"]
+        if not db_model.performance:
+            db_model.performance = db_models.ModelPerformance(model_id=db_model.id)
+            db.add(db_model.performance)
+        for p_field, p_value in perf_data.items():
+            if p_value is not None:
+                setattr(db_model.performance, p_field, p_value)
+
+    # 4. Update technical specs (replace existing specs if provided)
+    if "technical_specs" in update_dict and update_dict["technical_specs"] is not None:
+        # Delete existing specs
+        db.query(db_models.TechnicalSpec).filter(db_models.TechnicalSpec.model_id == db_model.id).delete()
+        # Add new specs
+        for spec_data in update_dict["technical_specs"]:
+            if all(k in spec_data and spec_data[k] is not None for k in ["section", "label", "value"]):
+                new_spec = db_models.TechnicalSpec(
+                    model_id=db_model.id,
+                    section=spec_data["section"],
+                    label=spec_data["label"],
+                    value=spec_data["value"],
+                )
+                db.add(new_spec)
+
+    # 5. Update benchmark scores
+    if "benchmark_scores" in update_dict and update_dict["benchmark_scores"] is not None:
+        for score_data in update_dict["benchmark_scores"]:
+            db_score = (
+                db.query(db_models.BenchmarkScore)
+                .filter(
+                    db_models.BenchmarkScore.model_id == db_model.id,
+                    db_models.BenchmarkScore.benchmark_id == score_data["benchmark_id"],
+                )
+                .first()
+            )
+            if db_score:
+                if "raw_score" in score_data and score_data["raw_score"] is not None:
+                    db_score.raw_score = score_data["raw_score"]
+                if "normalized_score" in score_data and score_data["normalized_score"] is not None:
+                    db_score.normalized_score = score_data["normalized_score"]
+                if "notes" in score_data and score_data["notes"] is not None:
+                    db_score.notes = score_data["notes"]
+                # For this implementation, we only update existing scores to keep it clean.
+
+    db.commit()
+    db.refresh(db_model)
+    return db_model
+
+
 # ---------- Benchmarks ----------
 
 
