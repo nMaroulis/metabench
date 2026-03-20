@@ -110,8 +110,8 @@ export default function LeaderboardTable({ entries, showBenchmark = false }) {
                     </thead>
                     <tbody className="divide-y divide-gray-100/50 dark:divide-gray-800/50">
                         {visibleRows.map((entry, idx) => (
-                            <tr 
-                                key={entry.model.name} 
+                            <tr
+                                key={entry.model.name}
                                 className="hover:bg-gray-50/50 dark:hover:bg-surface-800/50 transition-colors animate-fade-in group"
                                 style={{ animationDelay: `${(idx % 50) * 15}ms`, animationFillMode: 'both' }}
                             >
@@ -130,11 +130,11 @@ export default function LeaderboardTable({ entries, showBenchmark = false }) {
                                         </Link>
                                         <div className="flex items-center gap-1.5 text-[9px] sm:text-[11px] font-medium text-gray-400 dark:text-gray-500 mt-0.5">
                                             <span className={
-                                                entry.model.license_type === 'Open Source' 
-                                                    ? 'text-emerald-500/70' 
+                                                entry.model.license_type === 'Open Source'
+                                                    ? 'text-emerald-500/70'
                                                     : entry.model.license_type === 'Proprietary'
-                                                    ? 'text-blue-500/60 dark:text-blue-400/60'
-                                                    : 'text-gray-400/50'
+                                                        ? 'text-blue-500/60 dark:text-blue-400/60'
+                                                        : 'text-gray-400/50'
                                             }>
                                                 {(entry.model.license_type || 'unknown').toLowerCase()}
                                             </span>
@@ -173,17 +173,36 @@ export default function LeaderboardTable({ entries, showBenchmark = false }) {
             </div>
 
             {sorted.length > visibleCount && (
-                <div className="p-8 py-10 flex justify-center border-t border-gray-200/50 dark:border-gray-700/50 bg-gradient-to-b from-transparent to-gray-50/30 dark:to-surface-800/30">
-                    <button 
+                <div className="relative border-t border-gray-200/50 dark:border-gray-700/50 overflow-hidden">
+                    <button
                         ref={loadMoreBtnRef}
                         onClick={handleLoadMore}
-                        className="px-8 py-3.5 rounded-xl font-bold text-sm bg-white dark:bg-surface-800 border-2 border-brand-500/20 shadow-[0_0_20px_-5px_rgba(59,130,246,0.15)] hover:shadow-[0_0_25px_-5px_rgba(59,130,246,0.3)] hover:border-brand-500/50 text-brand-600 dark:text-brand-400 transition-all active:scale-95 flex items-center gap-2 group"
+                        className="w-full group relative py-10 px-4 flex flex-col items-center justify-center transition-all duration-500 hover:bg-gray-50/50 dark:hover:bg-brand-500/5"
                     >
-                        Expand Leaderboard
-                        <span className="bg-brand-500/10 px-2 py-0.5 rounded-lg text-xs ml-1">
-                            {sorted.length - visibleCount} more
-                        </span>
-                        <ArrowDown className="w-4 h-4 ml-1 group-hover:translate-y-1 transition-transform" />
+                        {/* Interactive Background Glow */}
+                        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-brand-500/5 to-brand-500/10 dark:via-brand-500/10 dark:to-brand-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+
+                        {/* Animated Mesh/Gradient Lines */}
+                        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-[1px] bg-gradient-to-r from-transparent via-brand-500 to-transparent opacity-20 group-hover:opacity-100 group-hover:w-[120%] transition-all duration-1000"></div>
+
+                        <div className="relative flex flex-col items-center gap-2">
+                            <span className="text-xs font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500 group-hover:text-brand-500 transition-colors duration-300">
+                                Click to Expand
+                            </span>
+
+                            <div className="flex items-center gap-4 mt-1">
+                                <div className="h-[1px] w-12 bg-gradient-to-r from-transparent to-gray-300 dark:to-gray-700 group-hover:to-brand-500 transition-all"></div>
+                                <span className="text-lg font-display font-light text-gray-600 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white transition-colors duration-300">
+                                    Reveal <span className="font-bold text-brand-600 dark:text-brand-400">{sorted.length - visibleCount}</span> more models
+                                </span>
+                                <div className="h-[1px] w-12 bg-gradient-to-l from-transparent to-gray-300 dark:to-gray-700 group-hover:to-brand-500 transition-all"></div>
+                            </div>
+
+                            <ArrowDown className="w-5 h-5 mt-4 text-brand-500/40 group-hover:text-brand-500 group-hover:translate-y-2 transition-all duration-500 ease-out" />
+                        </div>
+
+                        {/* Subtle bottom fade */}
+                        <div className="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-white dark:from-gray-950 to-transparent pointer-events-none opacity-60"></div>
                     </button>
                 </div>
             )}
