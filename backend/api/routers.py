@@ -17,7 +17,7 @@ router = APIRouter()
 
 
 @router.patch("/admin/update-model/{model_id}", tags=["Admin"])
-def update_model(
+async def update_model(
     model_id: int,
     update_data: schemas.ModelUpdate,
     db: Session = Depends(get_db),
@@ -25,6 +25,8 @@ def update_model(
     is_admin: bool = Depends(verify_admin_key),
 ):
     """Admin endpoint to update any model field, pricing, performance, or technical details."""
+    from fastapi_cache import FastAPICache
+
     model = crud.get_model_by_id(db, model_id)
     if not model:
         raise HTTPException(status_code=404, detail=f"Model with ID {model_id} not found")
@@ -32,6 +34,9 @@ def update_model(
     updated_model = crud.update_model_dynamic(db, model_id, update_data)
     if not updated_model:
         raise HTTPException(status_code=500, detail="Failed to update model")
+
+    # Invalidate entire cache to ensure and model details, leaderboard, and benchmarks are updated
+    await FastAPICache.clear()
 
     return {"message": "Model updated successfully", "model_id": model_id}
 

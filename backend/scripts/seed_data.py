@@ -162,6 +162,7 @@ def format_technical_details(
 
 
 BENCHMARKS = [
+    # Knowledge
     {
         "name": "MMLU",
         "category": "knowledge",
@@ -186,6 +187,7 @@ BENCHMARKS = [
         "weight": 1.3,
         "source": "Artificial Analysis",
     },
+    # Reasoning
     {
         "name": "HLE",
         "category": "reasoning",
@@ -194,6 +196,40 @@ BENCHMARKS = [
         "weight": 1.4,
         "source": "Artificial Analysis",
     },
+    {
+        "name": "BigBench-Hard",
+        "category": "reasoning",
+        "description": "23 challenging BIG-Bench reasoning tasks",
+        "max_score": 100.0,
+        "weight": 1.1,
+        "source": "Google",
+    },
+    {
+        "name": "ARC-Challenge",
+        "category": "reasoning",
+        "description": "AI2 Reasoning Challenge - science questions",
+        "max_score": 100.0,
+        "weight": 0.9,
+        "source": "AI2",
+    },
+    {
+        "name": "LCR",
+        "category": "reasoning",
+        "description": "Long Context Reasoning - reasoning with large context windows",
+        "max_score": 100.0,
+        "weight": 1.0,
+        "source": "Artificial Analysis",
+    },
+    {
+        "name": "LiveBench",
+        "category": "reasoning",
+        "type": "index",
+        "description": "Live benchmark - contamination-free reasoning",
+        "max_score": 100.0,
+        "weight": 1.2,
+        "source": "LiveBench.ai",
+    },
+    # Math
     {
         "name": "GSM8K",
         "category": "math",
@@ -226,6 +262,7 @@ BENCHMARKS = [
         "weight": 1.2,
         "source": "Artificial Analysis",
     },
+    # Coding
     {
         "name": "HumanEval",
         "category": "coding",
@@ -259,29 +296,15 @@ BENCHMARKS = [
         "source": "Artificial Analysis",
     },
     {
-        "name": "BigBench-Hard",
-        "category": "reasoning",
-        "description": "23 challenging BIG-Bench reasoning tasks",
+        "name": "SWE-Bench",
+        "category": "coding",
+        "type": "benchmark",
+        "description": "SWE-Bench - software engineering benchmark",
         "max_score": 100.0,
-        "weight": 1.1,
-        "source": "Google",
+        "weight": 1.3,
+        "source": "SWE-Bench",
     },
-    {
-        "name": "ARC-Challenge",
-        "category": "reasoning",
-        "description": "AI2 Reasoning Challenge - science questions",
-        "max_score": 100.0,
-        "weight": 0.9,
-        "source": "AI2",
-    },
-    {
-        "name": "LCR",
-        "category": "reasoning",
-        "description": "Long Context Reasoning - reasoning with large context windows",
-        "max_score": 100.0,
-        "weight": 1.0,
-        "source": "Artificial Analysis",
-    },
+    # Instruction Following
     {
         "name": "IFEval",
         "category": "instruction",
@@ -290,6 +313,7 @@ BENCHMARKS = [
         "weight": 1.0,
         "source": "Artificial Analysis",
     },
+    # Agentic
     {
         "name": "TAU2",
         "category": "agentic",
@@ -298,6 +322,7 @@ BENCHMARKS = [
         "weight": 1.1,
         "source": "Artificial Analysis",
     },
+    # Human Preference
     {
         "name": "Arena Elo",
         "category": "human_preference",
@@ -306,15 +331,7 @@ BENCHMARKS = [
         "weight": 1.5,
         "source": "LMSYS / Chatbot Arena",
     },
-    {
-        "name": "LiveBench",
-        "category": "reasoning",
-        "type": "index",
-        "description": "Live benchmark - contamination-free reasoning",
-        "max_score": 100.0,
-        "weight": 1.2,
-        "source": "LiveBench.ai",
-    },
+    # Emotional Intelligence
     {
         "name": "EQBench",
         "category": "emotional_intelligence",
@@ -324,6 +341,7 @@ BENCHMARKS = [
         "weight": 0.8,
         "source": "EQ-Bench",
     },
+    # Composite
     {
         "name": "AA Intelligence Index",
         "category": "composite",
@@ -439,7 +457,7 @@ def populate_missing_scores(mapped_scores: dict[str, Any]) -> dict[str, Any]:
     populated = mapped_scores.copy()
     for b in BENCHMARKS:
         if b["name"] not in populated:
-            populated[str(b["name"])] = 75.0  # Placeholder dummy value
+            populated[str(b["name"])] = 0.0  # Placeholder dummy value
     return populated
 
 
