@@ -162,7 +162,7 @@ export default function LandingPage() {
             </section>
 
             {/* Champions & Podium Section */}
-            <section className="relative py-20 overflow-hidden bg-gray-50/30 dark:bg-surface-950/30">
+            <section className="relative py-20 overflow-hidden bg-white dark:bg-surface-900">
                 {/* Refined Background Highlights - cleaner spotlights */}
                 <div className="absolute inset-0 pointer-events-none opacity-[0.03] dark:opacity-[0.05]"
                     style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, currentColor 1px, transparent 0)', backgroundSize: '32px 32px' }} />
@@ -200,10 +200,10 @@ export default function LandingPage() {
                                         to={`/model/${encodeURIComponent(overallTop[1].name)}`}
                                         className="w-full md:w-1/3 group order-2 md:order-1"
                                     >
-                                        <div className="glass-card p-6 md:h-64 flex flex-col justify-end items-center text-center border-gray-200 dark:border-surface-800 relative overflow-hidden group-hover:-translate-y-2 group-hover:shadow-2xl transition-all duration-500 rounded-2xl md:rounded-r-none md:rounded-l-3xl">
+                                        <div className="glass-card p-6 md:min-h-[18rem] flex flex-col justify-end items-center text-center border-gray-200 dark:border-surface-800 relative overflow-hidden group-hover:-translate-y-2 group-hover:shadow-2xl transition-all duration-500 rounded-2xl md:rounded-r-none md:rounded-l-3xl">
                                             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-gray-300 to-gray-400" />
                                             <div className="text-4xl mb-4 grayscale opacity-80 group-hover:grayscale-0 group-hover:opacity-100 transition-all transform group-hover:scale-110">🥈</div>
-                                            <h3 className="font-display font-bold text-xl mb-1 truncate w-full px-4">{overallTop[1].name}</h3>
+                                            <h3 className="font-display font-bold text-xl mb-1 w-full px-4 break-words leading-tight">{overallTop[1].name}</h3>
                                             <p className="text-[10px] text-gray-500 uppercase tracking-widest font-black mb-4">{overallTop[1].provider}</p>
                                             <div className="text-3xl font-display font-black text-gray-400 dark:text-gray-500">{overallTop[1].overall_score.toFixed(1)}</div>
                                             <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Silver Tier</div>
@@ -215,13 +215,13 @@ export default function LandingPage() {
                                         to={`/model/${encodeURIComponent(overallTop[0].name)}`}
                                         className="w-full md:w-1/3 z-10 order-1 md:order-2 group"
                                     >
-                                        <div className="glass-card p-8 md:h-80 flex flex-col justify-end items-center text-center ring-2 ring-yellow-400/30 shadow-[0_40px_80px_-15px_rgba(234,179,8,0.15)] bg-white/80 dark:bg-surface-900/80 relative overflow-hidden group-hover:-translate-y-4 group-hover:shadow-[0_50px_100px_-20px_rgba(234,179,8,0.25)] transition-all duration-700 rounded-3xl md:scale-110">
+                                        <div className="glass-card p-8 md:min-h-[24rem] flex flex-col justify-end items-center text-center ring-2 ring-yellow-400/30 shadow-[0_40px_80px_-15px_rgba(234,179,8,0.15)] bg-white dark:bg-surface-800/80 relative overflow-hidden group-hover:-translate-y-4 group-hover:shadow-[0_50px_100px_-20px_rgba(234,179,8,0.25)] transition-all duration-700 rounded-3xl md:scale-110">
                                             <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-yellow-400 via-amber-200 to-yellow-600" />
                                             <div className="absolute top-6 right-6 animate-pulse">
                                                 <Trophy className="w-8 h-8 text-yellow-500/20" />
                                             </div>
                                             <div className="text-7xl mb-6 drop-shadow-2xl transform group-hover:scale-110 group-hover:rotate-6 transition-transform">🥇</div>
-                                            <h3 className="font-display font-black text-2xl mb-1 truncate w-full px-4">{overallTop[0].name}</h3>
+                                            <h3 className="font-display font-black text-2xl mb-1 w-full px-4 break-words leading-tight pb-1">{overallTop[0].name}</h3>
                                             <p className="text-[10px] text-yellow-600 dark:text-yellow-500 uppercase tracking-widest font-black mb-4">{overallTop[0].provider}</p>
                                             <div className="text-6xl font-display font-black gradient-text mb-3 leading-none">{overallTop[0].overall_score.toFixed(1)}</div>
                                             <div className="px-5 py-1.5 rounded-full bg-yellow-400/20 text-yellow-700 dark:text-yellow-400 text-[10px] font-black uppercase tracking-widest ring-1 ring-yellow-400/20">Global Master</div>
@@ -233,10 +233,10 @@ export default function LandingPage() {
                                         to={`/model/${encodeURIComponent(overallTop[2].name)}`}
                                         className="w-full md:w-1/3 group order-3"
                                     >
-                                        <div className="glass-card p-6 md:h-56 flex flex-col justify-end items-center text-center border-gray-200 dark:border-surface-800 relative overflow-hidden group-hover:-translate-y-2 group-hover:shadow-xl transition-all duration-500 rounded-2xl md:rounded-l-none md:rounded-r-3xl">
+                                        <div className="glass-card p-6 md:min-h-[16rem] flex flex-col justify-end items-center text-center border-gray-200 dark:border-surface-800 relative overflow-hidden group-hover:-translate-y-2 group-hover:shadow-xl transition-all duration-500 rounded-2xl md:rounded-l-none md:rounded-r-3xl">
                                             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-600 to-amber-800" />
                                             <div className="text-4xl mb-4 grayscale opacity-80 group-hover:grayscale-0 group-hover:opacity-100 transition-all transform group-hover:scale-110">🥉</div>
-                                            <h3 className="font-display font-bold text-xl mb-1 truncate w-full px-4">{overallTop[2].name}</h3>
+                                            <h3 className="font-display font-bold text-xl mb-1 w-full px-4 break-words leading-tight">{overallTop[2].name}</h3>
                                             <p className="text-[10px] text-gray-500 uppercase tracking-widest font-black mb-4">{overallTop[2].provider}</p>
                                             <div className="text-3xl font-display font-black text-amber-800/60 dark:text-amber-700">{overallTop[2].overall_score.toFixed(1)}</div>
                                             <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1 text-opacity-50">Bronze Tier</div>
@@ -258,7 +258,7 @@ export default function LandingPage() {
                                             <cat.icon className="w-5 h-5 text-white" />
                                         </div>
                                         <div>
-                                            <h3 className="font-display font-black text-sm uppercase tracking-widest text-gray-400 leading-none mb-1">{cat.title}</h3>
+                                            <h3 className="font-display font-black text-sm uppercase tracking-widest text-gray-400 leading-none mb-1">{cat.title} Champion</h3>
                                             <p className="text-[10px] font-bold text-brand-500 uppercase tracking-widest">Category Leader</p>
                                         </div>
                                     </div>

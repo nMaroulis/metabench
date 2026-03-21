@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { GitCompareArrows, Plus, X, Search, Clapperboard } from 'lucide-react';
+import { GitCompareArrows, Plus, X, Search, Clapperboard, Brain, Zap } from 'lucide-react';
 import api from '../services/api';
 import BenchmarkRadarChart from '../charts/RadarChart';
 import BenchmarkBarChart from '../charts/BarChart';
@@ -99,6 +99,51 @@ export default function ComparePage() {
         name: m.model.name,
         scores: m.scores,
     })) || [];
+
+    const capabilityCategories = [
+        'knowledge', 'math', 'coding', 'reasoning',
+        'instruction', 'agentic', 'human_preference', 'emotional_intelligence'
+    ];
+
+    // 1. Process category data for each model
+    const categoryRadarData = comparisonData?.models?.map(m => {
+        const scoresByCategory = (m.scores || []).reduce((acc, s) => {
+            const cat = s.benchmark_category || 'other';
+            if (!acc[cat]) acc[cat] = [];
+            acc[cat].push(s.normalized_score);
+            return acc;
+        }, {});
+
+        const avgScores = capabilityCategories.map(cat => {
+            const scores = scoresByCategory[cat] || [];
+            const avg = scores.length > 0
+                ? scores.reduce((a, b) => a + b, 0) / scores.length
+                : 0;
+            return {
+                benchmark_name: cat.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
+                normalized_score: avg
+            };
+        });
+
+        return {
+            name: m.model.name,
+            scores: avgScores
+        };
+    }) || [];
+
+    // 2. Filter categories to only those with at least one non-zero score across all models
+    const categoryNames = capabilityCategories.map(cat =>
+        cat.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+    );
+
+    const filteredCategoryNames = categoryNames.filter(name =>
+        categoryRadarData.some(m => m.scores.find(s => s.benchmark_name === name)?.normalized_score > 0)
+    );
+
+    // 3. Filter benchmarks to only those with at least one value
+    const filteredBenchmarkNames = benchmarkNames.filter(name =>
+        modelsChartData.some(m => m.scores.find(s => s.benchmark_name === name)?.normalized_score > 0)
+    );
 
     return (
         <div className="page-container">
@@ -218,32 +263,65 @@ export default function ComparePage() {
 
             {comparisonData && !loading && (
                 <div className="space-y-8">
-                    {/* Chart toggle */}
-                    <div className="flex gap-2">
-                        <button
-                            onClick={() => setChartType('radar')}
-                            className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${chartType === 'radar' ? 'bg-brand-500 text-white' : 'bg-gray-100 dark:bg-surface-700 text-gray-600 dark:text-gray-400'
-                                }`}
-                        >
-                            Radar Chart
-                        </button>
-                        <button
-                            onClick={() => setChartType('bar')}
-                            className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${chartType === 'bar' ? 'bg-brand-500 text-white' : 'bg-gray-100 dark:bg-surface-700 text-gray-600 dark:text-gray-400'
-                                }`}
-                        >
-                            Bar Chart
-                        </button>
+                    {/* Charts View */}
+                    <div className="flex items-center justify-between">
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => setChartType('radar')}
+                                className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${chartType === 'radar' ? 'bg-brand-500 text-white shadow-lg shadow-brand-500/20' : 'bg-gray-100 dark:bg-surface-700 text-gray-600 dark:text-gray-400'
+                                    }`}
+                            >
+                                Radar View
+                            </button>
+                            <button
+                                onClick={() => setChartType('bar')}
+                                className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${chartType === 'bar' ? 'bg-brand-500 text-white shadow-lg shadow-brand-500/20' : 'bg-gray-100 dark:bg-surface-700 text-gray-600 dark:text-gray-400'
+                                    }`}
+                            >
+                                Bar Chart
+                            </button>
+                        </div>
+                        <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                            <Plus className="w-3 h-3" /> Showing active metrics only
+                        </div>
                     </div>
 
-                    {/* Chart */}
-                    <div className="glass-card p-6">
-                        <h3 className="text-lg font-display font-bold mb-4">Benchmark Comparison</h3>
-                        {chartType === 'radar' ? (
-                            <BenchmarkRadarChart modelsData={modelsChartData} benchmarks={benchmarkNames} />
-                        ) : (
-                            <BenchmarkBarChart modelsData={modelsChartData} benchmarks={benchmarkNames} />
-                        )}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                        {/* Capability Radar */}
+                        <div className="glass-card p-6">
+                            <div className="flex items-center gap-2 mb-6">
+                                <div className="p-2 rounded-lg bg-indigo-500/10 text-indigo-500">
+                                    <Brain className="w-4 h-4" />
+                                </div>
+                                <h3 className="text-lg font-display font-bold">Capability Profile</h3>
+                            </div>
+                            {chartType === 'radar' ? (
+                                <BenchmarkRadarChart modelsData={categoryRadarData} benchmarks={filteredCategoryNames} colorOffset={2} />
+                            ) : (
+                                <BenchmarkBarChart modelsData={categoryRadarData} benchmarks={filteredCategoryNames} />
+                            )}
+                            <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-4 text-center italic">
+                                Comparison of broad cognitive domains (Average normalized scores)
+                            </p>
+                        </div>
+
+                        {/* Benchmark Radar */}
+                        <div className="glass-card p-6">
+                            <div className="flex items-center gap-2 mb-6">
+                                <div className="p-2 rounded-lg bg-brand-500/10 text-brand-500">
+                                    <Zap className="w-4 h-4" />
+                                </div>
+                                <h3 className="text-lg font-display font-bold">Benchmark Detail</h3>
+                            </div>
+                            {chartType === 'radar' ? (
+                                <BenchmarkRadarChart modelsData={modelsChartData} benchmarks={filteredBenchmarkNames} />
+                            ) : (
+                                <BenchmarkBarChart modelsData={modelsChartData} benchmarks={filteredBenchmarkNames} />
+                            )}
+                            <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-4 text-center italic">
+                                Side-by-side performance on specific industry-standard metrics
+                            </p>
+                        </div>
                     </div>
 
                     {/* Score breakdown table */}
