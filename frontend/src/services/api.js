@@ -34,6 +34,20 @@ export const api = {
         return response.json();
     },
 
+    verifyAdminKey: async (adminKey) => {
+        const response = await fetch(`${API_BASE}/admin/verify`, {
+            method: 'GET',
+            headers: { 
+                'Authorization': `Bearer ${adminKey}`
+            },
+        });
+        if (!response.ok) {
+            const err = await response.json().catch(() => ({}));
+            throw new Error(err.detail || `Authentication error: ${response.status}`);
+        }
+        return response.json();
+    },
+
     // Benchmarks
     getBenchmarks: (modelName = null) => {
         const query = modelName ? `?model=${encodeURIComponent(modelName)}` : '';

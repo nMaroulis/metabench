@@ -16,6 +16,14 @@ router = APIRouter()
 # ---------- Admin ----------
 
 
+@router.get("/admin/verify", tags=["Admin"])
+async def verify_admin(
+    is_admin: bool = Depends(verify_admin_key),  # noqa: FBT001
+):
+    """Admin endpoint to verify the admin API key."""
+    return {"message": "Admin key is valid"}
+
+
 @router.patch("/admin/update-model/{model_id}", tags=["Admin"])
 async def update_model(
     model_id: int,

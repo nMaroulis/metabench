@@ -37,11 +37,23 @@ export default function AdminPage() {
     }
   };
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    if (adminKey.trim()) {
+    if (!adminKey.trim()) return;
+
+    setLoading(true);
+    setMessage({ type: '', text: '' });
+    
+    try {
+      await api.verifyAdminKey(adminKey.trim());
       sessionStorage.setItem('metabench_admin_key', adminKey.trim());
       setIsAuthenticated(true);
+    } catch (err) {
+      setMessage({ type: 'error', text: 'Wrong code. Please try again in 3 seconds.' });
+      setTimeout(() => {
+        setMessage({ type: '', text: '' });
+        setLoading(false);
+      }, 3000);
     }
   };
 
@@ -268,15 +280,22 @@ export default function AdminPage() {
             type="password"
             value={adminKey}
             onChange={(e) => setAdminKey(e.target.value)}
-            className="w-full px-4 py-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 mb-4"
+            disabled={loading}
+            className="w-full px-4 py-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 mb-4 disabled:opacity-50"
             placeholder="Enter key to access updates"
             required
           />
+          {message.text && message.type === 'error' && (
+            <div className="mb-4 p-3 bg-red-100 text-red-700 border border-red-200 rounded-lg text-sm">
+              {message.text}
+            </div>
+          )}
           <button
             type="submit"
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+            disabled={loading}
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors disabled:opacity-50"
           >
-            Authenticate
+            {loading ? 'Authenticating...' : 'Authenticate'}
           </button>
         </form>
       </div>
