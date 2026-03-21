@@ -136,6 +136,7 @@ export default function LeaderboardPage() {
                     onLoadMore={handleLoadMore}
                     loadingMore={loadingMore}
                     hasMore={entries.length < total}
+                    remainingCount={total - entries.length}
                 />
             )}
         </div>

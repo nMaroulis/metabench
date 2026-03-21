@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { ArrowUpDown, ArrowUp, ArrowDown, Search, Zap, Clock } from 'lucide-react';
 import ScoreBar from './ScoreBar';
 
-export default function LeaderboardTable({ entries, showBenchmark = false, onLoadMore, hasMore, loadingMore }) {
+export default function LeaderboardTable({ entries, showBenchmark = false, onLoadMore, hasMore, loadingMore, remainingCount }) {
     const [sortKey, setSortKey] = useState('score');
     const [sortDir, setSortDir] = useState('desc');
     const [search, setSearch] = useState('');
@@ -177,7 +177,11 @@ export default function LeaderboardTable({ entries, showBenchmark = false, onLoa
                             <div className="flex items-center gap-4 mt-1">
                                 <div className="h-[1px] w-12 bg-gradient-to-r from-transparent to-gray-300 dark:to-gray-700 group-hover:to-brand-500 transition-all"></div>
                                 <span className="text-lg font-display font-light text-gray-600 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white transition-colors duration-300">
-                                    {loadingMore ? 'Fetching next models...' : 'Reveal more models'}
+                                    {loadingMore ? 'Fetching next models...' : (
+                                        <>
+                                            Reveal <span className="font-bold text-brand-600 dark:text-brand-400">{remainingCount}</span> more models
+                                        </>
+                                    )}
                                 </span>
                                 <div className="h-[1px] w-12 bg-gradient-to-l from-transparent to-gray-300 dark:to-gray-700 group-hover:to-brand-500 transition-all"></div>
                             </div>

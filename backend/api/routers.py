@@ -51,6 +51,7 @@ def list_models(
 
 
 @router.get("/models/{model_name}", tags=["Models"])
+@cache(expire=1800)
 def get_model_detail(model_name: str, db: Session = Depends(get_db)):
     """Get detailed info for a specific model including all benchmark scores."""
     model = crud.get_model_detail(db, model_name)
@@ -81,6 +82,7 @@ def get_model_detail(model_name: str, db: Session = Depends(get_db)):
 
 
 @router.get("/benchmarks", tags=["Benchmarks"])
+@cache(expire=7200)
 def list_benchmarks(
     model: str | None = None,
     db: Session = Depends(get_db),
