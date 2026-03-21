@@ -162,7 +162,7 @@ export default function LandingPage() {
             </section>
 
             {/* Champions & Podium Section */}
-            <section className="relative py-20 overflow-hidden bg-white dark:bg-surface-900">
+            <section className="relative py-10 overflow-hidden bg-white dark:bg-surface-900">
                 {/* Refined Background Highlights - cleaner spotlights */}
                 <div className="absolute inset-0 pointer-events-none opacity-[0.03] dark:opacity-[0.05]"
                     style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, currentColor 1px, transparent 0)', backgroundSize: '32px 32px' }} />
@@ -312,7 +312,7 @@ export default function LandingPage() {
             </section>
 
             {/* Latest Models */}
-            <section className="page-container py-12">
+            <section className="page-container py-10">
                 <div className="flex items-center justify-between mb-12">
                     <div>
                         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[10px] font-black uppercase tracking-widest mb-3">
@@ -342,7 +342,7 @@ export default function LandingPage() {
             </section>
 
             {/* Benchmarks Overview */}
-            <section className="page-container py-12">
+            <section className="page-container py-10">
                 <div className="flex items-center justify-between mb-12">
                     <div>
                         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-violet-500/10 text-violet-600 dark:text-violet-400 text-[10px] font-black uppercase tracking-widest mb-3 w-fit">
@@ -381,7 +381,7 @@ export default function LandingPage() {
             </section>
 
             {/* Live Data Sources */}
-            <section className="page-container py-12">
+            <section className="page-container py-10">
                 <div className="flex flex-col mb-12">
                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-black uppercase tracking-widest mb-3 w-fit">
                         <Sparkles className="w-3 h-3" /> Verifiable Data
