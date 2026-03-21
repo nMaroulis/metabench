@@ -225,3 +225,68 @@ class CommunitySubmissionOut(CommunitySubmissionCreate):
 # ---------- Export schemas ----------
 class ExportParams(BaseModel):
     format: str = "json"  # json or csv
+
+
+class AdminSnapshotBenchmark(BaseModel):
+    name: str
+    category: str
+    type: str = "benchmark"
+    description: str = ""
+    max_score: float = 100.0
+    weight: float = 1.0
+    source: str = ""
+
+
+class AdminSnapshotModelPricing(BaseModel):
+    cost_per_1m_input_tokens: float | None = None
+    cost_per_1m_output_tokens: float | None = None
+    cost_per_1m_blended: float | None = None
+
+
+class AdminSnapshotModelPerformance(BaseModel):
+    median_output_tokens_per_second: float | None = None
+    median_ttft_seconds: float | None = None
+    median_ttfa_seconds: float | None = None
+    avg_latency_ms: float | None = None
+    context_window: int | None = None
+
+
+class AdminSnapshotTechnicalSpec(BaseModel):
+    section: str
+    label: str
+    value: str
+
+
+class AdminSnapshotBenchmarkScore(BaseModel):
+    benchmark_name: str
+    raw_score: float
+    normalized_score: float
+    language: str = "en"
+    evaluation_date: str = ""
+    notes: str = ""
+
+
+class AdminSnapshotModel(BaseModel):
+    name: str
+    slug: str = ""
+    provider: str
+    model_creator_slug: str = ""
+    open_router_id: str = ""
+    description: str = ""
+    parameters: str = ""
+    architecture: str = ""
+    license_type: str = ""
+    release_date: str = ""
+    is_active: int = 1
+
+    pricing: AdminSnapshotModelPricing | None = None
+    performance: AdminSnapshotModelPerformance | None = None
+    technical_specs: list[AdminSnapshotTechnicalSpec] = Field(default_factory=list)
+    benchmark_scores: list[AdminSnapshotBenchmarkScore] = Field(default_factory=list)
+
+
+class AdminSnapshot(BaseModel):
+    version: int = 1
+    exported_at: datetime | None = None
+    benchmarks: list[AdminSnapshotBenchmark] = Field(default_factory=list)
+    models: list[AdminSnapshotModel] = Field(default_factory=list)

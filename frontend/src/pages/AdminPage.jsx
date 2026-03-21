@@ -21,6 +21,8 @@ export default function AdminPage() {
   const [jsonError, setJsonError] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
+  const [snapshotBusy, setSnapshotBusy] = useState(false);
+  const [snapshotFileName, setSnapshotFileName] = useState('');
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -66,6 +68,56 @@ export default function AdminPage() {
     setJsonText('');
     setEditMode('form');
     setJsonError('');
+    setSnapshotBusy(false);
+    setSnapshotFileName('');
+  };
+
+  const downloadAdminSnapshot = async () => {
+    setSnapshotBusy(true);
+    setMessage({ type: '', text: '' });
+    try {
+      const snapshot = await api.exportAdminSnapshot(adminKey);
+      const exportedAt = snapshot.exported_at ? new Date(snapshot.exported_at) : new Date();
+      const safeDate = exportedAt.toISOString().replace(/[:.]/g, '-');
+      const fileName = `metabench_snapshot_${safeDate}.json`;
+
+      const blob = new Blob([JSON.stringify(snapshot, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      setMessage({ type: 'success', text: 'Snapshot downloaded.' });
+    } catch (err) {
+      setMessage({ type: 'error', text: err.message || 'Failed to download snapshot.' });
+    } finally {
+      setSnapshotBusy(false);
+    }
+  };
+
+  const handleSnapshotUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setSnapshotFileName(file.name);
+    setSnapshotBusy(true);
+    setMessage({ type: '', text: '' });
+
+    try {
+      const text = await file.text();
+      const parsed = JSON.parse(text);
+      const result = await api.importAdminSnapshot(parsed, adminKey);
+      setMessage({ type: 'success', text: `Snapshot imported. ${result?.result ? 'Done.' : ''}` });
+      await loadModels();
+    } catch (err) {
+      setMessage({ type: 'error', text: err.message || 'Failed to import snapshot.' });
+    } finally {
+      setSnapshotBusy(false);
+      e.target.value = '';
+    }
   };
 
   const handleSelectModel = async (e) => {
@@ -322,6 +374,37 @@ export default function AdminPage() {
       )}
 
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow border border-gray-200 dark:border-gray-700 p-6 mb-8">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={downloadAdminSnapshot}
+              disabled={snapshotBusy || loading}
+              className="text-sm bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors disabled:opacity-50"
+            >
+              {snapshotBusy ? 'Working...' : 'Download Snapshot JSON'}
+            </button>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <label className="text-sm bg-gray-100 hover:bg-gray-200 dark:bg-gray-900 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 py-2 px-4 rounded-lg cursor-pointer border border-gray-200 dark:border-gray-700 disabled:opacity-50">
+              Upload Snapshot JSON
+              <input
+                type="file"
+                accept="application/json"
+                onChange={handleSnapshotUpload}
+                disabled={snapshotBusy || loading}
+                className="hidden"
+              />
+            </label>
+            {snapshotFileName && (
+              <div className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[260px]" title={snapshotFileName}>
+                {snapshotFileName}
+              </div>
+            )}
+          </div>
+        </div>
+
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
           Select Model to Update
         </label>

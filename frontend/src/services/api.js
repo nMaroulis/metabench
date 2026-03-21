@@ -8,6 +8,15 @@ async function fetchJSON(url) {
     return response.json();
 }
 
+async function fetchJSONWithOptions(url, options) {
+    const response = await fetch(url, options);
+    if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.detail || `API error: ${response.status} ${response.statusText}`);
+    }
+    return response.json();
+}
+
 export const api = {
     // Models
     getModels: (params = {}) => {
@@ -47,6 +56,24 @@ export const api = {
         }
         return response.json();
     },
+
+    exportAdminSnapshot: (adminKey) =>
+        fetchJSONWithOptions(`${API_BASE}/admin/snapshot`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${adminKey}`
+            }
+        }),
+
+    importAdminSnapshot: (snapshot, adminKey) =>
+        fetchJSONWithOptions(`${API_BASE}/admin/snapshot`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${adminKey}`
+            },
+            body: JSON.stringify(snapshot),
+        }),
 
     // Benchmarks
     getBenchmarks: (modelName = null) => {

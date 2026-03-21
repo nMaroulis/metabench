@@ -1,10 +1,12 @@
 import csv
 import io
+from datetime import UTC, datetime
 
 import schemas
 from crud import crud
 from db.database import get_db
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
+from fastapi_cache import FastAPICache
 from fastapi_cache.decorator import cache
 from sqlalchemy.orm import Session
 
@@ -47,6 +49,35 @@ async def update_model(
     await FastAPICache.clear()
 
     return {"message": "Model updated successfully", "model_id": model_id}
+
+
+@router.get("/admin/snapshot", response_model=schemas.AdminSnapshot, tags=["Admin"])
+async def export_admin_snapshot(
+    db: Session = Depends(get_db),
+    *,
+    is_admin: bool = Depends(verify_admin_key),
+):
+    snapshot = crud.get_admin_snapshot(db)
+    return snapshot
+
+
+@router.post("/admin/snapshot", tags=["Admin"])
+async def import_admin_snapshot(
+    snapshot: schemas.AdminSnapshot,
+    db: Session = Depends(get_db),
+    *,
+    is_admin: bool = Depends(verify_admin_key),
+):
+    # Ensure exported_at is always set on import for traceability
+    if snapshot.exported_at is None:
+        snapshot.exported_at = datetime.now(UTC)
+
+    result = crud.import_admin_snapshot(db, snapshot)
+
+    # Invalidate entire cache to ensure leaderboard/model details update
+    await FastAPICache.clear()
+
+    return {"message": "Snapshot imported", "result": result}
 
 
 # ---------- Models ----------

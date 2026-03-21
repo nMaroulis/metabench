@@ -5,6 +5,7 @@ from services.scoring import (
     compute_weighted_overall_score,
 )
 from sqlalchemy import desc, func
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session, joinedload
 
 # ---------- Models ----------
@@ -427,3 +428,271 @@ def get_all_data_for_export(db: Session):
             model_data[f"{s['benchmark_name']}_normalized"] = s["normalized_score"]
         export_data.append(model_data)
     return export_data
+
+
+# ---------- Admin Snapshot ----------
+
+
+def get_admin_snapshot(db: Session) -> schemas.AdminSnapshot:
+    benchmarks = db.query(db_models.Benchmark).order_by(db_models.Benchmark.id.asc()).all()
+    models = (
+        db.query(db_models.Model)
+        .options(
+            joinedload(db_models.Model.pricing),
+            joinedload(db_models.Model.performance),
+            joinedload(db_models.Model.technical_specs),
+            joinedload(db_models.Model.scores).joinedload(db_models.BenchmarkScore.benchmark),
+        )
+        .order_by(db_models.Model.id.asc())
+        .all()
+    )
+
+    snapshot = schemas.AdminSnapshot(exported_at=None)
+    snapshot.benchmarks = [
+        schemas.AdminSnapshotBenchmark(
+            name=str(b.name),
+            category=str(b.category),
+            type=str(b.type),
+            description=str(b.description or ""),
+            max_score=float(b.max_score or 100.0),  # type: ignore
+            weight=float(b.weight or 1.0),  # type: ignore
+            source=str(b.source or ""),
+        )
+        for b in benchmarks
+    ]
+
+    snapshot.models = []
+    for m in models:
+        snapshot_model = schemas.AdminSnapshotModel(
+            name=str(m.name),
+            slug=str(m.slug or ""),
+            provider=str(m.provider),
+            model_creator_slug=str(m.model_creator_slug or ""),
+            open_router_id=str(m.open_router_id or ""),
+            description=str(m.description or ""),
+            parameters=str(m.parameters or ""),
+            architecture=str(m.architecture or ""),
+            license_type=str(m.license_type or ""),
+            release_date=str(m.release_date or ""),
+            is_active=int(m.is_active or 1),  # type: ignore
+            pricing=(
+                schemas.AdminSnapshotModelPricing(
+                    cost_per_1m_input_tokens=(
+                        float(m.pricing.cost_per_1m_input_tokens)
+                        if m.pricing.cost_per_1m_input_tokens is not None
+                        else None
+                    ),
+                    cost_per_1m_output_tokens=(
+                        float(m.pricing.cost_per_1m_output_tokens)
+                        if m.pricing.cost_per_1m_output_tokens is not None
+                        else None
+                    ),
+                    cost_per_1m_blended=(
+                        float(m.pricing.cost_per_1m_blended) if m.pricing.cost_per_1m_blended is not None else None
+                    ),
+                )
+                if m.pricing
+                else None
+            ),
+            performance=(
+                schemas.AdminSnapshotModelPerformance(
+                    median_output_tokens_per_second=(
+                        float(m.performance.median_output_tokens_per_second)
+                        if m.performance.median_output_tokens_per_second is not None
+                        else None
+                    ),
+                    median_ttft_seconds=(
+                        float(m.performance.median_ttft_seconds)
+                        if m.performance.median_ttft_seconds is not None
+                        else None
+                    ),
+                    median_ttfa_seconds=(
+                        float(m.performance.median_ttfa_seconds)
+                        if m.performance.median_ttfa_seconds is not None
+                        else None
+                    ),
+                    avg_latency_ms=(
+                        float(m.performance.avg_latency_ms) if m.performance.avg_latency_ms is not None else None
+                    ),
+                    context_window=(
+                        int(m.performance.context_window) if m.performance.context_window is not None else None
+                    ),
+                )
+                if m.performance
+                else None
+            ),
+            technical_specs=[
+                schemas.AdminSnapshotTechnicalSpec(section=str(s.section), label=str(s.label), value=str(s.value))
+                for s in (m.technical_specs or [])
+            ],
+            benchmark_scores=[
+                schemas.AdminSnapshotBenchmarkScore(
+                    benchmark_name=str(sc.benchmark.name) if sc.benchmark else "",
+                    raw_score=float(sc.raw_score),
+                    normalized_score=float(sc.normalized_score),
+                    language=str(sc.language or "en"),
+                    evaluation_date=str(sc.evaluation_date or ""),
+                    notes=str(sc.notes or ""),
+                )
+                for sc in (m.scores or [])
+                if sc.benchmark and sc.benchmark.name
+            ],
+        )
+        snapshot.models.append(snapshot_model)
+
+    return snapshot
+
+
+def import_admin_snapshot(db: Session, snapshot: schemas.AdminSnapshot) -> dict:
+    """Upsert benchmarks/models from a snapshot.
+
+    Uses `name` as the stable key for both benchmarks and models.
+    """
+
+    created_benchmarks = 0
+    updated_benchmarks = 0
+    created_models = 0
+    updated_models = 0
+    upserted_scores = 0
+    replaced_specs = 0
+
+    try:
+        with db.begin():
+            # 1) Benchmarks upsert
+            benchmark_by_name: dict[str, db_models.Benchmark] = {
+                str(b.name): b for b in db.query(db_models.Benchmark).all()
+            }
+            for b in snapshot.benchmarks:
+                existing = benchmark_by_name.get(b.name)
+                if existing:
+                    existing.category = b.category
+                    existing.type = b.type
+                    existing.description = b.description
+                    existing.max_score = b.max_score
+                    existing.weight = b.weight
+                    existing.source = b.source
+                    updated_benchmarks += 1
+                else:
+                    new_b = db_models.Benchmark(
+                        name=b.name,
+                        category=b.category,
+                        type=b.type,
+                        description=b.description,
+                        max_score=b.max_score,
+                        weight=b.weight,
+                        source=b.source,
+                    )
+                    db.add(new_b)
+                    db.flush()
+                    benchmark_by_name[b.name] = new_b
+                    created_benchmarks += 1
+
+            # 2) Models upsert
+            model_by_name: dict[str, db_models.Model] = {str(m.name): m for m in db.query(db_models.Model).all()}
+
+            for m in snapshot.models:
+                existing_model = model_by_name.get(m.name)
+                if existing_model:
+                    db_model = existing_model
+                    updated_models += 1
+                else:
+                    db_model = db_models.Model(name=m.name, provider=m.provider)
+                    db.add(db_model)
+                    db.flush()
+                    model_by_name[m.name] = db_model
+                    created_models += 1
+
+                # Basic fields
+                db_model.slug = m.slug or ""
+                db_model.provider = m.provider
+                db_model.model_creator_slug = m.model_creator_slug or ""
+                db_model.open_router_id = m.open_router_id or ""
+                db_model.description = m.description or ""
+                db_model.parameters = m.parameters or ""
+                db_model.architecture = m.architecture or ""
+                db_model.license_type = m.license_type or ""
+                db_model.release_date = m.release_date or ""
+                db_model.is_active = int(m.is_active) if m.is_active is not None else 1
+
+                # Pricing (upsert)
+                if m.pricing is not None:
+                    if not db_model.pricing:
+                        db_model.pricing = db_models.ModelPricing(model_id=db_model.id)
+                        db.add(db_model.pricing)
+                    db_model.pricing.cost_per_1m_input_tokens = m.pricing.cost_per_1m_input_tokens
+                    db_model.pricing.cost_per_1m_output_tokens = m.pricing.cost_per_1m_output_tokens
+                    db_model.pricing.cost_per_1m_blended = m.pricing.cost_per_1m_blended
+
+                # Performance (upsert)
+                if m.performance is not None:
+                    if not db_model.performance:
+                        db_model.performance = db_models.ModelPerformance(model_id=db_model.id)
+                        db.add(db_model.performance)
+                    db_model.performance.median_output_tokens_per_second = m.performance.median_output_tokens_per_second
+                    db_model.performance.median_ttft_seconds = m.performance.median_ttft_seconds
+                    db_model.performance.median_ttfa_seconds = m.performance.median_ttfa_seconds
+                    db_model.performance.avg_latency_ms = m.performance.avg_latency_ms
+                    db_model.performance.context_window = m.performance.context_window
+
+                # Technical specs (replace)
+                db.query(db_models.TechnicalSpec).filter(db_models.TechnicalSpec.model_id == db_model.id).delete()
+                for spec in m.technical_specs or []:
+                    db.add(
+                        db_models.TechnicalSpec(
+                            model_id=db_model.id,
+                            section=spec.section,
+                            label=spec.label,
+                            value=spec.value,
+                        )
+                    )
+                replaced_specs += 1
+
+                # Benchmark scores (upsert)
+                for sc in m.benchmark_scores or []:
+                    bench = benchmark_by_name.get(sc.benchmark_name)
+                    if not bench:
+                        # If the snapshot references a benchmark that isn't defined in `benchmarks`, skip it.
+                        continue
+
+                    existing_score = (
+                        db.query(db_models.BenchmarkScore)
+                        .filter(
+                            db_models.BenchmarkScore.model_id == db_model.id,
+                            db_models.BenchmarkScore.benchmark_id == bench.id,
+                            db_models.BenchmarkScore.language == (sc.language or "en"),
+                        )
+                        .first()
+                    )
+                    if existing_score:
+                        existing_score.raw_score = sc.raw_score
+                        existing_score.normalized_score = sc.normalized_score
+                        existing_score.evaluation_date = sc.evaluation_date or ""
+                        existing_score.notes = sc.notes or ""
+                    else:
+                        db.add(
+                            db_models.BenchmarkScore(
+                                model_id=db_model.id,
+                                benchmark_id=bench.id,
+                                raw_score=sc.raw_score,
+                                normalized_score=sc.normalized_score,
+                                language=sc.language or "en",
+                                evaluation_date=sc.evaluation_date or "",
+                                notes=sc.notes or "",
+                            )
+                        )
+                    upserted_scores += 1
+
+        # recompute overall scores after the transaction
+        recompute_overall_scores(db)
+
+        return {
+            "created_benchmarks": created_benchmarks,
+            "updated_benchmarks": updated_benchmarks,
+            "created_models": created_models,
+            "updated_models": updated_models,
+            "upserted_scores": upserted_scores,
+            "replaced_specs": replaced_specs,
+        }
+    except SQLAlchemyError:
+        db.rollback()
+        raise
