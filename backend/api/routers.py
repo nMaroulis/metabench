@@ -122,10 +122,11 @@ def get_leaderboard(
     task: str | None = None,
     language: str | None = None,
     limit: int = Query(50, ge=1, le=500),
+    skip: int = Query(0, ge=0),
     db: Session = Depends(get_db),
 ):
     """Get ranked leaderboard, optionally filtered by task/benchmark and language."""
-    return crud.get_leaderboard(db, task=task, language=language, limit=limit)
+    return crud.get_leaderboard(db, task=task, language=language, limit=limit, skip=skip)
 
 
 # ---------- Export ----------

@@ -195,33 +195,40 @@ def get_leaderboard(
     task: str | None = None,
     language: str | None = None,
     limit: int = 50,
+    skip: int = 0,
 ):
     if task:
         # Filter by specific benchmark
         benchmark = get_benchmark_by_name(db, task)
         if not benchmark:
-            return {"task": task, "language": language, "entries": []}
+            return {"task": task, "language": language, "total": 0, "limit": limit, "skip": skip, "entries": []}
 
-        query = (
+        base_query = (
             db.query(db_models.BenchmarkScore)
             .join(db_models.Model)
-            .options(
-                joinedload(db_models.BenchmarkScore.model).joinedload(db_models.Model.pricing),
-                joinedload(db_models.BenchmarkScore.model).joinedload(db_models.Model.performance),
-                joinedload(db_models.BenchmarkScore.model).joinedload(db_models.Model.technical_specs),
-            )
             .filter(db_models.BenchmarkScore.benchmark_id == benchmark.id)
             .filter(db_models.Model.is_active == 1)
         )
         if language:
-            query = query.filter(db_models.BenchmarkScore.language == language)
+            base_query = base_query.filter(db_models.BenchmarkScore.language == language)
 
-        scores = query.order_by(desc(db_models.BenchmarkScore.normalized_score)).limit(limit).all()
+        total = base_query.count()
+        scores = (
+            base_query.options(
+                joinedload(db_models.BenchmarkScore.model).joinedload(db_models.Model.pricing),
+                joinedload(db_models.BenchmarkScore.model).joinedload(db_models.Model.performance),
+                joinedload(db_models.BenchmarkScore.model).joinedload(db_models.Model.technical_specs),
+            )
+            .order_by(desc(db_models.BenchmarkScore.normalized_score))
+            .offset(skip)
+            .limit(limit)
+            .all()
+        )
+
         entries = []
-        for rank, s in enumerate(scores, 1):
-            model = s.model  # Relationship is already joined and eager loaded
+        for rank, s in enumerate(scores, skip + 1):
+            model = s.model
             if model:
-                # Explicitly validate and dump to ensure relationships are included
                 model_out = schemas.ModelOut.model_validate(model).model_dump()
                 entries.append(
                     {
@@ -231,24 +238,33 @@ def get_leaderboard(
                         "benchmark_name": benchmark.name,
                     }
                 )
-        return {"task": task, "language": language, "entries": entries}
+        return {
+            "task": task,
+            "language": language,
+            "total": total,
+            "limit": limit,
+            "skip": skip,
+            "entries": entries,
+        }
     else:
         # Overall leaderboard
+        base_query = db.query(db_models.Model).filter(db_models.Model.is_active == 1)
+
+        total = base_query.count()
         models = (
-            db.query(db_models.Model)
-            .options(
+            base_query.options(
                 joinedload(db_models.Model.pricing),
                 joinedload(db_models.Model.performance),
                 joinedload(db_models.Model.technical_specs),
             )
-            .filter(db_models.Model.is_active == 1)
             .order_by(desc(db_models.Model.overall_score))
+            .offset(skip)
             .limit(limit)
             .all()
         )
+
         entries = []
-        for rank, m in enumerate(models, 1):
-            # Explicitly validate and dump to ensure relationships are included
+        for rank, m in enumerate(models, skip + 1):
             model_out = schemas.ModelOut.model_validate(m).model_dump()
             entries.append(
                 {
@@ -258,7 +274,14 @@ def get_leaderboard(
                     "benchmark_name": None,
                 }
             )
-        return {"task": None, "language": language, "entries": entries}
+        return {
+            "task": None,
+            "language": language,
+            "total": total,
+            "limit": limit,
+            "skip": skip,
+            "entries": entries,
+        }
 
 
 # ---------- Community Submissions ----------

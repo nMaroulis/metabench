@@ -194,6 +194,9 @@ class LeaderboardEntry(BaseModel):
 class LeaderboardResponse(BaseModel):
     task: str | None = None
     language: str | None = None
+    total: int = 0
+    limit: int = 50
+    skip: int = 0
     entries: list[LeaderboardEntry]
 
 

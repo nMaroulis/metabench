@@ -3,17 +3,11 @@ import { Link } from 'react-router-dom';
 import { ArrowUpDown, ArrowUp, ArrowDown, Search, Zap, Clock } from 'lucide-react';
 import ScoreBar from './ScoreBar';
 
-export default function LeaderboardTable({ entries, showBenchmark = false }) {
+export default function LeaderboardTable({ entries, showBenchmark = false, onLoadMore, hasMore, loadingMore }) {
     const [sortKey, setSortKey] = useState('score');
     const [sortDir, setSortDir] = useState('desc');
     const [search, setSearch] = useState('');
-    const [visibleCount, setVisibleCount] = useState(50);
     const loadMoreBtnRef = useRef(null);
-
-    // Reset visible count when filters or sorting change
-    useEffect(() => {
-        setVisibleCount(50);
-    }, [search, sortKey, sortDir]);
 
     const handleSort = (key) => {
         if (sortKey === key) {
@@ -45,17 +39,6 @@ export default function LeaderboardTable({ entries, showBenchmark = false }) {
             return sortDir === 'asc' ? valA - valB : valB - valA;
         });
     }, [entries, sortKey, sortDir, search]);
-
-    const visibleRows = useMemo(() => {
-        return sorted.slice(0, visibleCount);
-    }, [sorted, visibleCount]);
-
-    const handleLoadMore = () => {
-        setVisibleCount(prev => prev + 50);
-        setTimeout(() => {
-            window.scrollBy({ top: 350, behavior: 'smooth' });
-        }, 50);
-    };
 
     const SortIcon = ({ columnKey }) => {
         if (sortKey !== columnKey) return <ArrowUpDown className="w-3 h-3 opacity-30" />;
@@ -109,7 +92,7 @@ export default function LeaderboardTable({ entries, showBenchmark = false }) {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100/50 dark:divide-gray-800/50">
-                        {visibleRows.map((entry, idx) => (
+                        {sorted.map((entry, idx) => (
                             <tr
                                 key={entry.model.name}
                                 className="hover:bg-gray-50/50 dark:hover:bg-surface-800/50 transition-colors animate-fade-in group"
@@ -172,12 +155,13 @@ export default function LeaderboardTable({ entries, showBenchmark = false }) {
                 </table>
             </div>
 
-            {sorted.length > visibleCount && (
+            {hasMore && (
                 <div className="relative border-t border-gray-200/50 dark:border-gray-700/50 overflow-hidden">
                     <button
                         ref={loadMoreBtnRef}
-                        onClick={handleLoadMore}
-                        className="w-full group relative py-10 px-4 flex flex-col items-center justify-center transition-all duration-500 hover:bg-gray-50/50 dark:hover:bg-brand-500/5"
+                        onClick={onLoadMore}
+                        disabled={loadingMore}
+                        className="w-full group relative py-10 px-4 flex flex-col items-center justify-center transition-all duration-500 hover:bg-gray-50/50 dark:hover:bg-brand-500/5 disabled:opacity-50"
                     >
                         {/* Interactive Background Glow */}
                         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-brand-500/5 to-brand-500/10 dark:via-brand-500/10 dark:to-brand-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
@@ -187,18 +171,18 @@ export default function LeaderboardTable({ entries, showBenchmark = false }) {
 
                         <div className="relative flex flex-col items-center gap-2">
                             <span className="text-xs font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500 group-hover:text-brand-500 transition-colors duration-300">
-                                Click to Expand
+                                {loadingMore ? 'Loading...' : 'Click to Expand'}
                             </span>
 
                             <div className="flex items-center gap-4 mt-1">
                                 <div className="h-[1px] w-12 bg-gradient-to-r from-transparent to-gray-300 dark:to-gray-700 group-hover:to-brand-500 transition-all"></div>
                                 <span className="text-lg font-display font-light text-gray-600 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white transition-colors duration-300">
-                                    Reveal <span className="font-bold text-brand-600 dark:text-brand-400">{sorted.length - visibleCount}</span> more models
+                                    {loadingMore ? 'Fetching next models...' : 'Reveal more models'}
                                 </span>
                                 <div className="h-[1px] w-12 bg-gradient-to-l from-transparent to-gray-300 dark:to-gray-700 group-hover:to-brand-500 transition-all"></div>
                             </div>
 
-                            <ArrowDown className="w-5 h-5 mt-4 text-brand-500/40 group-hover:text-brand-500 group-hover:translate-y-2 transition-all duration-500 ease-out" />
+                            <ArrowDown className={`w-5 h-5 mt-4 text-brand-500/40 group-hover:text-brand-500 group-hover:translate-y-2 transition-all duration-500 ease-out ${loadingMore ? 'animate-bounce' : ''}`} />
                         </div>
 
                         {/* Subtle bottom fade */}

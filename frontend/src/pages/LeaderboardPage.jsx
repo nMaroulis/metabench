@@ -10,19 +10,44 @@ export default function LeaderboardPage() {
     const [selectedTask, setSelectedTask] = useState('');
     const [loading, setLoading] = useState(true);
 
+    const [skip, setSkip] = useState(0);
+    const [total, setTotal] = useState(0);
+    const LIMIT = 50;
+    const [loadingMore, setLoadingMore] = useState(false);
+
     useEffect(() => {
         api.getBenchmarks().then(setBenchmarks).catch(console.error);
     }, []);
 
-    useEffect(() => {
-        setLoading(true);
-        const params = { limit: 500 };
+    const fetchLeaderboard = (newSkip, isAppend = false) => {
+        if (isAppend) setLoadingMore(true);
+        else setLoading(true);
+
+        const params = { limit: LIMIT, skip: newSkip };
         if (selectedTask) params.task = selectedTask;
+        
         api.getLeaderboard(params)
-            .then((data) => setEntries(data.entries || []))
+            .then((data) => {
+                setEntries(prev => isAppend ? [...prev, ...(data.entries || [])] : (data.entries || []));
+                setTotal(data.total || 0);
+            })
             .catch(console.error)
-            .finally(() => setLoading(false));
+            .finally(() => {
+                setLoading(false);
+                setLoadingMore(false);
+            });
+    };
+
+    useEffect(() => {
+        setSkip(0);
+        fetchLeaderboard(0, false);
     }, [selectedTask]);
+
+    const handleLoadMore = () => {
+        const nextSkip = skip + LIMIT;
+        setSkip(nextSkip);
+        fetchLeaderboard(nextSkip, true);
+    };
 
     const handleExport = async (format) => {
         try {
@@ -105,7 +130,13 @@ export default function LeaderboardPage() {
                     </div>
                 </div>
             ) : (
-                <LeaderboardTable entries={entries} showBenchmark={!!selectedTask} />
+                <LeaderboardTable 
+                    entries={entries} 
+                    showBenchmark={!!selectedTask} 
+                    onLoadMore={handleLoadMore}
+                    loadingMore={loadingMore}
+                    hasMore={entries.length < total}
+                />
             )}
         </div>
     );
