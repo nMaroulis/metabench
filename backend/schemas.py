@@ -193,6 +193,7 @@ class LeaderboardEntry(BaseModel):
 
 class LeaderboardResponse(BaseModel):
     task: str | None = None
+    category: str | None = Field(None, description="Category name if calculated across all benchmarks in a category")
     language: str | None = None
     total: int = 0
     limit: int = 50

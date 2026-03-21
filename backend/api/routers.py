@@ -49,10 +49,11 @@ def list_models(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=500),
     provider: str | None = None,
+    sort: str = "score",
     db: Session = Depends(get_db),
 ):
-    """List all models with metadata and overall scores."""
-    return crud.get_models(db, skip=skip, limit=limit, provider=provider)
+    """List all models with metadata and overall scores, optionally sorted by score or latest."""
+    return crud.get_models(db, skip=skip, limit=limit, provider=provider, sort=sort)
 
 
 @router.get("/models/{model_name}", tags=["Models"])
@@ -127,13 +128,14 @@ def compare_models(
 @cache(expire=3600)
 def get_leaderboard(
     task: str | None = None,
+    category: str | None = None,
     language: str | None = None,
     limit: int = Query(50, ge=1, le=500),
     skip: int = Query(0, ge=0),
     db: Session = Depends(get_db),
 ):
-    """Get ranked leaderboard, optionally filtered by task/benchmark and language."""
-    return crud.get_leaderboard(db, task=task, language=language, limit=limit, skip=skip)
+    """Get ranked leaderboard, optionally filtered by task/benchmark, category, and language."""
+    return crud.get_leaderboard(db, task=task, category=category, language=language, limit=limit, skip=skip)
 
 
 # ---------- Export ----------

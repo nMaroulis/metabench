@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Trophy, TrendingUp, BarChart3, Users, ArrowRight, Sparkles, Zap, Shield, Code, Terminal, BookOpen, Brain, Calculator, MessageSquare, Bot, Heart, Layers, FlaskConical } from 'lucide-react';
+import { Trophy, BarChart3, Users, ArrowRight, Sparkles, Zap, Shield, Code, Terminal, BookOpen, Brain, Calculator, Heart, Star, Crown } from 'lucide-react';
 import api from '../services/api';
-import ModelCard from '../components/ModelCard';
 import ScoreBar from '../components/ScoreBar';
+import SEO from '../components/SEO';
+import ModelCard from '../components/ModelCard';
 
 const dataSources = [
     { name: 'HuggingFace', logo: '/logos/huggingface.svg', type: 'image' },
@@ -14,21 +15,66 @@ const dataSources = [
     { name: 'EQBench', logo: '/logos/eqbench.png', type: 'image', rounded: true },
 ];
 
-import SEO from '../components/SEO';
+
+
+const CATEGORIES = [
+    {
+        id: 'coding',
+        title: 'Coding',
+        benchmark: 'AA Coding Index',
+        icon: Code,
+        color: 'from-emerald-500 to-teal-500',
+        bg: 'bg-emerald-500/10',
+        text: 'text-emerald-500',
+    },
+    {
+        id: 'reasoning',
+        title: 'Reasoning',
+        benchmark: 'GPQA Diamond',
+        icon: Brain,
+        color: 'from-violet-500 to-indigo-500',
+        bg: 'bg-violet-500/10',
+        text: 'text-violet-500',
+    },
+    {
+        id: 'math',
+        title: 'Mathematics',
+        benchmark: 'AA Math Index',
+        icon: Calculator,
+        color: 'from-amber-500 to-orange-500',
+        bg: 'bg-amber-500/10',
+        text: 'text-amber-500',
+    },
+];
 
 export default function LandingPage() {
-    const [models, setModels] = useState([]);
+    const [overallTop, setOverallTop] = useState([]);
+    const [categoryWinners, setCategoryWinners] = useState([]);
+    const [latestModels, setLatestModels] = useState([]);
     const [stats, setStats] = useState(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        Promise.all([api.getModels({ limit: 6 }), api.getStats()])
-            .then(([modelsData, statsData]) => {
-                setModels(modelsData);
+        const fetchAll = async () => {
+            try {
+                const [statsData, overall, latest, ...categoryResults] = await Promise.all([
+                    api.getStats(),
+                    api.getModels({ limit: 3 }),
+                    api.getModels({ sort: 'latest', limit: 3 }),
+                    ...CATEGORIES.map(cat => api.getLeaderboard({ category: cat.id, limit: 1 })),
+                ]);
+
                 setStats(statsData);
-            })
-            .catch(console.error)
-            .finally(() => setLoading(false));
+                setOverallTop(overall || []);
+                setLatestModels(latest || []);
+                setCategoryWinners(categoryResults.map(res => res.entries?.[0] || null));
+            } catch (err) {
+                console.error('Failed to fetch landing data', err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchAll();
     }, []);
 
     const features = [
@@ -115,31 +161,180 @@ export default function LandingPage() {
                 </div>
             </section>
 
-            {/* Top Models */}
-            <section className="page-container">
-                <div className="flex items-center justify-between mb-8">
-                    <div>
-                        <h2 className="section-title">Top Models</h2>
-                        <p className="text-gray-500 dark:text-gray-400 mt-2">Ranked by Overall Intelligence Score</p>
+            {/* Champions & Podium Section */}
+            <section className="relative py-20 overflow-hidden bg-gray-50/30 dark:bg-surface-950/30">
+                {/* Refined Background Highlights - cleaner spotlights */}
+                <div className="absolute inset-0 pointer-events-none opacity-[0.03] dark:opacity-[0.05]"
+                    style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, currentColor 1px, transparent 0)', backgroundSize: '32px 32px' }} />
+
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-px bg-gradient-to-r from-transparent via-brand-500/20 to-transparent" />
+                <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-brand-500/[0.03] dark:bg-brand-500/[0.05] rounded-[100%] blur-[120px] pointer-events-none" />
+
+                <div className="page-container relative">
+                    <div className="flex flex-col items-center text-center mb-20">
+                        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-brand-500/10 text-brand-600 dark:text-brand-400 text-sm font-bold uppercase tracking-widest mb-4">
+                            <Crown className="w-4 h-4" /> Current Champions
+                        </div>
+                        <h2 className="text-4xl sm:text-5xl lg:text-6xl font-display font-black tracking-tighter mb-6 max-w-4xl mx-auto">
+                            The Intelligence <span className="gradient-text">Elite</span>
+                        </h2>
+                        <p className="text-gray-500 dark:text-gray-400 text-lg max-w-2xl mx-auto leading-relaxed">
+                            A curated look at the models defining the frontier of AI intelligence, ranked by normalized multi-benchmark performance.
+                        </p>
                     </div>
-                    <Link to="/leaderboard" className="btn-secondary">
-                        View All <ArrowRight className="w-4 h-4" />
+
+                    {/* Overall Podium */}
+                    <div className="mb-24 relative">
+                        {/* Dramatic Spotlight for Podium */}
+                        <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-yellow-500/[0.05] dark:bg-yellow-500/[0.07] rounded-full blur-[100px] pointer-events-none" />
+
+                        <div className="flex flex-col md:flex-row items-end justify-center gap-4 md:gap-0 max-w-5xl mx-auto px-4 relative z-10">
+                            {loading ? (
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full h-64">
+                                    {[...Array(3)].map((_, i) => <div key={i} className="glass-card animate-pulse rounded-3xl" />)}
+                                </div>
+                            ) : overallTop.length >= 3 ? (
+                                <>
+                                    {/* #2 Silver */}
+                                    <Link
+                                        to={`/model/${encodeURIComponent(overallTop[1].name)}`}
+                                        className="w-full md:w-1/3 group order-2 md:order-1"
+                                    >
+                                        <div className="glass-card p-6 md:h-64 flex flex-col justify-end items-center text-center border-gray-200 dark:border-surface-800 relative overflow-hidden group-hover:-translate-y-2 group-hover:shadow-2xl transition-all duration-500 rounded-2xl md:rounded-r-none md:rounded-l-3xl">
+                                            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-gray-300 to-gray-400" />
+                                            <div className="text-4xl mb-4 grayscale opacity-80 group-hover:grayscale-0 group-hover:opacity-100 transition-all transform group-hover:scale-110">🥈</div>
+                                            <h3 className="font-display font-bold text-xl mb-1 truncate w-full px-4">{overallTop[1].name}</h3>
+                                            <p className="text-[10px] text-gray-500 uppercase tracking-widest font-black mb-4">{overallTop[1].provider}</p>
+                                            <div className="text-3xl font-display font-black text-gray-400 dark:text-gray-500">{overallTop[1].overall_score.toFixed(1)}</div>
+                                            <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Silver Tier</div>
+                                        </div>
+                                    </Link>
+
+                                    {/* #1 Gold */}
+                                    <Link
+                                        to={`/model/${encodeURIComponent(overallTop[0].name)}`}
+                                        className="w-full md:w-1/3 z-10 order-1 md:order-2 group"
+                                    >
+                                        <div className="glass-card p-8 md:h-80 flex flex-col justify-end items-center text-center ring-2 ring-yellow-400/30 shadow-[0_40px_80px_-15px_rgba(234,179,8,0.15)] bg-white/80 dark:bg-surface-900/80 relative overflow-hidden group-hover:-translate-y-4 group-hover:shadow-[0_50px_100px_-20px_rgba(234,179,8,0.25)] transition-all duration-700 rounded-3xl md:scale-110">
+                                            <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-yellow-400 via-amber-200 to-yellow-600" />
+                                            <div className="absolute top-6 right-6 animate-pulse">
+                                                <Trophy className="w-8 h-8 text-yellow-500/20" />
+                                            </div>
+                                            <div className="text-7xl mb-6 drop-shadow-2xl transform group-hover:scale-110 group-hover:rotate-6 transition-transform">🥇</div>
+                                            <h3 className="font-display font-black text-2xl mb-1 truncate w-full px-4">{overallTop[0].name}</h3>
+                                            <p className="text-[10px] text-yellow-600 dark:text-yellow-500 uppercase tracking-widest font-black mb-4">{overallTop[0].provider}</p>
+                                            <div className="text-6xl font-display font-black gradient-text mb-3 leading-none">{overallTop[0].overall_score.toFixed(1)}</div>
+                                            <div className="px-5 py-1.5 rounded-full bg-yellow-400/20 text-yellow-700 dark:text-yellow-400 text-[10px] font-black uppercase tracking-widest ring-1 ring-yellow-400/20">Global Master</div>
+                                        </div>
+                                    </Link>
+
+                                    {/* #3 Bronze */}
+                                    <Link
+                                        to={`/model/${encodeURIComponent(overallTop[2].name)}`}
+                                        className="w-full md:w-1/3 group order-3"
+                                    >
+                                        <div className="glass-card p-6 md:h-56 flex flex-col justify-end items-center text-center border-gray-200 dark:border-surface-800 relative overflow-hidden group-hover:-translate-y-2 group-hover:shadow-xl transition-all duration-500 rounded-2xl md:rounded-l-none md:rounded-r-3xl">
+                                            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-600 to-amber-800" />
+                                            <div className="text-4xl mb-4 grayscale opacity-80 group-hover:grayscale-0 group-hover:opacity-100 transition-all transform group-hover:scale-110">🥉</div>
+                                            <h3 className="font-display font-bold text-xl mb-1 truncate w-full px-4">{overallTop[2].name}</h3>
+                                            <p className="text-[10px] text-gray-500 uppercase tracking-widest font-black mb-4">{overallTop[2].provider}</p>
+                                            <div className="text-3xl font-display font-black text-amber-800/60 dark:text-amber-700">{overallTop[2].overall_score.toFixed(1)}</div>
+                                            <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1 text-opacity-50">Bronze Tier</div>
+                                        </div>
+                                    </Link>
+                                </>
+                            ) : null}
+                        </div>
+                    </div>
+
+                    {/* Category Top Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        {CATEGORIES.map((cat, i) => {
+                            const winner = categoryWinners[i];
+                            return (
+                                <div key={cat.id} className="relative group flex flex-col">
+                                    <div className="flex items-center gap-3 mb-6 px-4">
+                                        <div className={`w-10 h-10 rounded-2xl bg-gradient-to-br ${cat.color} flex items-center justify-center shadow-lg transform group-hover:scale-110 group-hover:rotate-12 transition-all duration-500`}>
+                                            <cat.icon className="w-5 h-5 text-white" />
+                                        </div>
+                                        <div>
+                                            <h3 className="font-display font-black text-sm uppercase tracking-widest text-gray-400 leading-none mb-1">{cat.title}</h3>
+                                            <p className="text-[10px] font-bold text-brand-500 uppercase tracking-widest">Category Leader</p>
+                                        </div>
+                                    </div>
+
+                                    {loading ? (
+                                        <div className="glass-card p-8 h-44 animate-pulse rounded-[32px]" />
+                                    ) : winner ? (
+                                        <Link
+                                            to={`/model/${encodeURIComponent(winner.model.name)}`}
+                                            className="grow glass-card p-8 rounded-[32px] group-hover:border-brand-500/50 group-hover:shadow-2xl group-hover:shadow-brand-500/5 transition-all duration-500 relative overflow-hidden"
+                                        >
+                                            {/* Vivid Accent Gradient */}
+                                            <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${cat.color} opacity-[0.03] group-hover:opacity-[0.08] -translate-y-1/2 translate-x-1/2 rounded-full transition-opacity duration-700`} />
+
+                                            <div className="flex justify-between items-start mb-6 relative z-10">
+                                                <div className="min-w-0 pr-4">
+                                                    <h4 className="font-display font-black text-xl mb-2 group-hover:text-brand-500 transition-colors uppercase leading-tight tracking-tight">{winner.model.name}</h4>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className={`text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg ${cat.bg} ${cat.text}`}>
+                                                            {winner.benchmark_name || cat.benchmark}
+                                                        </span>
+                                                        <Sparkles className={`w-3 h-3 ${cat.text} animate-pulse`} />
+                                                    </div>
+                                                </div>
+                                                <div className="text-right shrink-0">
+                                                    <div className="text-4xl font-display font-black leading-none gradient-text mb-1">{winner.score.toFixed(1)}</div>
+                                                    <div className="text-[9px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">Index Score</div>
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-4 relative z-10">
+                                                <ScoreBar score={winner.score} showLabel={false} height="h-1.5" />
+                                                <div className="flex items-center justify-between text-[11px]">
+                                                    <span className="text-gray-500 font-black uppercase tracking-widest">{winner.model.provider}</span>
+                                                    <div className="flex items-center gap-1 text-brand-500 font-bold">
+                                                        Analysis <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </Link>
+                                    ) : (
+                                        <div className="glass-card p-8 rounded-[32px] flex items-center justify-center text-gray-400 text-sm italic border-dashed border-2">
+                                            Winner data not yet available
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            </section>
+
+            {/* Latest Models */}
+            <section className="page-container py-12">
+                <div className="flex items-center justify-between mb-12">
+                    <div>
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[10px] font-black uppercase tracking-widest mb-3">
+                            <Sparkles className="w-3 h-3" /> New Arrivals
+                        </div>
+                        <h2 className="text-3xl font-display font-black tracking-tighter uppercase italic">Latest Models</h2>
+                        <p className="text-gray-500 dark:text-gray-400 mt-2 text-sm font-medium">Recently added to the intelligence index</p>
+                    </div>
+                    <Link to="/leaderboard" className="group flex items-center gap-2 text-sm font-black uppercase tracking-widest text-gray-400 hover:text-brand-500 transition-colors">
+                        View All <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                     </Link>
                 </div>
 
                 {loading ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {[...Array(6)].map((_, i) => (
-                            <div key={i} className="glass-card p-6 animate-pulse">
-                                <div className="h-6 bg-gray-200 dark:bg-surface-700 rounded-lg w-3/4 mb-4" />
-                                <div className="h-4 bg-gray-200 dark:bg-surface-700 rounded-lg w-1/2 mb-6" />
-                                <div className="h-2 bg-gray-200 dark:bg-surface-700 rounded-full" />
-                            </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        {[...Array(3)].map((_, i) => (
+                            <div key={i} className="glass-card p-8 animate-pulse h-48 rounded-[32px]" />
                         ))}
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {models.map((model, idx) => (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        {latestModels.map((model, idx) => (
                             <ModelCard key={model.name} model={model} rank={idx + 1} />
                         ))}
                     </div>
@@ -147,11 +342,14 @@ export default function LandingPage() {
             </section>
 
             {/* Benchmarks Overview */}
-            <section className="page-container">
-                <div className="flex items-center justify-between mb-8">
+            <section className="page-container py-12">
+                <div className="flex items-center justify-between mb-12">
                     <div>
-                        <h2 className="section-title">Benchmarks</h2>
-                        <p className="text-gray-500 dark:text-gray-400 mt-2">Evaluations we track across all models</p>
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-violet-500/10 text-violet-600 dark:text-violet-400 text-[10px] font-black uppercase tracking-widest mb-3 w-fit">
+                            <Shield className="w-3 h-3" /> Comprehensive Index
+                        </div>
+                        <h2 className="text-3xl font-display font-black tracking-tighter uppercase italic">Benchmarks</h2>
+                        <p className="text-gray-500 dark:text-gray-400 mt-2 text-sm font-medium">Evaluations we track across all models</p>
                     </div>
                     <Link to="/benchmarks" className="btn-secondary">
                         View All <ArrowRight className="w-4 h-4" />
@@ -183,13 +381,19 @@ export default function LandingPage() {
             </section>
 
             {/* Live Data Sources */}
-            <section className="page-container">
-                <div className="glass-card p-8">
-                    <h2 className="section-title mb-6">Live Data Sources</h2>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 mb-8">
+            <section className="page-container py-12">
+                <div className="flex flex-col mb-12">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-black uppercase tracking-widest mb-3 w-fit">
+                        <Sparkles className="w-3 h-3" /> Verifiable Data
+                    </div>
+                    <h2 className="text-3xl font-display font-black tracking-tighter uppercase italic">Live Data Sources</h2>
+                    <p className="text-gray-500 dark:text-gray-400 mt-2 text-sm font-medium">
                         MetaBench continuously aggregates real-time data from the community's most trusted platforms
                     </p>
+                </div>
 
+                <div className="glass-card p-12 relative overflow-hidden group">
+                    <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/[0.02] to-transparent pointer-events-none" />
                     {/* CSS-based infinite scroll carousel */}
                     <div className="relative w-full overflow-hidden h-20 flex items-center bg-gray-50/50 dark:bg-surface-800/30 rounded-2xl border border-gray-100 dark:border-surface-700">
                         {/* Left/Right fading edges */}
@@ -217,6 +421,7 @@ export default function LandingPage() {
                     </div>
                 </div>
             </section>
+
 
             {/* CTA */}
             <section className="page-container pb-20">

@@ -4,17 +4,23 @@ from services.scoring import (
     DEFAULT_WEIGHTS,
     compute_weighted_overall_score,
 )
-from sqlalchemy import desc
+from sqlalchemy import desc, func
 from sqlalchemy.orm import Session, joinedload
 
 # ---------- Models ----------
 
 
-def get_models(db: Session, skip: int = 0, limit: int = 100, provider: str | None = None):
+def get_models(db: Session, skip: int = 0, limit: int = 100, provider: str | None = None, sort: str = "score"):
     query = db.query(db_models.Model).filter(db_models.Model.is_active == 1)
     if provider:
         query = query.filter(db_models.Model.provider == provider)
-    return query.order_by(desc(db_models.Model.overall_score)).offset(skip).limit(limit).all()
+
+    if sort == "latest":
+        query = query.order_by(desc(db_models.Model.created_at))
+    else:
+        query = query.order_by(desc(db_models.Model.overall_score))
+
+    return query.offset(skip).limit(limit).all()
 
 
 def get_model_by_name(db: Session, name: str):
@@ -193,6 +199,7 @@ def compare_models(db: Session, model_names: list[str]):
 def get_leaderboard(
     db: Session,
     task: str | None = None,
+    category: str | None = None,
     language: str | None = None,
     limit: int = 50,
     skip: int = 0,
@@ -201,7 +208,15 @@ def get_leaderboard(
         # Filter by specific benchmark
         benchmark = get_benchmark_by_name(db, task)
         if not benchmark:
-            return {"task": task, "language": language, "total": 0, "limit": limit, "skip": skip, "entries": []}
+            return {
+                "task": task,
+                "category": None,
+                "language": language,
+                "total": 0,
+                "limit": limit,
+                "skip": skip,
+                "entries": [],
+            }
 
         base_query = (
             db.query(db_models.BenchmarkScore)
@@ -240,6 +255,63 @@ def get_leaderboard(
                 )
         return {
             "task": task,
+            "category": None,
+            "language": language,
+            "total": total,
+            "limit": limit,
+            "skip": skip,
+            "entries": entries,
+        }
+    elif category:
+        # Subquery to calculate average scores per model for the given category
+        avg_scores_sub = (
+            db.query(
+                db_models.BenchmarkScore.model_id,
+                func.avg(db_models.BenchmarkScore.normalized_score).label("avg_score"),
+            )
+            .join(db_models.Benchmark, db_models.BenchmarkScore.benchmark_id == db_models.Benchmark.id)
+            .filter(db_models.Benchmark.category == category)
+        )
+
+        if language:
+            avg_scores_sub = avg_scores_sub.filter(db_models.BenchmarkScore.language == language)
+
+        avg_scores_sub = avg_scores_sub.group_by(db_models.BenchmarkScore.model_id).subquery()
+
+        # Main query to fetch models and their aggregated scores
+        base_query = (
+            db.query(db_models.Model, avg_scores_sub.c.avg_score)
+            .join(avg_scores_sub, db_models.Model.id == avg_scores_sub.c.model_id)
+            .filter(db_models.Model.is_active == 1)
+        )
+
+        total = base_query.count()
+        results = (
+            base_query.options(
+                joinedload(db_models.Model.pricing),
+                joinedload(db_models.Model.performance),
+                joinedload(db_models.Model.technical_specs),
+            )
+            .order_by(desc(avg_scores_sub.c.avg_score))
+            .offset(skip)
+            .limit(limit)
+            .all()
+        )
+
+        entries = []
+        for rank, (model, avg_score) in enumerate(results, skip + 1):
+            model_out = schemas.ModelOut.model_validate(model).model_dump()
+            entries.append(
+                {
+                    "rank": rank,
+                    "model": model_out,
+                    "score": float(avg_score),
+                    "benchmark_name": f"{category.capitalize()} Composite",
+                }
+            )
+        return {
+            "task": None,
+            "category": category,
             "language": language,
             "total": total,
             "limit": limit,
