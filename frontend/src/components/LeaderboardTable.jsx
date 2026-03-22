@@ -1,6 +1,6 @@
-import { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowUpDown, ArrowUp, ArrowDown, Search, Zap, Clock } from 'lucide-react';
+import { ArrowUpDown, ArrowUp, ArrowDown, Search, Clock } from 'lucide-react';
 import ScoreBar from './ScoreBar';
 
 export default function LeaderboardTable({ entries, showBenchmark = false, onLoadMore, hasMore, loadingMore, remainingCount }) {
@@ -49,6 +49,40 @@ export default function LeaderboardTable({ entries, showBenchmark = false, onLoa
         if (score >= 85) return 'text-emerald-600 dark:text-emerald-400';
         if (score >= 70) return 'text-amber-600 dark:text-amber-400';
         return 'text-red-600 dark:text-red-400';
+    };
+
+    const getLicenseColor = (licenseType) => {
+        switch (licenseType?.toLowerCase()) {
+            case 'open source':
+                return 'text-emerald-600 dark:text-emerald-400';
+            case 'proprietary':
+                return 'text-blue-600 dark:text-blue-400';
+            default:
+                return 'text-gray-500 dark:text-gray-400';
+        }
+    };
+
+    const getParameterColor = (params) => {
+        if (!params || params === 'Unknown') return 'text-gray-400 dark:text-gray-500';
+        
+        const paramValue = parseFloat(params);
+        if (paramValue >= 70) return 'text-purple-600 dark:text-purple-400';
+        if (paramValue >= 30) return 'text-blue-600 dark:text-blue-400';
+        return 'text-gray-600 dark:text-gray-400';
+    };
+
+    const formatDate = (dateString) => {
+        if (!dateString || dateString === 'Unknown') return null;
+        try {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', { 
+                year: 'numeric', 
+                month: 'short', 
+                day: 'numeric' 
+            });
+        } catch {
+            return null;
+        }
     };
 
     return (
@@ -104,27 +138,45 @@ export default function LeaderboardTable({ entries, showBenchmark = false, onLoa
                                     </span>
                                 </td>
                                 <td className="px-6 py-4">
-                                    <div className="flex flex-col">
+                                    <div className="flex flex-col gap-1">
                                         <Link
                                             to={`/model/${encodeURIComponent(entry.model.name)}`}
                                             className="text-sm font-semibold hover:text-brand-500 transition-colors"
                                         >
                                             {entry.model.name}
                                         </Link>
-                                        <div className="flex items-center gap-1.5 text-[9px] sm:text-[11px] font-medium text-gray-400 dark:text-gray-500 mt-0.5">
-                                            <span className={
-                                                entry.model.license_type === 'Open Source'
-                                                    ? 'text-emerald-500/70'
-                                                    : entry.model.license_type === 'Proprietary'
-                                                        ? 'text-blue-500/60 dark:text-blue-400/60'
-                                                        : 'text-gray-400/50'
-                                            }>
-                                                {(entry.model.license_type || 'unknown').toLowerCase()}
-                                            </span>
+                                        
+                                        {/* Metadata Row */}
+                                        <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                                            {/* License */}
+                                            {entry.model.license_type && entry.model.license_type !== 'Unknown' && (
+                                                <span className={`${getLicenseColor(entry.model.license_type)}`}>
+                                                    {entry.model.license_type.toLowerCase()}
+                                                </span>
+                                            )}
+                                            
+                                            {/* Parameters */}
                                             {entry.model.parameters && entry.model.parameters !== 'Unknown' && (
                                                 <>
-                                                    <span className="text-gray-300 dark:text-gray-700 font-bold">·</span>
-                                                    <span>{entry.model.parameters.toLowerCase()}</span>
+                                                    {entry.model.license_type && entry.model.license_type !== 'Unknown' && (
+                                                        <span className="text-gray-300 dark:text-gray-600">·</span>
+                                                    )}
+                                                    <span className={`${getParameterColor(entry.model.parameters)}`}>
+                                                        {entry.model.parameters}
+                                                    </span>
+                                                </>
+                                            )}
+                                            
+                                            {/* Release Date */}
+                                            {formatDate(entry.model.release_date) && (
+                                                <>
+                                                    {(entry.model.license_type && entry.model.license_type !== 'Unknown' || 
+                                                      entry.model.parameters && entry.model.parameters !== 'Unknown') && (
+                                                        <span className="text-gray-300 dark:text-gray-600">·</span>
+                                                    )}
+                                                    <span className="text-amber-600 dark:text-amber-400">
+                                                        {formatDate(entry.model.release_date)}
+                                                    </span>
                                                 </>
                                             )}
                                         </div>

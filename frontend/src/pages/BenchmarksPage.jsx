@@ -18,6 +18,7 @@ const PAPER_LINKS = {
     'AIME': 'https://artofproblemsolving.com/wiki/index.php/AIME',
     'AIME 2025': 'https://artofproblemsolving.com/wiki/index.php/2025_AIME',
     'HumanEval': 'https://arxiv.org/abs/2107.03374',
+    'SWE-Bench': 'https://arxiv.org/abs/2310.06770',
     'LiveCodeBench': 'https://livecodebench.github.io/',
     'SciCode': 'https://scicode-bench.github.io/',
     'TerminalBench Hard': 'https://terminalbench.com/',

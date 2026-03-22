@@ -161,3 +161,6 @@ __marimo__/
 #notebooks
 *.ipynb_checkpoints
 *.ipynb
+
+#admin
+snapshot.json
