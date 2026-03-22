@@ -166,6 +166,7 @@ BENCHMARKS = [
     {
         "name": "MMLU",
         "category": "knowledge",
+        "type": "benchmark",
         "description": "Massive Multitask Language Understanding - 57 subjects",
         "max_score": 100.0,
         "weight": 1.2,
@@ -174,6 +175,7 @@ BENCHMARKS = [
     {
         "name": "MMLU-Pro",
         "category": "knowledge",
+        "type": "benchmark",
         "description": "MMLU Professional - harder, more discriminative version",
         "max_score": 100.0,
         "weight": 1.3,
@@ -182,6 +184,7 @@ BENCHMARKS = [
     {
         "name": "GPQA Diamond",
         "category": "knowledge",
+        "type": "benchmark",
         "description": "Graduate-level science QA - PhD-level Q&A",
         "max_score": 100.0,
         "weight": 1.3,
@@ -191,6 +194,7 @@ BENCHMARKS = [
     {
         "name": "HLE",
         "category": "reasoning",
+        "type": "benchmark",
         "description": "Humanity's Last Exam - extremely difficult reasoning benchmark",
         "max_score": 100.0,
         "weight": 1.4,
@@ -199,6 +203,7 @@ BENCHMARKS = [
     {
         "name": "BigBench-Hard",
         "category": "reasoning",
+        "type": "benchmark",
         "description": "23 challenging BIG-Bench reasoning tasks",
         "max_score": 100.0,
         "weight": 1.1,
@@ -207,6 +212,7 @@ BENCHMARKS = [
     {
         "name": "ARC-Challenge",
         "category": "reasoning",
+        "type": "benchmark",
         "description": "AI2 Reasoning Challenge - science questions",
         "max_score": 100.0,
         "weight": 0.9,
@@ -215,6 +221,7 @@ BENCHMARKS = [
     {
         "name": "LCR",
         "category": "reasoning",
+        "type": "benchmark",
         "description": "Long Context Reasoning - reasoning with large context windows",
         "max_score": 100.0,
         "weight": 1.0,
@@ -231,8 +238,18 @@ BENCHMARKS = [
     },
     # Math
     {
+        "name": "AA Math Index",
+        "category": "composite",
+        "type": "index",
+        "description": "Artificial Analysis composite score for math reasoning",
+        "max_score": 100.0,
+        "weight": 1.3,
+        "source": "Artificial Analysis",
+    },
+    {
         "name": "GSM8K",
         "category": "math",
+        "type": "benchmark",
         "description": "Grade School Math - multi-step math problems",
         "max_score": 100.0,
         "weight": 1.0,
@@ -241,6 +258,7 @@ BENCHMARKS = [
     {
         "name": "MATH-500",
         "category": "math",
+        "type": "benchmark",
         "description": "Competition-level math - 500 problems",
         "max_score": 100.0,
         "weight": 1.2,
@@ -249,6 +267,7 @@ BENCHMARKS = [
     {
         "name": "AIME",
         "category": "math",
+        "type": "benchmark",
         "description": "American Invitational Mathematics Examination problems",
         "max_score": 100.0,
         "weight": 1.2,
@@ -257,6 +276,7 @@ BENCHMARKS = [
     {
         "name": "AIME 2025",
         "category": "math",
+        "type": "benchmark",
         "description": "AIME 2025 benchmark variant",
         "max_score": 100.0,
         "weight": 1.2,
@@ -266,6 +286,7 @@ BENCHMARKS = [
     {
         "name": "HumanEval",
         "category": "coding",
+        "type": "benchmark",
         "description": "Python coding - functional correctness",
         "max_score": 100.0,
         "weight": 1.2,
@@ -274,6 +295,7 @@ BENCHMARKS = [
     {
         "name": "LiveCodeBench",
         "category": "coding",
+        "type": "benchmark",
         "description": "Live competitive programming benchmark",
         "max_score": 100.0,
         "weight": 1.1,
@@ -282,6 +304,7 @@ BENCHMARKS = [
     {
         "name": "SciCode",
         "category": "coding",
+        "type": "benchmark",
         "description": "Scientific programming tasks benchmark",
         "max_score": 100.0,
         "weight": 1.0,
@@ -290,6 +313,7 @@ BENCHMARKS = [
     {
         "name": "TerminalBench Hard",
         "category": "coding",
+        "type": "benchmark",
         "description": "Autonomous coding/terminal tasks benchmark",
         "max_score": 100.0,
         "weight": 1.1,
@@ -304,10 +328,20 @@ BENCHMARKS = [
         "weight": 1.3,
         "source": "SWE-Bench",
     },
+    {
+        "name": "AA Coding Index",
+        "category": "coding",
+        "type": "index",
+        "description": "Artificial Analysis composite score for coding ability",
+        "max_score": 100.0,
+        "weight": 1.3,
+        "source": "Artificial Analysis",
+    },
     # Instruction Following
     {
         "name": "IFEval",
         "category": "instruction",
+        "type": "benchmark",
         "description": "Instruction Following Evaluation",
         "max_score": 100.0,
         "weight": 1.0,
@@ -317,6 +351,7 @@ BENCHMARKS = [
     {
         "name": "TAU2",
         "category": "agentic",
+        "type": "benchmark",
         "description": "TAU-Bench v2 - agentic tool-use tasks",
         "max_score": 100.0,
         "weight": 1.1,
@@ -326,6 +361,7 @@ BENCHMARKS = [
     {
         "name": "Arena Elo",
         "category": "human_preference",
+        "type": "benchmark",
         "description": "Chatbot Arena Elo - human preference votes",
         "max_score": 1400.0,
         "weight": 1.5,
@@ -349,24 +385,6 @@ BENCHMARKS = [
         "description": "Artificial Analysis composite score for overall model intelligence",
         "max_score": 100.0,
         "weight": 1.5,
-        "source": "Artificial Analysis",
-    },
-    {
-        "name": "AA Coding Index",
-        "category": "composite",
-        "type": "index",
-        "description": "Artificial Analysis composite score for coding ability",
-        "max_score": 100.0,
-        "weight": 1.3,
-        "source": "Artificial Analysis",
-    },
-    {
-        "name": "AA Math Index",
-        "category": "composite",
-        "type": "index",
-        "description": "Artificial Analysis composite score for math reasoning",
-        "max_score": 100.0,
-        "weight": 1.3,
         "source": "Artificial Analysis",
     },
 ]

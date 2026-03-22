@@ -65,10 +65,22 @@ export default function LeaderboardTable({ entries, showBenchmark = false, onLoa
     const getParameterColor = (params) => {
         if (!params || params === 'Unknown') return 'text-gray-400 dark:text-gray-500';
         
-        const paramValue = parseFloat(params);
-        if (paramValue >= 70) return 'text-purple-600 dark:text-purple-400';
-        if (paramValue >= 30) return 'text-blue-600 dark:text-blue-400';
-        return 'text-gray-600 dark:text-gray-400';
+        // Remove tilde prefix if present and check if it's an approximate value
+        const hasTilde = params.startsWith('~');
+        const cleanParams = hasTilde ? params.slice(1) : params;
+        const paramValue = parseFloat(cleanParams);
+        
+        if (isNaN(paramValue)) return 'text-gray-600 dark:text-gray-400';
+        
+        if (hasTilde) {
+            // Lighter purple for approximate values (with ~)
+            return 'text-purple-400 dark:text-purple-300';
+        } else {
+            // Regular colors for exact values
+            if (paramValue >= 70) return 'text-purple-600 dark:text-purple-400';
+            if (paramValue >= 30) return 'text-blue-600 dark:text-blue-400';
+            return 'text-gray-600 dark:text-gray-400';
+        }
     };
 
     const formatDate = (dateString) => {

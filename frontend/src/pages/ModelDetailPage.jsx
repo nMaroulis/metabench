@@ -290,6 +290,7 @@ export default function ModelDetailPage() {
                                                     key={s.benchmark_name}
                                                     score={s.normalized_score}
                                                     label={s.benchmark_name}
+                                                    type={s.benchmark_type || 'benchmark'}
                                                 />
                                             ) : (
                                                 <div key={s.benchmark_name} className="w-full opacity-40">
@@ -322,7 +323,7 @@ export default function ModelDetailPage() {
                             <tr className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider border-b border-gray-200/50 dark:border-gray-700/50">
                                 <th className="px-6 py-3 text-left">Benchmark</th>
                                 <th className="px-6 py-3 text-left">Category</th>
-                                <th className="px-6 py-3 text-center">Raw Score</th>
+                                <th className="px-6 py-3 text-left">Type</th>
                                 <th className="px-6 py-3 text-center">Normalized</th>
                                 <th className="px-6 py-3 text-left hidden md:table-cell">Language</th>
                             </tr>
@@ -339,7 +340,15 @@ export default function ModelDetailPage() {
                                             {s.benchmark_category}
                                         </span>
                                     </td>
-                                    <td className="px-6 py-3 text-center text-sm font-mono">{s.raw_score ?? '—'}</td>
+                                    <td className="px-6 py-3">
+                                        <span className={`text-xs px-2 py-1 rounded-full font-medium capitalize ${
+                                            s.benchmark_type === 'index' 
+                                                ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400' 
+                                                : 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
+                                        }`}>
+                                            {s.benchmark_type || 'benchmark'}
+                                        </span>
+                                    </td>
                                     <td className="px-6 py-3 text-center">
                                         <span className={`text-sm font-bold ${!s.available ? 'text-gray-300' : s.normalized_score >= 85 ? 'text-emerald-600 dark:text-emerald-400' : s.normalized_score >= 70 ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400'}`}>
                                             {s.normalized_score != null ? s.normalized_score.toFixed(1) : '—'}
