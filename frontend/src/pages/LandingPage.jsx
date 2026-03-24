@@ -257,8 +257,11 @@ export default function LandingPage() {
                                         <div className={`w-10 h-10 rounded-2xl bg-gradient-to-br ${cat.color} flex items-center justify-center shadow-lg transform group-hover:scale-110 group-hover:rotate-12 transition-all duration-500`}>
                                             <cat.icon className="w-5 h-5 text-white" />
                                         </div>
-                                        <div>
-                                            <h3 className="font-display font-black text-sm uppercase tracking-widest text-gray-400 leading-none mb-1">{cat.title} Champion</h3>
+                                        <div className="flex-1">
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <Crown className="w-4 h-4 text-yellow-500 animate-pulse" />
+                                                <h3 className="font-display font-black text-sm uppercase tracking-widest text-gray-400 leading-none">{cat.title} Champion</h3>
+                                            </div>
                                             <p className="text-[10px] font-bold text-brand-500 uppercase tracking-widest">Category Leader</p>
                                         </div>
                                     </div>
@@ -270,9 +273,10 @@ export default function LandingPage() {
                                             to={`/model/${encodeURIComponent(winner.model.name)}`}
                                             className="grow glass-card p-8 rounded-[32px] group-hover:border-brand-500/50 group-hover:shadow-2xl group-hover:shadow-brand-500/5 transition-all duration-500 relative overflow-hidden"
                                         >
-                                            {/* Vivid Accent Gradient */}
-                                            <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${cat.color} opacity-[0.03] group-hover:opacity-[0.08] -translate-y-1/2 translate-x-1/2 rounded-full transition-opacity duration-700`} />
-
+                                            {/* Golden Crown Glow */}
+                                            <div className="absolute -top-4 -right-4 w-16 h-16 bg-gradient-to-br from-yellow-400/20 to-amber-500/10 rounded-full blur-xl animate-pulse" />
+                                            <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-yellow-400/30 to-transparent" />
+                                            
                                             <div className="flex justify-between items-start mb-6 relative z-10">
                                                 <div className="min-w-0 pr-4">
                                                     <h4 className="font-display font-black text-xl mb-2 group-hover:text-brand-500 transition-colors uppercase leading-tight tracking-tight">{winner.model.name}</h4>
@@ -280,6 +284,7 @@ export default function LandingPage() {
                                                         <span className={`text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg ${cat.bg} ${cat.text}`}>
                                                             {winner.benchmark_name || cat.benchmark}
                                                         </span>
+                                                        <Crown className="w-3 h-3 text-yellow-500 animate-pulse" />
                                                         <Sparkles className={`w-3 h-3 ${cat.text} animate-pulse`} />
                                                     </div>
                                                 </div>
