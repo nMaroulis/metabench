@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Trophy, Filter, Download, BarChart3, Target, Brain, BookOpen, Code, GraduationCap, MessageSquare, Cpu, Users, Heart, Zap } from 'lucide-react';
+import { Trophy, Filter, Download, BarChart3, Target, Brain, BookOpen, Code, GraduationCap, MessageSquare, Cpu, Users, Heart, Zap, Check, X, ChevronDown } from 'lucide-react';
 import api from '../services/api';
 import LeaderboardTable from '../components/LeaderboardTable';
 import SEO from '../components/SEO';
@@ -11,6 +11,14 @@ export default function LeaderboardPage() {
     const [selectedCategory, setSelectedCategory] = useState('overall');
     const [selectedTask, setSelectedTask] = useState('');
     const [loading, setLoading] = useState(true);
+    const [benchmarkTypeFilter, setBenchmarkTypeFilter] = useState('all'); // 'all', 'index', 'benchmark'
+    const [showAllBenchmarks, setShowAllBenchmarks] = useState(false);
+
+    // Filtered benchmarks based on type
+    const filteredBenchmarks = useMemo(() => {
+        if (benchmarkTypeFilter === 'all') return benchmarks;
+        return benchmarks.filter(b => b.type === benchmarkTypeFilter);
+    }, [benchmarks, benchmarkTypeFilter]);
 
     const [skip, setSkip] = useState(0);
     const [total, setTotal] = useState(0);
@@ -65,12 +73,6 @@ export default function LeaderboardPage() {
         fetchLeaderboard(0, false);
     }, [selectedView, selectedCategory, selectedTask]);
 
-    const handleLoadMore = () => {
-        const nextSkip = skip + LIMIT;
-        setSkip(nextSkip);
-        fetchLeaderboard(nextSkip, true);
-    };
-
     const handleExport = async (format) => {
         try {
             if (format === 'csv') {
@@ -95,6 +97,12 @@ export default function LeaderboardPage() {
         } catch (err) {
             console.error('Export error:', err);
         }
+    };
+
+    const handleLoadMore = () => {
+        const nextSkip = skip + LIMIT;
+        setSkip(nextSkip);
+        fetchLeaderboard(nextSkip, true);
     };
 
     const getSelectionDescription = () => {
@@ -123,15 +131,16 @@ export default function LeaderboardPage() {
 
     const getCategoryColor = (category) => {
         switch (category?.toLowerCase()) {
-            case 'coding': return 'from-blue-500 to-cyan-500';
-            case 'math': return 'from-purple-500 to-pink-500';
-            case 'reasoning': return 'from-emerald-500 to-teal-500';
-            case 'knowledge': return 'from-amber-500 to-orange-500';
-            case 'instruction': return 'from-indigo-500 to-blue-500';
-            case 'agentic': return 'from-red-500 to-rose-500';
-            case 'human_preference': return 'from-green-500 to-emerald-500';
-            case 'emotional_intelligence': return 'from-pink-500 to-rose-500';
-            case 'composite': return 'from-brand-500 to-purple-500';
+            case 'overall': return 'from-amber-500 to-orange-600';
+            case 'knowledge': return 'from-blue-500 to-indigo-600';
+            case 'reasoning': return 'from-purple-500 to-violet-600';
+            case 'math': return 'from-red-500 to-rose-600';
+            case 'coding': return 'from-emerald-500 to-teal-600';
+            case 'instruction': return 'from-cyan-500 to-blue-600';
+            case 'agentic': return 'from-orange-500 to-amber-600';
+            case 'human_preference': return 'from-pink-500 to-fuchsia-600';
+            case 'emotional_intelligence': return 'from-rose-500 to-pink-600';
+            case 'composite': return 'from-indigo-500 to-brand-600';
             default: return 'from-gray-500 to-gray-600';
         }
     };
@@ -151,38 +160,12 @@ export default function LeaderboardPage() {
                         <Trophy className="w-8 h-8 text-amber-500" />
                         Leaderboard
                     </h1>
-                    <p className="text-gray-500 dark:text-gray-400 mt-2">
-                        {getSelectionDescription()}
+                    <p className="text-gray-500 dark:text-gray-400 mt-1">
+                        Comprehensive model evaluation across 20+ benchmarks
                     </p>
                 </div>
 
                 <div className="flex items-center gap-3">
-                    {/* Stylish View Selector */}
-                    <div className="flex bg-gray-100 dark:bg-surface-700 rounded-lg p-1">
-                        <button
-                            onClick={() => { setSelectedView('category'); setSelectedTask(''); }}
-                            className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
-                                selectedView === 'category'
-                                    ? 'bg-white dark:bg-surface-600 text-brand-600 dark:text-brand-400 shadow-sm'
-                                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-                            }`}
-                        >
-                            <BarChart3 className="w-4 h-4" />
-                            Categories
-                        </button>
-                        <button
-                            onClick={() => { setSelectedView('benchmark'); setSelectedCategory('overall'); }}
-                            className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
-                                selectedView === 'benchmark'
-                                    ? 'bg-white dark:bg-surface-600 text-brand-600 dark:text-brand-400 shadow-sm'
-                                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-                            }`}
-                        >
-                            <Target className="w-4 h-4" />
-                            Benchmarks
-                        </button>
-                    </div>
-
                     {/* Export */}
                     <div className="flex gap-2">
                         <button onClick={() => handleExport('json')} className="btn-secondary text-xs px-4 py-2">
@@ -195,82 +178,129 @@ export default function LeaderboardPage() {
                 </div>
             </div>
 
-            {/* Compact Category Selection */}
-            {selectedView === 'category' && (
-                <div className="mb-6">
-                    <div className="flex flex-wrap gap-2">
-                        {allCategories.map((category) => {
-                            const Icon = getCategoryIcon(category);
-                            const isSelected = selectedCategory === category;
-                            const isOverall = category === 'overall';
-                            
-                            return (
-                                <button
-                                    key={category}
-                                    onClick={() => setSelectedCategory(category)}
-                                    className={`group flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                                        isSelected
-                                            ? 'bg-gradient-to-r ' + getCategoryColor(category) + ' text-white shadow-md'
-                                            : 'bg-white dark:bg-surface-800 border border-gray-200 dark:border-gray-700 hover:border-brand-300 dark:hover:border-brand-600 text-gray-700 dark:text-gray-300'
-                                    }`}
-                                >
-                                    <Icon className={`w-4 h-4 ${isSelected ? 'text-white' : 'text-brand-500'}`} />
-                                    <span>{isOverall ? 'Overall' : category.charAt(0).toUpperCase() + category.slice(1).replace('_', ' ')}</span>
-                                    {isOverall && !isSelected && (
-                                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 font-semibold">
-                                            Default
-                                        </span>
-                                    )}
-                                    {!isOverall && (
-                                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
-                                            isSelected 
-                                                ? 'bg-white/20 text-white'
-                                                : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
-                                        }`}>
-                                            {benchmarksByCategory[category]?.length || 0}
-                                        </span>
-                                    )}
-                                </button>
-                            );
-                        })}
+
+            {/* Ultra-Minimal Monolithic Selector */}
+            <div className="mb-1 bg-white dark:bg-surface-900 border-y border-gray-100 dark:border-gray-800">
+                <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-stretch sm:items-center h-[48px]">
+                    
+                    {/* Perspective Switcher */}
+                    <div className="flex border-b sm:border-b-0 sm:border-r border-gray-100 dark:border-gray-800">
+                        {['category', 'benchmark'].map((view) => (
+                            <button
+                                key={view}
+                                onClick={() => setSelectedView(view)}
+                                className={`flex-1 sm:flex-none px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] transition-colors ${
+                                    selectedView === view
+                                        ? 'bg-black dark:bg-white text-white dark:text-black'
+                                        : 'text-gray-400 hover:text-black dark:hover:text-white'
+                                }`}
+                            >
+                                {view}
+                            </button>
+                        ))}
+                    </div>
+
+                    {/* Content Area */}
+                    <div className="flex-1 flex items-center overflow-hidden min-w-0">
+                        {/* Fixed Type Filter - Only for Benchmark View */}
+                        {selectedView === 'benchmark' && (
+                            <div className="flex border-r border-gray-100 dark:border-gray-800 flex-shrink-0">
+                                {['all', 'index', 'benchmark'].map((type) => (
+                                    <button
+                                        key={type}
+                                        onClick={() => setBenchmarkTypeFilter(type)}
+                                        className={`px-3 py-4 text-[9px] font-black uppercase tracking-tighter whitespace-nowrap ${
+                                            benchmarkTypeFilter === type
+                                                ? 'text-black dark:text-white'
+                                                : 'text-gray-300 hover:text-gray-500'
+                                        }`}
+                                    >
+                                        {type}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                        
+                        {/* Scrollable Content */}
+                        <div className="flex-1 overflow-x-auto scrollbar-hide min-w-0">
+                            <div className="flex items-center px-4 h-[48px]">
+                                {selectedView === 'category' ? (
+                                    allCategories.map((category) => {
+                                        const isSelected = selectedCategory === category;
+                                        return (
+                                            <button
+                                                key={category}
+                                                onClick={() => setSelectedCategory(category)}
+                                                className={`px-4 py-4 font-display font-black tracking-tighter uppercase italic text-[10px] whitespace-nowrap transition-all leading-none ${
+                                                    isSelected
+                                                        ? 'text-black dark:text-white underline decoration-2 underline-offset-8'
+                                                        : 'text-gray-400 hover:text-black dark:hover:text-white'
+                                                }`}
+                                            >
+                                                {category.replace('_', ' ')}
+                                            </button>
+                                        );
+                                    })
+                                ) : (
+                                    <>
+                                        {/* Benchmark List */}
+                                        {filteredBenchmarks.slice(0, 10).map((benchmark) => {
+                                            const isSelected = selectedTask === benchmark.name;
+                                            return (
+                                                <button
+                                                    key={benchmark.name}
+                                                    onClick={() => setSelectedTask(benchmark.name)}
+                                                    className={`px-4 py-4 font-display font-black tracking-tighter uppercase italic text-[10px] whitespace-nowrap transition-all leading-none ${
+                                                        isSelected
+                                                            ? 'text-black dark:text-white underline decoration-2 underline-offset-8'
+                                                            : 'text-gray-400 hover:text-black dark:hover:text-white'
+                                                    }`}
+                                                >
+                                                    {benchmark.name}
+                                                </button>
+                                            );
+                                        })}
+                                        
+                                        <button 
+                                            onClick={() => setShowAllBenchmarks(true)}
+                                            className="px-4 py-4 text-[9px] font-black text-brand-500 tracking-widest hover:bg-gray-50 dark:hover:bg-black/20 transition-colors flex-shrink-0"
+                                        >
+                                            + DIRECTORY
+                                        </button>
+                                    </>
+                                )}
+                            </div>
+                        </div>
                     </div>
                 </div>
-            )}
+            </div>
 
-            {/* Compact Benchmark Selection */}
-            {selectedView === 'benchmark' && (
-                <div className="mb-6">
-                    <div className="flex flex-wrap gap-2">
-                        {benchmarks.map((benchmark) => {
-                            const isSelected = selectedTask === benchmark.name;
-                            const Icon = getCategoryIcon(benchmark.category);
-                            
-                            return (
+            {/* Popovers */}
+            {showAllBenchmarks && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/20 backdrop-blur-sm">
+                    <div className="w-full max-w-4xl bg-white dark:bg-surface-900 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                        <div className="flex items-center justify-between p-6 border-b border-gray-100 dark:border-gray-800">
+                            <span className="text-xs font-black uppercase tracking-widest">Full Benchmark Directory</span>
+                            <button onClick={() => setShowAllBenchmarks(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-surface-800 rounded-full">
+                                <X className="w-5 h-5 text-gray-400" />
+                            </button>
+                        </div>
+                        <div className="p-6 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 max-h-[60vh] overflow-y-auto">
+                            {benchmarks.map((benchmark) => (
                                 <button
                                     key={benchmark.name}
-                                    onClick={() => setSelectedTask(benchmark.name)}
-                                    className={`group flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                                        isSelected
-                                            ? 'bg-gradient-to-r from-brand-500 to-brand-600 text-white shadow-md'
-                                            : 'bg-white dark:bg-surface-800 border border-gray-200 dark:border-gray-700 hover:border-brand-300 dark:hover:border-brand-600 text-gray-700 dark:text-gray-300'
+                                    onClick={() => { setSelectedTask(benchmark.name); setSelectedView('benchmark'); setShowAllBenchmarks(false); }}
+                                    className={`p-4 rounded-xl text-left border transition-all ${
+                                        selectedTask === benchmark.name 
+                                            ? 'bg-black dark:bg-white text-white dark:text-black border-black dark:border-white' 
+                                            : 'bg-gray-50 dark:bg-surface-800 border-transparent hover:border-gray-200'
                                     }`}
                                 >
-                                    <Icon className={`w-4 h-4 ${isSelected ? 'text-white' : 'text-brand-500'}`} />
-                                    <span className="truncate max-w-[120px]">{benchmark.name}</span>
-                                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${
-                                        benchmark.type === 'index'
-                                            ? isSelected 
-                                                ? 'bg-white/20 text-white'
-                                                : 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400'
-                                            : isSelected
-                                                ? 'bg-white/20 text-white'
-                                                : 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
-                                    }`}>
-                                        {benchmark.type || 'benchmark'}
-                                    </span>
+                                    <span className="block text-[8px] font-black uppercase opacity-50 mb-1">{benchmark.category}</span>
+                                    <span className="text-xs font-bold">{benchmark.name}</span>
                                 </button>
-                            );
-                        })}
+                            ))}
+                        </div>
                     </div>
                 </div>
             )}
