@@ -43,6 +43,20 @@ export const api = {
         return response.json();
     },
 
+    deleteModel: async (modelId, adminKey) => {
+        const response = await fetch(`${API_BASE}/admin/delete-model/${modelId}`, {
+            method: 'DELETE',
+            headers: { 
+                'Authorization': `Bearer ${adminKey}`
+            },
+        });
+        if (!response.ok) {
+            const err = await response.json().catch(() => ({}));
+            throw new Error(err.detail || `Delete error: ${response.status}`);
+        }
+        return response.json();
+    },
+
     verifyAdminKey: async (adminKey) => {
         const response = await fetch(`${API_BASE}/admin/verify`, {
             method: 'GET',

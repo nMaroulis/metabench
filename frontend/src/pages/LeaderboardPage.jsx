@@ -1,61 +1,91 @@
-import { useState, useEffect, useMemo } from 'react';
-import { Trophy, Filter, Download, BarChart3, Target, Brain, BookOpen, Code, GraduationCap, MessageSquare, Cpu, Users, Heart, Zap, Check, X, ChevronDown } from 'lucide-react';
+import { useState, useEffect, useMemo, useRef } from 'react';
+import { Trophy, Download, X } from 'lucide-react';
 import api from '../services/api';
 import LeaderboardTable from '../components/LeaderboardTable';
 import SEO from '../components/SEO';
 
+/**
+ * LeaderboardPage Component
+ * Displays the main LLM intelligence leaderboard with category and benchmark filtering.
+ */
 export default function LeaderboardPage() {
-    const [entries, setEntries] = useState([]);
-    const [benchmarks, setBenchmarks] = useState([]);
-    const [selectedView, setSelectedView] = useState('category'); // 'category', 'benchmark'
-    const [selectedCategory, setSelectedCategory] = useState('overall');
-    const [selectedTask, setSelectedTask] = useState('');
-    const [loading, setLoading] = useState(true);
-    const [benchmarkTypeFilter, setBenchmarkTypeFilter] = useState('all'); // 'all', 'index', 'benchmark'
-    const [showAllBenchmarks, setShowAllBenchmarks] = useState(false);
+    // --- State Management ---
+    const [entries, setEntries] = useState([]); // Leaderboard data rows
+    const [benchmarks, setBenchmarks] = useState([]); // List of all available benchmarks
+    const [selectedView, setSelectedView] = useState('category'); // Toggle between 'category' and 'benchmark' views
+    const [selectedCategory, setSelectedCategory] = useState('overall'); // Active category filter (e.g., 'coding', 'math')
+    const [selectedTask, setSelectedTask] = useState(''); // Active specific benchmark filter
+    const [loading, setLoading] = useState(true); // Initial load state
+    const [benchmarkTypeFilter, setBenchmarkTypeFilter] = useState('all'); // Filter benchmarks by type ('index', 'benchmark')
+    const [showAllBenchmarks, setShowAllBenchmarks] = useState(false); // Popover toggle for benchmark directory
 
-    // Filtered benchmarks based on type
+    const [skip, setSkip] = useState(0); // Pagination offset
+    const [total, setTotal] = useState(0); // Total number of entries available
+    const [loadingMore, setLoadingMore] = useState(false); // Load more state
+    const LIMIT = 50; // Items per page
+
+    // --- Dynamic Scroll Feedback ---
+    const scrollRef = useRef(null);
+    const [scrollState, setScrollState] = useState({ isAtStart: true, isAtEnd: false });
+
+    const handleScroll = () => {
+        if (!scrollRef.current) return;
+        const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
+        setScrollState({
+            isAtStart: scrollLeft < 10,
+            isAtEnd: scrollLeft + clientWidth >= scrollWidth - 10
+        });
+    };
+
+    // Initialize scroll state on mount/change
+    useEffect(() => {
+        handleScroll();
+        window.addEventListener('resize', handleScroll);
+        return () => window.removeEventListener('resize', handleScroll);
+    }, [benchmarks, selectedView, selectedCategory, selectedTask]);
+
+    // --- Memoized Values ---
+
+    // Filtered list of benchmarks based on the type filter (all/index/benchmark)
     const filteredBenchmarks = useMemo(() => {
         if (benchmarkTypeFilter === 'all') return benchmarks;
         return benchmarks.filter(b => b.type === benchmarkTypeFilter);
     }, [benchmarks, benchmarkTypeFilter]);
 
-    const [skip, setSkip] = useState(0);
-    const [total, setTotal] = useState(0);
-    const LIMIT = 50;
-    const [loadingMore, setLoadingMore] = useState(false);
-
-    // Extract unique categories and organize benchmarks
-    const { categories, benchmarksByCategory } = useMemo(() => {
-        const cats = [...new Set(benchmarks.map(b => b.category).filter(Boolean))];
-        const grouped = benchmarks.reduce((acc, benchmark) => {
-            const cat = benchmark.category || 'other';
-            if (!acc[cat]) acc[cat] = [];
-            acc[cat].push(benchmark);
-            return acc;
-        }, {});
-        return { categories: cats, benchmarksByCategory: grouped };
+    // Extract unique categories from the benchmarks list
+    const categories = useMemo(() => {
+        return [...new Set(benchmarks.map(b => b.category).filter(Boolean))];
     }, [benchmarks]);
 
+    // Combined list of 'overall' plus individual categories
+    const allCategories = ['overall', ...categories];
+
+    // --- Data Fetching ---
+
+    // Initial fetch of all available benchmarks
     useEffect(() => {
         api.getBenchmarks().then(setBenchmarks).catch(console.error);
     }, []);
 
+    /**
+     * Fetches leaderboard entries from the API based on current filters and pagination.
+     * @param {number} newSkip - Pagination offset
+     * @param {boolean} isAppend - Whether to append data to existing list (Load More)
+     */
     const fetchLeaderboard = (newSkip, isAppend = false) => {
         if (isAppend) setLoadingMore(true);
         else setLoading(true);
 
         const params = { limit: LIMIT, skip: newSkip };
-        
+
         if (selectedView === 'category') {
             if (selectedCategory !== 'overall') {
                 params.category = selectedCategory;
             }
-            // No filtering for overall
         } else if (selectedView === 'benchmark' && selectedTask) {
             params.task = selectedTask;
         }
-        
+
         api.getLeaderboard(params)
             .then((data) => {
                 setEntries(prev => isAppend ? [...prev, ...(data.entries || [])] : (data.entries || []));
@@ -68,11 +98,18 @@ export default function LeaderboardPage() {
             });
     };
 
+    // Re-fetch when view or filters change
     useEffect(() => {
         setSkip(0);
         fetchLeaderboard(0, false);
     }, [selectedView, selectedCategory, selectedTask]);
 
+    // --- Handlers ---
+
+    /**
+     * Handles data export in various formats
+     * @param {string} format - 'csv' or 'json'
+     */
     const handleExport = async (format) => {
         try {
             if (format === 'csv') {
@@ -99,53 +136,14 @@ export default function LeaderboardPage() {
         }
     };
 
+    /**
+     * Handles pagination for more results
+     */
     const handleLoadMore = () => {
         const nextSkip = skip + LIMIT;
         setSkip(nextSkip);
         fetchLeaderboard(nextSkip, true);
     };
-
-    const getSelectionDescription = () => {
-        if (selectedView === 'category') {
-            if (selectedCategory === 'overall') return 'Ranked by Overall Intelligence Score';
-            return `Ranked by ${selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1).replace('_', ' ')} Performance`;
-        }
-        if (selectedView === 'benchmark') return `Ranked by ${selectedTask} Score`;
-        return 'Ranked by Overall Intelligence Score';
-    };
-
-    const getCategoryIcon = (category) => {
-        switch (category?.toLowerCase()) {
-            case 'coding': return Code;
-            case 'math': return Brain;
-            case 'reasoning': return BookOpen;
-            case 'knowledge': return GraduationCap;
-            case 'instruction': return MessageSquare;
-            case 'agentic': return Cpu;
-            case 'human_preference': return Users;
-            case 'emotional_intelligence': return Heart;
-            case 'composite': return Trophy;
-            default: return Zap;
-        }
-    };
-
-    const getCategoryColor = (category) => {
-        switch (category?.toLowerCase()) {
-            case 'overall': return 'from-amber-500 to-orange-600';
-            case 'knowledge': return 'from-blue-500 to-indigo-600';
-            case 'reasoning': return 'from-purple-500 to-violet-600';
-            case 'math': return 'from-red-500 to-rose-600';
-            case 'coding': return 'from-emerald-500 to-teal-600';
-            case 'instruction': return 'from-cyan-500 to-blue-600';
-            case 'agentic': return 'from-orange-500 to-amber-600';
-            case 'human_preference': return 'from-pink-500 to-fuchsia-600';
-            case 'emotional_intelligence': return 'from-rose-500 to-pink-600';
-            case 'composite': return 'from-indigo-500 to-brand-600';
-            default: return 'from-gray-500 to-gray-600';
-        }
-    };
-
-    const allCategories = ['overall', ...categories];
 
     return (
         <div className="page-container">
@@ -153,7 +151,8 @@ export default function LeaderboardPage() {
                 title="LLM Intelligence Leaderboard"
                 description="The ultimate leaderboard for Large Language Models. Compare GPT-4, Claude, Gemini and more based on aggregated benchmark scores."
             />
-            {/* Header */}
+
+            {/* --- Header Section --- */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
                 <div>
                     <h1 className="section-title flex items-center gap-3">
@@ -165,8 +164,8 @@ export default function LeaderboardPage() {
                     </p>
                 </div>
 
+                {/* Export Buttons */}
                 <div className="flex items-center gap-3">
-                    {/* Export */}
                     <div className="flex gap-2">
                         <button onClick={() => handleExport('json')} className="btn-secondary text-xs px-4 py-2">
                             <Download className="w-3 h-3" /> JSON
@@ -179,103 +178,122 @@ export default function LeaderboardPage() {
             </div>
 
 
-            {/* Ultra-Minimal Monolithic Selector */}
+            {/* --- Navigation & Filter Bar --- */}
             <div className="mb-1 bg-white dark:bg-surface-900 border-y border-gray-100 dark:border-gray-800">
-                <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-stretch sm:items-center h-[48px]">
-                    
-                    {/* Perspective Switcher */}
+                <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-stretch sm:items-center min-h-[48px] sm:h-[48px]">
+
+                    {/* Perspective Switcher (Toggle between Rankings by Category or by Benchmark) */}
                     <div className="flex border-b sm:border-b-0 sm:border-r border-gray-100 dark:border-gray-800">
                         {['category', 'benchmark'].map((view) => (
                             <button
                                 key={view}
                                 onClick={() => setSelectedView(view)}
-                                className={`flex-1 sm:flex-none px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] transition-colors ${
-                                    selectedView === view
-                                        ? 'bg-black dark:bg-white text-white dark:text-black'
-                                        : 'text-gray-400 hover:text-black dark:hover:text-white'
-                                }`}
+                                className={`flex-1 sm:flex-none px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] transition-colors ${selectedView === view
+                                    ? 'bg-black dark:bg-white text-white dark:text-black'
+                                    : 'text-gray-400 hover:text-black dark:hover:text-white'
+                                    }`}
                             >
                                 {view}
                             </button>
                         ))}
                     </div>
 
-                    {/* Content Area */}
-                    <div className="flex-1 flex items-center overflow-hidden min-w-0">
-                        {/* Fixed Type Filter - Only for Benchmark View */}
+                    {/* Content Area - Scrollable Categories or Benchmarks */}
+                    <div className="flex-1 flex items-center min-w-0 relative h-[48px]">
+
+                        {/* Type Filter for Benchmark View (Only shown when Benchmark perspective is active) */}
                         {selectedView === 'benchmark' && (
                             <div className="flex border-r border-gray-100 dark:border-gray-800 flex-shrink-0">
                                 {['all', 'index', 'benchmark'].map((type) => (
                                     <button
                                         key={type}
                                         onClick={() => setBenchmarkTypeFilter(type)}
-                                        className={`px-3 py-4 text-[9px] font-black uppercase tracking-tighter whitespace-nowrap ${
-                                            benchmarkTypeFilter === type
-                                                ? 'text-black dark:text-white'
-                                                : 'text-gray-300 hover:text-gray-500'
-                                        }`}
+                                        className={`px-3 py-4 text-[9px] font-black uppercase tracking-tighter whitespace-nowrap ${benchmarkTypeFilter === type
+                                            ? 'text-black dark:text-white'
+                                            : 'text-gray-300 hover:text-gray-500'
+                                            }`}
                                     >
                                         {type}
                                     </button>
                                 ))}
                             </div>
                         )}
-                        
-                        {/* Scrollable Content */}
-                        <div className="flex-1 overflow-x-auto scrollbar-hide min-w-0">
-                            <div className="flex items-center px-4 h-[48px]">
-                                {selectedView === 'category' ? (
-                                    allCategories.map((category) => {
-                                        const isSelected = selectedCategory === category;
-                                        return (
-                                            <button
-                                                key={category}
-                                                onClick={() => setSelectedCategory(category)}
-                                                className={`px-4 py-4 font-display font-black tracking-tighter uppercase italic text-[10px] whitespace-nowrap transition-all leading-none ${
-                                                    isSelected
-                                                        ? 'text-black dark:text-white underline decoration-2 underline-offset-8'
-                                                        : 'text-gray-400 hover:text-black dark:hover:text-white'
-                                                }`}
-                                            >
-                                                {category.replace('_', ' ')}
-                                            </button>
-                                        );
-                                    })
-                                ) : (
-                                    <>
-                                        {/* Benchmark List */}
-                                        {filteredBenchmarks.slice(0, 10).map((benchmark) => {
-                                            const isSelected = selectedTask === benchmark.name;
+
+                        {/* Scrollable Container with Dynamic Mask Fade */}
+                        <div
+                            className="flex-1 flex items-center min-w-0 relative overflow-hidden h-full"
+                            style={{
+                                maskImage: `linear-gradient(to right, 
+                                    ${scrollState.isAtStart ? 'black' : 'transparent'} 0%, 
+                                    black ${scrollState.isAtStart ? '0%' : '15%'}, 
+                                    black ${scrollState.isAtEnd ? '100%' : '85%'}, 
+                                    ${scrollState.isAtEnd ? 'black' : 'transparent'} 100%)`,
+                                WebkitMaskImage: `linear-gradient(to right, 
+                                    ${scrollState.isAtStart ? 'black' : 'transparent'} 0%, 
+                                    black ${scrollState.isAtStart ? '0%' : '15%'}, 
+                                    black ${scrollState.isAtEnd ? '100%' : '85%'}, 
+                                    ${scrollState.isAtEnd ? 'black' : 'transparent'} 100%)`
+                            }}
+                        >
+                            <div
+                                ref={scrollRef}
+                                onScroll={handleScroll}
+                                className="flex-1 overflow-x-auto overflow-y-hidden scrollbar-hide min-w-0 flex items-center px-4 h-full"
+                            >
+                                <div className="flex items-center">
+                                    {selectedView === 'category' ? (
+                                        // Category Selection
+                                        allCategories.map((category) => {
+                                            const isSelected = selectedCategory === category;
                                             return (
                                                 <button
-                                                    key={benchmark.name}
-                                                    onClick={() => setSelectedTask(benchmark.name)}
-                                                    className={`px-4 py-4 font-display font-black tracking-tighter uppercase italic text-[10px] whitespace-nowrap transition-all leading-none ${
-                                                        isSelected
-                                                            ? 'text-black dark:text-white underline decoration-2 underline-offset-8'
-                                                            : 'text-gray-400 hover:text-black dark:hover:text-white'
-                                                    }`}
+                                                    key={category}
+                                                    onClick={() => setSelectedCategory(category)}
+                                                    className={`px-4 py-4 font-display font-black tracking-tighter uppercase italic text-[10px] whitespace-nowrap transition-all leading-none ${isSelected
+                                                        ? 'text-black dark:text-white underline decoration-2 underline-offset-8'
+                                                        : 'text-gray-400 hover:text-black dark:hover:text-white'
+                                                        }`}
                                                 >
-                                                    {benchmark.name}
+                                                    {category.replace('_', ' ')}
                                                 </button>
                                             );
-                                        })}
-                                        
-                                        <button 
-                                            onClick={() => setShowAllBenchmarks(true)}
-                                            className="px-4 py-4 text-[9px] font-black text-brand-500 tracking-widest hover:bg-gray-50 dark:hover:bg-black/20 transition-colors flex-shrink-0"
-                                        >
-                                            + DIRECTORY
-                                        </button>
-                                    </>
-                                )}
+                                        })
+                                    ) : (
+                                        // Benchmark Selection
+                                        <>
+                                            {filteredBenchmarks.slice(0, 10).map((benchmark) => {
+                                                const isSelected = selectedTask === benchmark.name;
+                                                return (
+                                                    <button
+                                                        key={benchmark.name}
+                                                        onClick={() => setSelectedTask(benchmark.name)}
+                                                        className={`px-4 py-4 font-display font-black tracking-tighter uppercase italic text-[10px] whitespace-nowrap transition-all leading-none ${isSelected
+                                                            ? 'text-black dark:text-white underline decoration-2 underline-offset-8'
+                                                            : 'text-gray-400 hover:text-black dark:hover:text-white'
+                                                            }`}
+                                                    >
+                                                        {benchmark.name}
+                                                    </button>
+                                                );
+                                            })}
+
+                                            {/* Directory Button to show all benchmarks in a popover */}
+                                            <button
+                                                onClick={() => setShowAllBenchmarks(true)}
+                                                className="px-4 py-4 text-[9px] font-black text-brand-500 tracking-widest hover:bg-gray-50 dark:hover:bg-black/20 transition-colors flex-shrink-0"
+                                            >
+                                                + DIRECTORY
+                                            </button>
+                                        </>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* Popovers */}
+            {/* --- All Benchmarks Popover (Directory) --- */}
             {showAllBenchmarks && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/20 backdrop-blur-sm">
                     <div className="w-full max-w-4xl bg-white dark:bg-surface-900 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
@@ -290,11 +308,10 @@ export default function LeaderboardPage() {
                                 <button
                                     key={benchmark.name}
                                     onClick={() => { setSelectedTask(benchmark.name); setSelectedView('benchmark'); setShowAllBenchmarks(false); }}
-                                    className={`p-4 rounded-xl text-left border transition-all ${
-                                        selectedTask === benchmark.name 
-                                            ? 'bg-black dark:bg-white text-white dark:text-black border-black dark:border-white' 
-                                            : 'bg-gray-50 dark:bg-surface-800 border-transparent hover:border-gray-200'
-                                    }`}
+                                    className={`p-4 rounded-xl text-left border transition-all ${selectedTask === benchmark.name
+                                        ? 'bg-black dark:bg-white text-white dark:text-black border-black dark:border-white'
+                                        : 'bg-gray-50 dark:bg-surface-800 border-transparent hover:border-gray-200'
+                                        }`}
                                 >
                                     <span className="block text-[8px] font-black uppercase opacity-50 mb-1">{benchmark.category}</span>
                                     <span className="text-xs font-bold">{benchmark.name}</span>
@@ -305,7 +322,7 @@ export default function LeaderboardPage() {
                 </div>
             )}
 
-            {/* Table */}
+            {/* --- Main Table Section --- */}
             {loading ? (
                 <div className="glass-card p-12 text-center">
                     <div className="animate-pulse">
@@ -314,9 +331,9 @@ export default function LeaderboardPage() {
                     </div>
                 </div>
             ) : (
-                <LeaderboardTable 
-                    entries={entries} 
-                    showBenchmark={selectedView === 'benchmark' && !!selectedTask} 
+                <LeaderboardTable
+                    entries={entries}
+                    showBenchmark={selectedView === 'benchmark' && !!selectedTask}
                     onLoadMore={handleLoadMore}
                     loadingMore={loadingMore}
                     hasMore={entries.length < total}
@@ -326,3 +343,4 @@ export default function LeaderboardPage() {
         </div>
     );
 }
+

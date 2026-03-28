@@ -131,6 +131,16 @@ def update_model_dynamic(db: Session, model_id: int, update_data: schemas.ModelU
     return db_model
 
 
+def delete_model(db: Session, model_id: int):
+    """Deletes a model and its associated scores/metadata (via cascade)."""
+    db_model = get_model_by_id(db, model_id)
+    if not db_model:
+        return False
+    db.delete(db_model)
+    db.commit()
+    return True
+
+
 # ---------- Benchmarks ----------
 
 

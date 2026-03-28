@@ -51,6 +51,26 @@ async def update_model(
     return {"message": "Model updated successfully", "model_id": model_id}
 
 
+@router.delete("/admin/delete-model/{model_id}", tags=["Admin"])
+async def delete_model(
+    model_id: int,
+    db: Session = Depends(get_db),
+    *,
+    is_admin: bool = Depends(verify_admin_key),
+):
+    """Admin endpoint to delete any model and its associated data."""
+    from fastapi_cache import FastAPICache
+
+    success = crud.delete_model(db, model_id)
+    if not success:
+        raise HTTPException(status_code=404, detail=f"Model with ID {model_id} not found")
+
+    # Invalidate entire cache to ensure and model details, leaderboard, and benchmarks are updated
+    await FastAPICache.clear()
+
+    return {"message": "Model deleted successfully", "model_id": model_id}
+
+
 @router.get("/admin/snapshot", response_model=schemas.AdminSnapshot, tags=["Admin"])
 async def export_admin_snapshot(
     db: Session = Depends(get_db),

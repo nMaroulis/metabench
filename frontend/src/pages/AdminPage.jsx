@@ -260,6 +260,28 @@ export default function AdminPage() {
     });
   };
 
+  const handleDeleteModel = async () => {
+    if (!selectedModel) return;
+    
+    const confirmDelete = window.confirm(`Are you sure you want to delete "${selectedModel.name}"? This action cannot be undone and will remove all associated scores and metadata.`);
+    if (!confirmDelete) return;
+
+    setLoading(true);
+    setMessage({ type: '', text: '' });
+
+    try {
+      await api.deleteModel(selectedModel.id, adminKey);
+      setMessage({ type: 'success', text: `Model "${selectedModel.name}" deleted successfully.` });
+      setSelectedModel(null);
+      setFormData(null);
+      await loadModels();
+    } catch (err) {
+      setMessage({ type: 'error', text: err.message || 'Failed to delete model.' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!selectedModel) return;
@@ -648,16 +670,24 @@ export default function AdminPage() {
               </section>
             )}
 
-            <div className="pt-4 border-t dark:border-gray-700 flex justify-end">
-            <button
-              type="submit"
-              disabled={loading}
-              className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg disabled:opacity-50 transition-colors"
-            >
-              {loading ? 'Saving...' : 'Save Changes'}
-            </button>
-          </div>
-        </form>
+            <div className="pt-4 border-t dark:border-gray-700 flex justify-between items-center">
+              <button
+                type="button"
+                onClick={handleDeleteModel}
+                disabled={loading}
+                className="px-4 py-2 border border-red-200 dark:border-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 font-medium rounded-lg disabled:opacity-50 transition-colors"
+              >
+                Delete Model
+              </button>
+              <button
+                type="submit"
+                disabled={loading}
+                className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg disabled:opacity-50 transition-colors"
+              >
+                {loading ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
+          </form>
         </div>
       )}
     </div>
