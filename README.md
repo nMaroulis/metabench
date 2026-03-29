@@ -76,6 +76,11 @@ uvicorn main:app --reload --port 8080
 
 The API will be available at http://localhost:8080 with interactive docs at http://localhost:8080/docs.
 
+> **Skipping Database Updates:** To start the server without performing the initial database update or starting the background scheduler, pass the `--no-update` flag:
+> ```bash
+> uvicorn main:app --reload --port 8080 --no-update
+> ```
+
 > The database is automatically created and seeded with **15 models** and **12 benchmarks** on first startup.
 
 ### 3. Setup & Start Frontend

@@ -153,7 +153,7 @@ export default function ComparePage() {
             />
             {/* Header */}
             <div className="mb-8">
-                <h1 className="section-title flex items-center gap-3">
+                <h1 className="text-2xl sm:text-3xl font-display font-black tracking-tight uppercase italic flex items-center gap-3 select-none">
                     <GitCompareArrows className="w-8 h-8 text-brand-500" />
                     Compare Models
                 </h1>

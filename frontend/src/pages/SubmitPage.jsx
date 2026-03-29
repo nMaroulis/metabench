@@ -63,7 +63,7 @@ export default function SubmitPage() {
                 description="Contribute your own LLM benchmark results to MetaBench. Help build the most comprehensive intelligence index for AI models."
             />
             <div className="mb-8">
-                <h1 className="section-title flex items-center gap-3">
+                <h1 className="text-2xl sm:text-3xl font-display font-black tracking-tight uppercase italic flex items-center gap-3 select-none">
                     <Send className="w-8 h-8 text-brand-500" />
                     Submit Evaluation
                 </h1>

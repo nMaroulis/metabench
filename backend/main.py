@@ -1,4 +1,5 @@
 import os
+import sys
 from contextlib import asynccontextmanager
 from urllib.parse import urlparse
 
@@ -29,29 +30,42 @@ async def lifespan(app: FastAPI):
     FastAPICache.init(InMemoryBackend())
     logger.info("FastAPI-Cache Initialized with InMemoryBackend")
 
-    db = SessionLocal()
-    try:
-        if check_db_exists():
-            logger.info("Database exists, running update_database")
-            update_database(db)
-        else:
-            logger.info("Database doesn't exist, creating tables and seeding data")
+    # Check for skip updates flag
+    skip_updates = "--no-update" in sys.argv
+
+    if skip_updates:
+        logger.info("Skipping database updates and background scheduler as requested")
+        # Ensure tables exist even if we skip seeding/updates
+        if not check_db_exists():
+            logger.info("Database doesn't exist, creating tables (no seeding)")
             Base.metadata.create_all(bind=engine)
-            seed_database(db)
-    finally:
-        db.close()
+    else:
+        db = SessionLocal()
+        try:
+            if check_db_exists():
+                logger.info("Database exists, running update_database")
+                update_database(db)
+            else:
+                logger.info("Database doesn't exist, creating tables and seeding data")
+                Base.metadata.create_all(bind=engine)
+                seed_database(db)
+        finally:
+            db.close()
 
-    # Scheduling the background updates
-    scheduler = BackgroundScheduler()
-    scheduler.add_job(update_database, trigger=CronTrigger(hour="0,6,12,18", minute=0, second=0))
-    scheduler.start()
-
-    logger.info("Background Scheduler Started")
+        # Scheduling the background updates
+        scheduler = BackgroundScheduler()
+        scheduler.add_job(update_database, trigger=CronTrigger(hour="0,6,12,18", minute=0, second=0))
+        scheduler.start()
+        logger.info("Background Scheduler Started")
 
     yield
 
-    # Shutdown scheduler when app exits
-    scheduler.shutdown()
+    # Shutdown scheduler if it was started
+    if not skip_updates:
+        try:
+            scheduler.shutdown()
+        except NameError:
+            pass
 
 
 app = FastAPI(

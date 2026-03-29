@@ -172,11 +172,11 @@ export default function LandingPage() {
 
                 <div className="page-container relative">
                     <div className="flex flex-col items-center text-center mb-20">
-                        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-brand-500/10 text-brand-600 dark:text-brand-400 text-sm font-bold uppercase tracking-widest mb-4">
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[10px] font-black uppercase tracking-widest mb-3">
                             <Crown className="w-4 h-4" /> Current Champions
                         </div>
-                        <h2 className="text-4xl sm:text-5xl lg:text-6xl font-display font-black tracking-tighter mb-6 max-w-4xl mx-auto">
-                            The Intelligence <span className="gradient-text">Elite</span>
+                        <h2 className="text-3xl sm:text-4xl lg:text-5xl font-display font-black tracking-tight mb-6 max-w-4xl mx-auto uppercase italic px-4 select-none">
+                            The Intelligence <span className="gradient-text inline-block pr-2 ml-1">Elite</span>
                         </h2>
                         <p className="text-gray-500 dark:text-gray-400 text-lg max-w-2xl mx-auto leading-relaxed">
                             A curated look at the models defining the frontier of AI intelligence, ranked by normalized multi-benchmark performance.
@@ -260,9 +260,11 @@ export default function LandingPage() {
                                         <div className="flex-1">
                                             <div className="flex items-center gap-2 mb-1">
                                                 <Crown className="w-4 h-4 text-yellow-500 animate-pulse" />
-                                                <h3 className="font-display font-black text-sm uppercase tracking-widest text-gray-400 leading-none">{cat.title} Champion</h3>
+                                                <h3 className="font-display font-black text-sm uppercase italic tracking-widest text-gray-400 leading-none">
+                                                    {cat.title} <span className="inline-block pr-1">Champion</span>
+                                                </h3>
                                             </div>
-                                            <p className="text-[10px] font-bold text-brand-500 uppercase tracking-widest">Category Leader</p>
+                                            <p className="text-[10px] font-black uppercase italic tracking-widest text-brand-500/80">Category Leader</p>
                                         </div>
                                     </div>
 
@@ -276,7 +278,7 @@ export default function LandingPage() {
                                             {/* Golden Crown Glow */}
                                             <div className="absolute -top-4 -right-4 w-16 h-16 bg-gradient-to-br from-yellow-400/20 to-amber-500/10 rounded-full blur-xl animate-pulse" />
                                             <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-yellow-400/30 to-transparent" />
-                                            
+
                                             <div className="flex justify-between items-start mb-6 relative z-10">
                                                 <div className="min-w-0 pr-4">
                                                     <h4 className="font-display font-black text-xl mb-2 group-hover:text-brand-500 transition-colors uppercase leading-tight tracking-tight">{winner.model.name}</h4>
